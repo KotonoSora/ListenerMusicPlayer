@@ -30,6 +30,7 @@ import io.hefuyi.listener.mvp.model.Playlist;
 import io.hefuyi.listener.mvp.model.Song;
 import io.hefuyi.listener.respository.interfaces.Repository;
 import io.hefuyi.listener.util.LyricUtil;
+import io.hefuyi.listener.util.PreferencesUtility;
 import retrofit2.Retrofit;
 import rx.Observable;
 import rx.functions.Func1;
@@ -41,9 +42,9 @@ import rx.schedulers.Schedulers;
 
 public class RepositoryImpl implements Repository {
 
-    private KuGouApiService mKuGouApiService;
-    private LastFmApiService mLastFmApiService;
-    private Context mContext;
+    private final KuGouApiService mKuGouApiService;
+    private final LastFmApiService mLastFmApiService;
+    private final Context mContext;
 
     public RepositoryImpl(Context context, Retrofit kugou, Retrofit lastfm) {
         mContext = context;
@@ -53,11 +54,17 @@ public class RepositoryImpl implements Repository {
 
     @Override
     public Observable<ArtistInfo> getArtistInfo(String artist) {
+        if (PreferencesUtility.getInstance(mContext).isWorkOffline()) {
+            return Observable.just(null);
+        }
         return mLastFmApiService.getArtistInfo(artist);
     }
 
     @Override
     public Observable<File> downloadLrcFile(final String title, final String artist, final long duration) {
+        if (PreferencesUtility.getInstance(mContext).isWorkOffline()) {
+            return Observable.just(null);
+        }
         return mKuGouApiService.searchLyric(title, String.valueOf(duration))
                 .subscribeOn(Schedulers.io())
                 .flatMap(new Func1<KuGouSearchLyricResult, Observable<KuGouRawLyric>>() {

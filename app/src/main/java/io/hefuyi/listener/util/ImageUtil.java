@@ -2,37 +2,31 @@ package io.hefuyi.listener.util;
 
 import android.content.Context;
 import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
+import android.graphics.BlurMaskFilter;
+import android.graphics.Canvas;
+import android.graphics.Paint;
 import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.Drawable;
-import android.support.v8.renderscript.RenderScript;
-
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
 
 public class ImageUtil {
 
     public static Drawable createBlurredImageFromBitmap(Bitmap bitmap, Context context, int inSampleSize) {
+        // 1. Create a scaled bitmap for efficiency
+        Bitmap scaledBitmap = Bitmap.createScaledBitmap(bitmap,
+                bitmap.getWidth() / inSampleSize,
+                bitmap.getHeight() / inSampleSize, true);
 
-        RenderScript rs = RenderScript.create(context);
-        final BitmapFactory.Options options = new BitmapFactory.Options();
-        options.inSampleSize = inSampleSize;
+        // 2. Prepare the blurred bitmap
+        Bitmap blurredBitmap = Bitmap.createBitmap(scaledBitmap.getWidth(), scaledBitmap.getHeight(), Bitmap.Config.ARGB_8888);
+        Canvas canvas = new Canvas(blurredBitmap);
 
-        ByteArrayOutputStream stream = new ByteArrayOutputStream();
-        bitmap.compress(Bitmap.CompressFormat.JPEG, 100, stream);
-        byte[] imageInByte = stream.toByteArray();
-        ByteArrayInputStream bis = new ByteArrayInputStream(imageInByte);
-        Bitmap blurTemplate = BitmapFactory.decodeStream(bis, null, options);
+        // 3. Configure Paint with BlurMaskFilter
+        Paint paint = new Paint();
+        paint.setMaskFilter(new BlurMaskFilter(15f, BlurMaskFilter.Blur.NORMAL));
 
-        final android.support.v8.renderscript.Allocation input = android.support.v8.renderscript.Allocation.createFromBitmap(rs, blurTemplate);
-        final android.support.v8.renderscript.Allocation output = android.support.v8.renderscript.Allocation.createTyped(rs, input.getType());
-        final android.support.v8.renderscript.ScriptIntrinsicBlur script = android.support.v8.renderscript.ScriptIntrinsicBlur.create(rs, android.support.v8.renderscript.Element.U8_4(rs));
-        script.setRadius(4f);
-        script.setInput(input);
-        script.forEach(output);
-        output.copyTo(blurTemplate);
+        // 4. Draw the bitmap onto the canvas with the blur filter
+        canvas.drawBitmap(scaledBitmap, 0, 0, paint);
 
-        return new BitmapDrawable(context.getResources(), blurTemplate);
+        return new BitmapDrawable(context.getResources(), blurredBitmap);
     }
-
 }

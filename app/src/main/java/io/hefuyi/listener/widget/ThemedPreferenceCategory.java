@@ -15,7 +15,7 @@ import io.hefuyi.listener.util.ATEUtil;
  */
 public class ThemedPreferenceCategory extends PreferenceCategory {
 
-    private Context context;
+    private final Context context;
 
     public ThemedPreferenceCategory(Context context) {
         super(context);
@@ -36,7 +36,7 @@ public class ThemedPreferenceCategory extends PreferenceCategory {
     @Override
     protected void onBindView(View view) {
         super.onBindView(view);
-        TextView titleView = (TextView) view.findViewById(android.R.id.title);
+        TextView titleView = view.findViewById(android.R.id.title);
         titleView.setTextColor(Config.accentColor(context, ATEUtil.getATEKey(context)));
     }
 }

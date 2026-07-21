@@ -8,7 +8,7 @@ import android.database.sqlite.SQLiteOpenHelper;
  * Created by hefuyi on 2016/11/5.
  */
 
-public class MusicDB extends SQLiteOpenHelper{
+public class MusicDB extends SQLiteOpenHelper {
 
     private static final String DATABASENAME = "musicdb.db";
     private static final int VERSION = 1;

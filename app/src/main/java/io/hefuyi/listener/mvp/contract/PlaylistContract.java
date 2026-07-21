@@ -12,7 +12,7 @@ import io.hefuyi.listener.mvp.view.BaseView;
 
 public interface PlaylistContract {
 
-    interface View extends BaseView{
+    interface View extends BaseView {
 
         void showPlaylist(List<Playlist> playlists);
 
@@ -20,7 +20,7 @@ public interface PlaylistContract {
 
     }
 
-    interface Presenter extends BasePresenter<View>{
+    interface Presenter extends BasePresenter<View> {
 
         void loadPlaylist();
     }

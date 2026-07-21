@@ -15,9 +15,9 @@ import rx.subscriptions.CompositeSubscription;
  * Created by hefuyi on 2016/12/4.
  */
 
-public class PlaylistPresenter implements PlaylistContract.Presenter{
+public class PlaylistPresenter implements PlaylistContract.Presenter {
 
-    private GetPlaylists mUsecase;
+    private final GetPlaylists mUsecase;
     private PlaylistContract.View mView;
     private CompositeSubscription mCompositeSubscription;
 

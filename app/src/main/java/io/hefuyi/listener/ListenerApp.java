@@ -1,6 +1,5 @@
 package io.hefuyi.listener;
 
-import android.Manifest;
 import android.app.Application;
 import android.content.Intent;
 import android.media.MediaScannerConnection;
@@ -9,8 +8,6 @@ import android.os.Build;
 import android.os.Environment;
 
 import com.afollestad.appthemeengine.ATE;
-import com.nostra13.universalimageloader.core.ImageLoader;
-import com.nostra13.universalimageloader.core.ImageLoaderConfiguration;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -45,7 +42,6 @@ public class ListenerApp extends Application {
 //        initStetho();
 //        setStrictMode();
         setupInjector();
-        initImageLoader();
         PermissionManager.init(this);
         updataMedia();
         setupATE();
@@ -80,11 +76,6 @@ public class ListenerApp extends Application {
                 .networkModule(new NetworkModule(this)).build();
     }
 
-    private void initImageLoader() {
-        ImageLoaderConfiguration localImageLoaderConfiguration = new ImageLoaderConfiguration.Builder(this).build();
-        ImageLoader.getInstance().init(localImageLoaderConfiguration);
-    }
-
     public ApplicationComponent getApplicationComponent() {
         return mApplicationComponent;
     }
@@ -93,7 +84,7 @@ public class ListenerApp extends Application {
     private void updataMedia() {
         //版本号的判断  4.4为分水岭，发送广播更新媒体库
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT) {
-            if (ListenerUtil.isMarshmallow() && !PermissionManager.checkPermission(Manifest.permission.READ_EXTERNAL_STORAGE)) {
+            if (ListenerUtil.isMarshmallow() && !PermissionManager.checkPermission(ListenerUtil.getStoragePermission())) {
                 return;
             }
             SongLoader.getAllSongs(this)

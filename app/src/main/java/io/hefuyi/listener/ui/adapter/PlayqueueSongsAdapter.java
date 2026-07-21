@@ -1,14 +1,16 @@
 package io.hefuyi.listener.ui.adapter;
 
 import android.os.Handler;
-import android.support.v7.app.AppCompatActivity;
-import android.support.v7.graphics.Palette;
-import android.support.v7.widget.RecyclerView;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageView;
 import android.widget.TextView;
+
+import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.content.ContextCompat;
+import androidx.palette.graphics.Palette;
+import androidx.recyclerview.widget.RecyclerView;
 
 import com.bumptech.glide.Glide;
 
@@ -26,11 +28,11 @@ import io.hefuyi.listener.util.ListenerUtil;
  * Created by hefuyi on 2016/12/26.
  */
 
-public class PlayqueueSongsAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder>{
+public class PlayqueueSongsAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
 
+    private final AppCompatActivity mContext;
     private int currentlyPlayingPosition;
     private List<Song> arraylist;
-    private AppCompatActivity mContext;
     private long[] songIDs;
     private Palette.Swatch mSwatch;
 
@@ -73,7 +75,7 @@ public class PlayqueueSongsAdapter extends RecyclerView.Adapter<RecyclerView.Vie
             }
         }
 
-        Glide.with(holder.itemView.getContext()).load(ListenerUtil.getAlbumArtUri(localItem.albumId).toString())
+        Glide.with(holder.itemView.getContext()).load(ListenerUtil.getAlbumArtUri(localItem.albumId))
                 .error(ATEUtil.getDefaultAlbumDrawable(mContext))
                 .placeholder(ATEUtil.getDefaultAlbumDrawable(mContext))
                 .centerCrop()
@@ -106,23 +108,23 @@ public class PlayqueueSongsAdapter extends RecyclerView.Adapter<RecyclerView.Vie
     }
 
     public class ItemHolder extends RecyclerView.ViewHolder implements View.OnClickListener {
-        private TextView title;
-        private TextView artist;
-        private TextView album;
-        private ImageView albumArt;
-        private ImageView popupMenu;
-        private View playIndicator;
+        private final TextView title;
+        private final TextView artist;
+        private final TextView album;
+        private final ImageView albumArt;
+        private final ImageView popupMenu;
+        private final View playIndicator;
 
         public ItemHolder(View view) {
             super(view);
-            this.title = (TextView) view.findViewById(R.id.text_item_title);
-            this.artist = (TextView) view.findViewById(R.id.text_item_subtitle);
-            this.album = (TextView) view.findViewById(R.id.text_item_subtitle_2);
-            this.albumArt = (ImageView) view.findViewById(R.id.image);
-            this.popupMenu = (ImageView) view.findViewById(R.id.popup_menu);
+            this.title = view.findViewById(R.id.text_item_title);
+            this.artist = view.findViewById(R.id.text_item_subtitle);
+            this.album = view.findViewById(R.id.text_item_subtitle_2);
+            this.albumArt = view.findViewById(R.id.image);
+            this.popupMenu = view.findViewById(R.id.popup_menu);
             this.playIndicator = view.findViewById(R.id.now_playing_indicator);
 
-            popupMenu.setImageDrawable(mContext.getResources().getDrawable(R.drawable.ic_clear_white_36dp));
+            popupMenu.setImageDrawable(ContextCompat.getDrawable(mContext, R.drawable.ic_clear_white_36dp));
             popupMenu.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View v) {

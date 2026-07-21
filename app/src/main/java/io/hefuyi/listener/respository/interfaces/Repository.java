@@ -19,7 +19,7 @@ public interface Repository {
 
     //from network
 
-    Observable<ArtistInfo> getArtistInfo( String artist);
+    Observable<ArtistInfo> getArtistInfo(String artist);
 
     Observable<File> downloadLrcFile(String title, String artist, long duration);
 

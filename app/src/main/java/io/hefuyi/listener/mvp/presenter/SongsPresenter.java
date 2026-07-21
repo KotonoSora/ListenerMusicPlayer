@@ -17,7 +17,7 @@ import rx.subscriptions.CompositeSubscription;
 
 public class SongsPresenter implements SongsContract.Presenter {
 
-    private GetSongs mUsecase;
+    private final GetSongs mUsecase;
     private SongsContract.View mView;
     private CompositeSubscription mCompositeSubscription;
 

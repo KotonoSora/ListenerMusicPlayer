@@ -16,7 +16,7 @@ import io.hefuyi.listener.mvp.view.BaseView;
 
 public interface PlaylistDetailContract {
 
-    interface View extends BaseView{
+    interface View extends BaseView {
 
         Context getContext();
 
@@ -27,7 +27,7 @@ public interface PlaylistDetailContract {
         void showPlaylistArt(Bitmap bitmap);
     }
 
-    interface Presenter extends BasePresenter<View>{
+    interface Presenter extends BasePresenter<View> {
 
         void loadPlaylistSongs(long playlistID);
 

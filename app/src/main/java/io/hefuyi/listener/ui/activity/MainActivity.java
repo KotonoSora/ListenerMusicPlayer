@@ -1,34 +1,37 @@
 package io.hefuyi.listener.ui.activity;
 
-import android.Manifest;
 import android.content.Intent;
 import android.graphics.PorterDuff;
 import android.graphics.drawable.Drawable;
 import android.os.Bundle;
 import android.os.Handler;
-import android.support.design.widget.NavigationView;
-import android.support.design.widget.Snackbar;
-import android.support.v4.app.Fragment;
-import android.support.v4.app.FragmentManager;
-import android.support.v4.app.FragmentTransaction;
-import android.support.v4.view.GravityCompat;
-import android.support.v4.widget.DrawerLayout;
 import android.text.TextUtils;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
+import android.view.ViewGroup;
 import android.widget.ImageView;
 import android.widget.TextView;
 
+import androidx.activity.OnBackPressedCallback;
+import androidx.core.content.ContextCompat;
+import androidx.core.view.GravityCompat;
+import androidx.core.view.ViewCompat;
+import androidx.core.view.WindowInsetsCompat;
+import androidx.drawerlayout.widget.DrawerLayout;
+import androidx.fragment.app.Fragment;
+import androidx.fragment.app.FragmentManager;
+import androidx.fragment.app.FragmentTransaction;
+
 import com.afollestad.appthemeengine.customizers.ATEActivityThemeCustomizer;
 import com.bumptech.glide.Glide;
+import com.google.android.material.navigation.NavigationView;
+import com.google.android.material.snackbar.Snackbar;
 import com.sothree.slidinguppanel.SlidingUpPanelLayout;
 
 import java.util.HashMap;
 import java.util.Map;
 
-import butterknife.BindView;
-import butterknife.ButterKnife;
 import io.hefuyi.listener.Constants;
 import io.hefuyi.listener.MusicPlayer;
 import io.hefuyi.listener.R;
@@ -53,24 +56,111 @@ import rx.schedulers.Schedulers;
 
 public class MainActivity extends BaseActivity implements ATEActivityThemeCustomizer {
 
-    @BindView(R.id.sliding_layout)
+    private final Map<String, Runnable> navigationMap = new HashMap<String, Runnable>();
+    private final Handler navDrawerRunnable = new Handler();
+    private final Runnable navigateSearch = new Runnable() {
+        public void run() {
+            Fragment fragment = new SearchFragment();
+            FragmentTransaction transaction = getSupportFragmentManager().beginTransaction();
+            transaction.hide(getSupportFragmentManager().findFragmentById(R.id.fragment_container));
+            transaction.add(R.id.fragment_container, fragment);
+            transaction.addToBackStack(null).commit();
+        }
+    };
+    private final Runnable navigateSetting = new Runnable() {
+        public void run() {
+            final Intent intent = new Intent(MainActivity.this, SettingActivity.class);
+            MainActivity.this.startActivity(intent);
+        }
+    };
+    private final Runnable navigateAlbum = new Runnable() {
+        public void run() {
+            long albumID = getIntent().getExtras().getLong(Constants.ALBUM_ID);
+            String albumName = getIntent().getExtras().getString(Constants.ALBUM_NAME);
+            Fragment fragment = AlbumDetailFragment.newInstance(albumID, albumName, false, null);
+            FragmentManager fragmentManager = getSupportFragmentManager();
+            fragmentManager.beginTransaction()
+                    .replace(R.id.fragment_container, fragment).commit();
+        }
+    };
+    private final Runnable navigateArtist = new Runnable() {
+        public void run() {
+            long artistID = getIntent().getExtras().getLong(Constants.ARTIST_ID);
+            String artistName = getIntent().getExtras().getString(Constants.ARTIST_NAME);
+            Fragment fragment = ArtistDetailFragment.newInstance(artistID, artistName, false, null);
+            FragmentManager fragmentManager = getSupportFragmentManager();
+            fragmentManager.beginTransaction()
+                    .replace(R.id.fragment_container, fragment).commit();
+        }
+    };
     SlidingUpPanelLayout panelLayout;
-    @BindView(R.id.nav_view)
     NavigationView navigationView;
-    @BindView(R.id.drawer_layout)
-    DrawerLayout mDrawerLayout;
+    private final Runnable navigateLibrary = new Runnable() {
+        public void run() {
+            navigationView.getMenu().findItem(R.id.nav_library).setChecked(true);
+            Fragment fragment = MainFragment.newInstance(Constants.NAVIGATE_ALLSONG);
+            FragmentTransaction transaction = getSupportFragmentManager().beginTransaction();
+            transaction.replace(R.id.fragment_container, fragment).commitAllowingStateLoss();
 
+        }
+    };
+    private final Runnable navigatePlaylist = new Runnable() {
+        public void run() {
+            navigationView.getMenu().findItem(R.id.nav_playlists).setChecked(true);
+            Fragment fragment = new PlaylistFragment();
+            FragmentTransaction transaction = getSupportFragmentManager().beginTransaction();
+            transaction.hide(getSupportFragmentManager().findFragmentById(R.id.fragment_container));
+            transaction.replace(R.id.fragment_container, fragment).commit();
+
+        }
+    };
+    private final Runnable navigateFavourate = new Runnable() {
+        public void run() {
+            navigationView.getMenu().findItem(R.id.nav_favourate).setChecked(true);
+            Fragment fragment = MainFragment.newInstance(Constants.NAVIGATE_PLAYLIST_FAVOURATE);
+            FragmentTransaction transaction = getSupportFragmentManager().beginTransaction();
+            transaction.replace(R.id.fragment_container, fragment).commit();
+        }
+    };
+    private final Runnable navigateFolders = new Runnable() {
+        public void run() {
+            navigationView.getMenu().findItem(R.id.nav_folders).setChecked(true);
+            Fragment fragment = new FoldersFragment();
+            FragmentTransaction transaction = getSupportFragmentManager().beginTransaction();
+            transaction.hide(getSupportFragmentManager().findFragmentById(R.id.fragment_container));
+            transaction.replace(R.id.fragment_container, fragment).commit();
+
+        }
+    };
+    private final Runnable navigateRecentPlay = new Runnable() {
+        public void run() {
+            navigationView.getMenu().findItem(R.id.nav_recent_play).setChecked(true);
+            Fragment fragment = MainFragment.newInstance(Constants.NAVIGATE_PLAYLIST_RECENTPLAY);
+            FragmentTransaction transaction = getSupportFragmentManager().beginTransaction();
+            transaction.replace(R.id.fragment_container, fragment).commit();
+        }
+    };
+    private final Runnable navigateRecentAdd = new Runnable() {
+        public void run() {
+            navigationView.getMenu().findItem(R.id.nav_recent_add).setChecked(true);
+            Fragment fragment = MainFragment.newInstance(Constants.NAVIGATE_PLAYLIST_RECENTADD);
+            FragmentTransaction transaction = getSupportFragmentManager().beginTransaction();
+            transaction.replace(R.id.fragment_container, fragment).commit();
+        }
+    };
+    private final Runnable navigatePlayRanking = new Runnable() {
+        public void run() {
+            navigationView.getMenu().findItem(R.id.nav_play_ranking).setChecked(true);
+            Fragment fragment = new PlayRankingFragment();
+            FragmentTransaction transaction = getSupportFragmentManager().beginTransaction();
+            transaction.replace(R.id.fragment_container, fragment).commit();
+        }
+    };
+    DrawerLayout mDrawerLayout;
     private TextView songtitle;
     private TextView songartist;
     private ImageView albumart;
     private String action;
-    private Map<String, Runnable> navigationMap = new HashMap<String, Runnable>();
-    private Handler navDrawerRunnable = new Handler();
-    private Runnable runnable;
-    private PanelSlideListener mPanelSlideListener;
-    private boolean listenerSeted = false;
-    private boolean isDarkTheme;
-
     private final PermissionCallback permissionReadstorageCallback = new PermissionCallback() {
         @Override
         public void permissionGranted() {
@@ -82,105 +172,10 @@ public class MainActivity extends BaseActivity implements ATEActivityThemeCustom
             finish();
         }
     };
-    private Runnable navigateLibrary = new Runnable() {
-        public void run() {
-            navigationView.getMenu().findItem(R.id.nav_library).setChecked(true);
-            Fragment fragment = MainFragment.newInstance(Constants.NAVIGATE_ALLSONG);
-            FragmentTransaction transaction = getSupportFragmentManager().beginTransaction();
-            transaction.replace(R.id.fragment_container, fragment).commitAllowingStateLoss();
-
-        }
-    };
-    private Runnable navigatePlaylist = new Runnable() {
-        public void run() {
-            navigationView.getMenu().findItem(R.id.nav_playlists).setChecked(true);
-            Fragment fragment = new PlaylistFragment();
-            FragmentTransaction transaction = getSupportFragmentManager().beginTransaction();
-            transaction.hide(getSupportFragmentManager().findFragmentById(R.id.fragment_container));
-            transaction.replace(R.id.fragment_container, fragment).commit();
-
-        }
-    };
-    private Runnable navigateFavourate = new Runnable() {
-        public void run() {
-            navigationView.getMenu().findItem(R.id.nav_favourate).setChecked(true);
-            Fragment fragment = MainFragment.newInstance(Constants.NAVIGATE_PLAYLIST_FAVOURATE);
-            FragmentTransaction transaction = getSupportFragmentManager().beginTransaction();
-            transaction.replace(R.id.fragment_container, fragment).commit();
-        }
-    };
-    private Runnable navigateFolders = new Runnable() {
-        public void run() {
-            navigationView.getMenu().findItem(R.id.nav_folders).setChecked(true);
-            Fragment fragment = new FoldersFragment();
-            FragmentTransaction transaction = getSupportFragmentManager().beginTransaction();
-            transaction.hide(getSupportFragmentManager().findFragmentById(R.id.fragment_container));
-            transaction.replace(R.id.fragment_container, fragment).commit();
-
-        }
-    };
-    private Runnable navigateRecentPlay = new Runnable() {
-        public void run() {
-            navigationView.getMenu().findItem(R.id.nav_recent_play).setChecked(true);
-            Fragment fragment = MainFragment.newInstance(Constants.NAVIGATE_PLAYLIST_RECENTPLAY);
-            FragmentTransaction transaction = getSupportFragmentManager().beginTransaction();
-            transaction.replace(R.id.fragment_container, fragment).commit();
-        }
-    };
-    private Runnable navigateRecentAdd = new Runnable() {
-        public void run() {
-            navigationView.getMenu().findItem(R.id.nav_recent_add).setChecked(true);
-            Fragment fragment = MainFragment.newInstance(Constants.NAVIGATE_PLAYLIST_RECENTADD);
-            FragmentTransaction transaction = getSupportFragmentManager().beginTransaction();
-            transaction.replace(R.id.fragment_container, fragment).commit();
-        }
-    };
-    private Runnable navigatePlayRanking = new Runnable() {
-        public void run() {
-            navigationView.getMenu().findItem(R.id.nav_play_ranking).setChecked(true);
-            Fragment fragment = new PlayRankingFragment();
-            FragmentTransaction transaction = getSupportFragmentManager().beginTransaction();
-            transaction.replace(R.id.fragment_container, fragment).commit();
-        }
-    };
-
-    private Runnable navigateSearch = new Runnable() {
-        public void run() {
-            Fragment fragment = new SearchFragment();
-            FragmentTransaction transaction = getSupportFragmentManager().beginTransaction();
-            transaction.hide(getSupportFragmentManager().findFragmentById(R.id.fragment_container));
-            transaction.add(R.id.fragment_container, fragment);
-            transaction.addToBackStack(null).commit();
-        }
-    };
-
-    private Runnable navigateSetting = new Runnable() {
-        public void run() {
-            final Intent intent = new Intent(MainActivity.this, SettingActivity.class);
-            MainActivity.this.startActivity(intent);
-        }
-    };
-
-    private Runnable navigateAlbum = new Runnable() {
-        public void run() {
-            long albumID = getIntent().getExtras().getLong(Constants.ALBUM_ID);
-            String albumName = getIntent().getExtras().getString(Constants.ALBUM_NAME);
-            Fragment fragment = AlbumDetailFragment.newInstance(albumID, albumName, false, null);
-            FragmentManager fragmentManager = getSupportFragmentManager();
-            fragmentManager.beginTransaction()
-                    .replace(R.id.fragment_container, fragment).commit();
-        }
-    };
-    private Runnable navigateArtist = new Runnable() {
-        public void run() {
-            long artistID = getIntent().getExtras().getLong(Constants.ARTIST_ID);
-            String artistName = getIntent().getExtras().getString(Constants.ARTIST_NAME);
-            Fragment fragment = ArtistDetailFragment.newInstance(artistID, artistName, false, null);
-            FragmentManager fragmentManager = getSupportFragmentManager();
-            fragmentManager.beginTransaction()
-                    .replace(R.id.fragment_container, fragment).commit();
-        }
-    };
+    private Runnable runnable;
+    private PanelSlideListener mPanelSlideListener;
+    private boolean listenerSeted = false;
+    private boolean isDarkTheme;
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -191,16 +186,41 @@ public class MainActivity extends BaseActivity implements ATEActivityThemeCustom
 
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-        ButterKnife.bind(this);
+
+        mDrawerLayout = findViewById(R.id.drawer_layout);
+        panelLayout = findViewById(R.id.sliding_layout);
+        navigationView = findViewById(R.id.nav_view);
 
         navigationMap.put(Constants.NAVIGATE_LIBRARY, navigateLibrary);
         navigationMap.put(Constants.NAVIGATE_ALBUM, navigateAlbum);
         navigationMap.put(Constants.NAVIGATE_ARTIST, navigateArtist);
 
         View header = navigationView.inflateHeaderView(R.layout.nav_header);
-        albumart = (ImageView) header.findViewById(R.id.album_art);
-        songtitle = (TextView) header.findViewById(R.id.song_title);
-        songartist = (TextView) header.findViewById(R.id.song_artist);
+        albumart = header.findViewById(R.id.album_art);
+        songtitle = header.findViewById(R.id.song_title);
+        songartist = header.findViewById(R.id.song_artist);
+
+        ViewCompat.setOnApplyWindowInsetsListener(mDrawerLayout, (v, insets) -> {
+            int top = insets.getInsets(WindowInsetsCompat.Type.systemBars()).top;
+            int bottom = insets.getInsets(WindowInsetsCompat.Type.systemBars()).bottom;
+
+            // Header: increase height and pad internal text if needed,
+            // but alignParentBottom handles it if height is increased.
+            ViewGroup.LayoutParams lp = header.getLayoutParams();
+            if (lp != null) {
+                // The base height of the header is 208dp
+                lp.height = (int) (getResources().getDisplayMetrics().density * 208) + top;
+                header.setLayoutParams(lp);
+            }
+            header.setPadding(0, top, 0, 0);
+
+            int basePanelHeight = getResources().getDimensionPixelSize(R.dimen.sliding_up_header);
+            panelLayout.setPanelHeight(basePanelHeight + bottom);
+
+            navigationView.setPadding(0, 0, 0, bottom);
+
+            return insets;
+        });
 
         navDrawerRunnable.postDelayed(new Runnable() {
             @Override
@@ -232,11 +252,29 @@ public class MainActivity extends BaseActivity implements ATEActivityThemeCustom
         }
         subscribeMetaChangedEvent();
 
+        getOnBackPressedDispatcher().addCallback(this, new OnBackPressedCallback(true) {
+            @Override
+            public void handleOnBackPressed() {
+                if (panelLayout.getPanelState() == SlidingUpPanelLayout.PanelState.EXPANDED) {
+                    panelLayout.setPanelState(SlidingUpPanelLayout.PanelState.COLLAPSED);
+                } else if (mDrawerLayout.isDrawerOpen(GravityCompat.START)) {
+                    mDrawerLayout.closeDrawer(GravityCompat.START);
+                } else if (!isNavigatingMain()) {
+                    setEnabled(false);
+                    getOnBackPressedDispatcher().onBackPressed();
+                    setEnabled(true);
+                } else {
+                    finish();
+                }
+            }
+        });
+
     }
 
     @Override
     protected void onDestroy() {
         super.onDestroy();
+        navDrawerRunnable.removeCallbacksAndMessages(null);
         RxBus.getInstance().unSubscribe(this);
         if (mPanelSlideListener != null) {
             RxBus.getInstance().unSubscribe(mPanelSlideListener);
@@ -251,31 +289,39 @@ public class MainActivity extends BaseActivity implements ATEActivityThemeCustom
             navigateLibrary.run();
         }
 
-        new initQuickControls().execute("");
+        initializeQuickControls();
     }
 
     private void checkPermissionAndThenLoad() {
         //check for permission
-        if (PermissionManager.checkPermission(Manifest.permission.READ_EXTERNAL_STORAGE)) {
+        String[] requiredPermissions = ListenerUtil.getRequiredPermissions();
+        if (PermissionManager.hasPermission(this, requiredPermissions)) {
             loadEverything();
         } else {
-            if (PermissionManager.shouldShowRequestPermissionRationale(this, Manifest.permission.READ_EXTERNAL_STORAGE)) {
-                Snackbar.make(panelLayout, "Listener will need to read external storage to display songs on your device.",
-                        Snackbar.LENGTH_INDEFINITE)
+            String storagePermission = ListenerUtil.getStoragePermission();
+            String rationale = getString(R.string.permission_rationale_storage);
+            if (ListenerUtil.isTiramisu()) {
+                rationale = getString(R.string.permission_rationale_tiramisu);
+            }
+
+            if (PermissionManager.shouldShowRequestPermissionRationale(this, storagePermission)) {
+                Snackbar.make(panelLayout, rationale,
+                                Snackbar.LENGTH_INDEFINITE)
                         .setAction(android.R.string.ok, new View.OnClickListener() {
                             @Override
                             public void onClick(View view) {
-                                PermissionManager.askForPermission(MainActivity.this, Manifest.permission.READ_EXTERNAL_STORAGE, permissionReadstorageCallback);
+                                PermissionManager.askForPermission(MainActivity.this, requiredPermissions, permissionReadstorageCallback);
                             }
                         }).show();
             } else {
-                PermissionManager.askForPermission(this, Manifest.permission.READ_EXTERNAL_STORAGE, permissionReadstorageCallback);
+                PermissionManager.askForPermission(this, requiredPermissions, permissionReadstorageCallback);
             }
         }
     }
 
     /**
      * 监听menu点击
+     *
      * @param navigationView
      */
     private void setupDrawerContent(NavigationView navigationView) {
@@ -292,6 +338,7 @@ public class MainActivity extends BaseActivity implements ATEActivityThemeCustom
 
     /**
      * 设置图标
+     *
      * @param navigationView
      */
     private void setupNavigationIcons(NavigationView navigationView) {
@@ -326,39 +373,31 @@ public class MainActivity extends BaseActivity implements ATEActivityThemeCustom
 
     /**
      * 导航
+     *
      * @param menuItem
      */
     private void updatePosition(final MenuItem menuItem) {
         runnable = null;
 
-        switch (menuItem.getItemId()) {
-            case R.id.nav_library:
-                runnable = navigateLibrary;
-                break;
-            case R.id.nav_playlists:
-                runnable = navigatePlaylist;
-                break;
-            case R.id.nav_folders:
-                runnable = navigateFolders;
-                break;
-            case R.id.nav_favourate:
-                runnable = navigateFavourate;
-                break;
-            case R.id.nav_recent_play:
-                runnable = navigateRecentPlay;
-                break;
-            case R.id.nav_recent_add:
-                runnable = navigateRecentAdd;
-                break;
-            case R.id.nav_play_ranking:
-                runnable = navigatePlayRanking;
-                break;
-            case R.id.nav_settings:
-                runnable = navigateSetting;
-                break;
-            case R.id.nav_exit:
-                this.finish();
-                break;
+        int itemId = menuItem.getItemId();
+        if (itemId == R.id.nav_library) {
+            runnable = navigateLibrary;
+        } else if (itemId == R.id.nav_playlists) {
+            runnable = navigatePlaylist;
+        } else if (itemId == R.id.nav_folders) {
+            runnable = navigateFolders;
+        } else if (itemId == R.id.nav_favourate) {
+            runnable = navigateFavourate;
+        } else if (itemId == R.id.nav_recent_play) {
+            runnable = navigateRecentPlay;
+        } else if (itemId == R.id.nav_recent_add) {
+            runnable = navigateRecentAdd;
+        } else if (itemId == R.id.nav_play_ranking) {
+            runnable = navigatePlayRanking;
+        } else if (itemId == R.id.nav_settings) {
+            runnable = navigateSetting;
+        } else if (itemId == R.id.nav_exit) {
+            this.finish();
         }
 
         if (runnable != null) {
@@ -383,7 +422,7 @@ public class MainActivity extends BaseActivity implements ATEActivityThemeCustom
         if (TextUtils.isEmpty(name) || TextUtils.isEmpty(artist)) {
             songtitle.setText(R.string.app_name);
             songartist.setText("");
-            Drawable defaultHeader = getResources().getDrawable(R.drawable.icon_drawer_theme_bg);
+            Drawable defaultHeader = ContextCompat.getDrawable(this, R.drawable.icon_drawer_theme_bg);
             defaultHeader.setColorFilter(ATEUtil.getThemePrimaryColor(this), PorterDuff.Mode.DARKEN);
             albumart.setImageDrawable(defaultHeader);
             return;
@@ -392,10 +431,10 @@ public class MainActivity extends BaseActivity implements ATEActivityThemeCustom
         songtitle.setText(name);
         songartist.setText(artist);
 
-        Drawable defaultHeader = getResources().getDrawable(R.drawable.icon_drawer_theme_bg);
+        Drawable defaultHeader = ContextCompat.getDrawable(this, R.drawable.icon_drawer_theme_bg);
         defaultHeader.setColorFilter(ATEUtil.getThemePrimaryColor(this), PorterDuff.Mode.DARKEN);
 
-        Glide.with(this).load(ListenerUtil.getAlbumArtUri(MusicPlayer.getCurrentAlbumId()).toString())
+        Glide.with(this).load(ListenerUtil.getAlbumArtUri(MusicPlayer.getCurrentAlbumId()))
                 .error(defaultHeader)
                 .centerCrop()
                 .into(albumart);
@@ -404,9 +443,8 @@ public class MainActivity extends BaseActivity implements ATEActivityThemeCustom
     private boolean isNavigatingMain() {
         Fragment currentFragment = getSupportFragmentManager().findFragmentById(R.id.fragment_container);
         return (currentFragment instanceof MainFragment || currentFragment instanceof PlaylistFragment
-                || currentFragment instanceof PlayRankingFragment|| currentFragment instanceof  FoldersFragment);
+                || currentFragment instanceof PlayRankingFragment || currentFragment instanceof FoldersFragment);
     }
-
 
     private void addBackstackListener() {
         getSupportFragmentManager().addOnBackStackChangedListener(new FragmentManager.OnBackStackChangedListener() {
@@ -425,30 +463,21 @@ public class MainActivity extends BaseActivity implements ATEActivityThemeCustom
 
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
-        switch (item.getItemId()) {
-            case android.R.id.home: {
-                if (panelLayout.getPanelState() == SlidingUpPanelLayout.PanelState.EXPANDED){
-                    panelLayout.setPanelState(SlidingUpPanelLayout.PanelState.COLLAPSED);
-                }else if(isNavigatingMain()) {
-                    mDrawerLayout.openDrawer(GravityCompat.START);
-                } else super.onBackPressed();
-                return true;
+        int itemId = item.getItemId();
+        if (itemId == android.R.id.home) {
+            if (panelLayout.getPanelState() == SlidingUpPanelLayout.PanelState.EXPANDED) {
+                panelLayout.setPanelState(SlidingUpPanelLayout.PanelState.COLLAPSED);
+            } else if (isNavigatingMain()) {
+                mDrawerLayout.openDrawer(GravityCompat.START);
+            } else {
+                getOnBackPressedDispatcher().onBackPressed();
             }
-            case R.id.action_search:
-                navigateSearch.run();
-                return true;
+            return true;
+        } else if (itemId == R.id.action_search) {
+            navigateSearch.run();
+            return true;
         }
         return super.onOptionsItemSelected(item);
-    }
-
-    @Override
-    public void onBackPressed() {
-        if (panelLayout.getPanelState() == SlidingUpPanelLayout.PanelState.EXPANDED) {
-            panelLayout.setPanelState(SlidingUpPanelLayout.PanelState.COLLAPSED);
-        } else {
-
-            super.onBackPressed();
-        }
     }
 
     @Override
@@ -485,6 +514,12 @@ public class MainActivity extends BaseActivity implements ATEActivityThemeCustom
     public void onRequestPermissionsResult(
             int requestCode, String[] permissions, int[] grantResults) {
         PermissionManager.onRequestPermissionsResult(requestCode, permissions, grantResults);
+    }
+
+    @Override
+    public void onServiceConnected() {
+        super.onServiceConnected();
+        setDetailsToHeader();
     }
 
     @Override

@@ -7,3 +7,8 @@
 *.iml
 
 app/app.iml
+
+.artifacts/
+
+*.csv
+*.py

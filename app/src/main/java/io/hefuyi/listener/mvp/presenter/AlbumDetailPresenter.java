@@ -27,7 +27,7 @@ import rx.subscriptions.CompositeSubscription;
 
 public class AlbumDetailPresenter implements AlbumDetailContract.Presenter {
 
-    private GetAlbumSongs mUsecase;
+    private final GetAlbumSongs mUsecase;
     private AlbumDetailContract.View mView;
     private CompositeSubscription mCompositeSubscription;
 

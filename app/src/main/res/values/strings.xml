@@ -37,6 +37,7 @@
     <string name="exit">Exit</string>
     <string name="search">Search</string>
     <string name="action_equalizer">Equalizer</string>
+    <string name="equalizer_not_found">Equalizer not found</string>
     <string name="search_library">Search Library</string>
 
     <string name="play_shuffle">Play shuffle in all</string>
@@ -47,6 +48,10 @@
 
     <string name="primary_color">Primary Color</string>
     <string name="primary_color_summary">Change the primary theme color</string>
+
+    <string name="notification_channel_description">Music playback controls</string>
+    <string name="permission_rationale_storage">Listener will need to read external storage to display songs on your device.</string>
+    <string name="permission_rationale_tiramisu">Listener will need permission to access audio files and show notifications.</string>
 
     <string name="count_song"><xliff:g id="count">%d</xliff:g> song</string>
     <string name="count_songs"><xliff:g id="count">%d</xliff:g> songs</string>
@@ -98,12 +103,16 @@
     <string name="rename_playlist_success">Rename Success</string>
     <string name="delete_playlist">Delete playlist</string>
     <string name="delete_playlist_success">Delete Playlist Success</string>
-    <string name="delete_playlist_song">Delete Song From Playlist</string>
+    <string name="delete_playlist_song">Delete Song From Playlist?</string>
     <string name="delete_folder">Delete Folder</string>
-    <string name="delete_song_favourate">Delete Song From Favourate</string>
-    <string name="delete_song_recentlyplay">Delete Song From Recently Play</string>
-    <string name="clear_song_queue">Remove Song From Quene</string>
+    <string name="delete_folder_confirmation">Delete %d songs in this folder?</string>
+    <string name="delete_song_favourate">Delete Song From Favourate?</string>
+    <string name="delete_song_recentlyplay">Delete Song From Recently Play?</string>
+    <string name="clear_song_queue">Remove Song From Quene?</string>
+    <string name="delete_song_confirmation">Delete %s ?</string>
     <string name="remove_recentlyplay_success">Delete Song From Recentyl Play Success</string>
     <string name="color">Color</string>
     <string name="sure">Sure</string>
+    <string name="no_lyrics">No lyrics</string>
+    <string name="colon" translatable="false">:</string>
 </resources>

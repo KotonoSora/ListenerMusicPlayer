@@ -3,10 +3,7 @@ package io.hefuyi.listener.ui.adapter;
 import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.drawable.Drawable;
-import android.support.annotation.NonNull;
-import android.support.v4.app.Fragment;
-import android.support.v7.graphics.Palette;
-import android.support.v7.widget.RecyclerView;
+import android.net.Uri;
 import android.util.Pair;
 import android.view.LayoutInflater;
 import android.view.MenuItem;
@@ -16,6 +13,11 @@ import android.widget.ImageView;
 import android.widget.PopupMenu;
 import android.widget.TextView;
 import android.widget.Toast;
+
+import androidx.annotation.NonNull;
+import androidx.fragment.app.Fragment;
+import androidx.palette.graphics.Palette;
+import androidx.recyclerview.widget.RecyclerView;
 
 import com.afollestad.materialdialogs.DialogAction;
 import com.afollestad.materialdialogs.MaterialDialog;
@@ -50,12 +52,12 @@ import rx.schedulers.Schedulers;
  * Created by hefuyi on 2016/12/4.
  */
 
-public class PlaylistAdapter extends RecyclerView.Adapter<PlaylistAdapter.ItemHolder> implements FastScrollRecyclerView.SectionedAdapter{
+public class PlaylistAdapter extends RecyclerView.Adapter<PlaylistAdapter.ItemHolder> implements FastScrollRecyclerView.SectionedAdapter {
 
-    private List<Playlist> arraylist;
-    private Fragment mFragment;
-    private Context mContext;
-    private boolean isGrid;
+    private final List<Playlist> arraylist;
+    private final Fragment mFragment;
+    private final Context mContext;
+    private final boolean isGrid;
 
     public PlaylistAdapter(Fragment fragment, List<Playlist> arraylist) {
         if (arraylist == null) {
@@ -94,13 +96,13 @@ public class PlaylistAdapter extends RecyclerView.Adapter<PlaylistAdapter.ItemHo
                 .subscribe(new Action1<List<Song>>() {
                     @Override
                     public void call(List<Song> playlistsongs) {
-                        String uri = "";
+                        Uri uri = null;
                         long firstAlbumID = -1;
                         if (playlistsongs.size() != 0) {
                             firstAlbumID = playlistsongs.get(0).albumId;
-                            uri = ListenerUtil.getAlbumArtUri(firstAlbumID).toString();
+                            uri = ListenerUtil.getAlbumArtUri(firstAlbumID);
                         }
-                        itemHolder.playlistArt.setTag(R.string.playlistArt,firstAlbumID);
+                        itemHolder.playlistArt.setTag(R.string.playlistArt, firstAlbumID);
 
                         Glide.with(itemHolder.itemView.getContext())
                                 .load(uri)
@@ -180,66 +182,62 @@ public class PlaylistAdapter extends RecyclerView.Adapter<PlaylistAdapter.ItemHo
                     @Override
                     public boolean onMenuItemClick(MenuItem item) {
                         final Playlist playlist = arraylist.get(itemHolder.getAdapterPosition());
-                        switch (item.getItemId()) {
-                            case R.id.popup_playlist_rename:
-                                new MaterialDialog.Builder(mContext)
-                                        .title(R.string.rename_playlist)
-                                        .positiveText("确定")
-                                        .negativeText(R.string.cancel)
-                                        .input(null, playlist.name, false, new MaterialDialog.InputCallback() {
-                                            @Override
-                                            public void onInput(@NonNull MaterialDialog dialog, CharSequence input) {
-                                                MusicPlayer.renamePlaylist(mContext, playlist.id, input.toString());
-                                                itemHolder.title.setText(input.toString());
-                                                Toast.makeText(mContext, R.string.rename_playlist_success, Toast.LENGTH_SHORT).show();
-                                            }
-                                        })
-                                        .show();
-                                break;
-                            case R.id.popup_playlist_addto_playlist:
-                                getSongListIdByPlaylist(playlist.id)
-                                        .subscribeOn(Schedulers.io())
-                                        .observeOn(AndroidSchedulers.mainThread())
-                                        .subscribe(new Action1<long[]>() {
-                                            @Override
-                                            public void call(long[] ids) {
-                                                ListenerUtil.showAddPlaylistDialog(mFragment.getActivity(),ids);
-                                            }
-                                        });
-                                break;
-                            case R.id.popup_playlist_addto_queue:
-                                getSongListIdByPlaylist(playlist.id)
-                                        .subscribeOn(Schedulers.io())
-                                        .observeOn(AndroidSchedulers.mainThread())
-                                        .subscribe(new Action1<long[]>() {
-                                            @Override
-                                            public void call(long[] ids) {
-                                                MusicPlayer.addToQueue(mContext, ids, -1, ListenerUtil.IdType.Playlist);
-                                            }
-                                        });
-                                break;
-                            case R.id.popup_playlist_delete:
-                                new MaterialDialog.Builder(mContext)
-                                        .title(R.string.delete_playlist)
-                                        .positiveText(R.string.delete)
-                                        .negativeText(R.string.cancel)
-                                        .onPositive(new MaterialDialog.SingleButtonCallback() {
-                                            @Override
-                                            public void onClick(@NonNull MaterialDialog dialog, @NonNull DialogAction which) {
-                                                PlaylistLoader.deletePlaylists(mContext, playlist.id);
-                                                arraylist.remove(itemHolder.getAdapterPosition());
-                                                notifyItemRemoved(itemHolder.getAdapterPosition());
-                                                Toast.makeText(mContext, R.string.delete_playlist_success, Toast.LENGTH_SHORT).show();
-                                            }
-                                        })
-                                        .onNegative(new MaterialDialog.SingleButtonCallback() {
-                                            @Override
-                                            public void onClick(@NonNull MaterialDialog dialog, @NonNull DialogAction which) {
-                                                dialog.dismiss();
-                                            }
-                                        })
-                                        .show();
-                                break;
+                        int itemId = item.getItemId();
+                        if (itemId == R.id.popup_playlist_rename) {
+                            new MaterialDialog.Builder(mContext)
+                                    .title(R.string.rename_playlist)
+                                    .positiveText(R.string.sure)
+                                    .negativeText(R.string.cancel)
+                                    .input(null, playlist.name, false, new MaterialDialog.InputCallback() {
+                                        @Override
+                                        public void onInput(@NonNull MaterialDialog dialog, CharSequence input) {
+                                            MusicPlayer.renamePlaylist(mContext, playlist.id, input.toString());
+                                            itemHolder.title.setText(input.toString());
+                                            Toast.makeText(mContext, R.string.rename_playlist_success, Toast.LENGTH_SHORT).show();
+                                        }
+                                    })
+                                    .show();
+                        } else if (itemId == R.id.popup_playlist_addto_playlist) {
+                            getSongListIdByPlaylist(playlist.id)
+                                    .subscribeOn(Schedulers.io())
+                                    .observeOn(AndroidSchedulers.mainThread())
+                                    .subscribe(new Action1<long[]>() {
+                                        @Override
+                                        public void call(long[] ids) {
+                                            ListenerUtil.showAddPlaylistDialog(mFragment.getActivity(), ids);
+                                        }
+                                    });
+                        } else if (itemId == R.id.popup_playlist_addto_queue) {
+                            getSongListIdByPlaylist(playlist.id)
+                                    .subscribeOn(Schedulers.io())
+                                    .observeOn(AndroidSchedulers.mainThread())
+                                    .subscribe(new Action1<long[]>() {
+                                        @Override
+                                        public void call(long[] ids) {
+                                            MusicPlayer.addToQueue(mContext, ids, -1, ListenerUtil.IdType.Playlist);
+                                        }
+                                    });
+                        } else if (itemId == R.id.popup_playlist_delete) {
+                            new MaterialDialog.Builder(mContext)
+                                    .title(R.string.delete_playlist)
+                                    .positiveText(R.string.delete)
+                                    .negativeText(R.string.cancel)
+                                    .onPositive(new MaterialDialog.SingleButtonCallback() {
+                                        @Override
+                                        public void onClick(@NonNull MaterialDialog dialog, @NonNull DialogAction which) {
+                                            PlaylistLoader.deletePlaylists(mContext, playlist.id);
+                                            arraylist.remove(itemHolder.getAdapterPosition());
+                                            notifyItemRemoved(itemHolder.getAdapterPosition());
+                                            Toast.makeText(mContext, R.string.delete_playlist_success, Toast.LENGTH_SHORT).show();
+                                        }
+                                    })
+                                    .onNegative(new MaterialDialog.SingleButtonCallback() {
+                                        @Override
+                                        public void onClick(@NonNull MaterialDialog dialog, @NonNull DialogAction which) {
+                                            dialog.dismiss();
+                                        }
+                                    })
+                                    .show();
                         }
                         return false;
                     }
@@ -267,23 +265,23 @@ public class PlaylistAdapter extends RecyclerView.Adapter<PlaylistAdapter.ItemHo
     }
 
     public class ItemHolder extends RecyclerView.ViewHolder implements View.OnClickListener {
-        private TextView title;
-        private TextView subtitle1;
-        private View divider;
-        private TextView songcount;
-        private ImageView playlistArt;
-        private View footer;
-        private ImageView popupMenu;
+        private final TextView title;
+        private final TextView subtitle1;
+        private final View divider;
+        private final TextView songcount;
+        private final ImageView playlistArt;
+        private final View footer;
+        private final ImageView popupMenu;
 
         public ItemHolder(View view) {
             super(view);
-            this.title = (TextView) view.findViewById(R.id.text_item_title);
-            this.subtitle1 = (TextView) view.findViewById(R.id.text_item_subtitle);
+            this.title = view.findViewById(R.id.text_item_title);
+            this.subtitle1 = view.findViewById(R.id.text_item_subtitle);
             this.divider = view.findViewById(R.id.divider_subtitle);
-            this.songcount = (TextView) view.findViewById(R.id.text_item_subtitle_2);
-            this.playlistArt = (ImageView) view.findViewById(R.id.image);
+            this.songcount = view.findViewById(R.id.text_item_subtitle_2);
+            this.playlistArt = view.findViewById(R.id.image);
             this.footer = view.findViewById(R.id.footer);
-            this.popupMenu = (ImageView) view.findViewById(R.id.popup_menu);
+            this.popupMenu = view.findViewById(R.id.popup_menu);
             view.setOnClickListener(this);
         }
 

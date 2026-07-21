@@ -11,11 +11,11 @@ import rx.Observable;
  * Created by hefuyi on 2016/11/12.
  */
 
-public class GetAlbums extends UseCase<GetAlbums.RequestValues,GetAlbums.ResponseValue>{
+public class GetAlbums extends UseCase<GetAlbums.RequestValues, GetAlbums.ResponseValue> {
 
     private final Repository mRepository;
 
-    public GetAlbums(Repository repository){
+    public GetAlbums(Repository repository) {
         mRepository = repository;
     }
 
@@ -36,7 +36,7 @@ public class GetAlbums extends UseCase<GetAlbums.RequestValues,GetAlbums.Respons
         }
     }
 
-    public static final class RequestValues implements UseCase.RequestValues{
+    public static final class RequestValues implements UseCase.RequestValues {
 
         private final String action;
 
@@ -57,7 +57,7 @@ public class GetAlbums extends UseCase<GetAlbums.RequestValues,GetAlbums.Respons
             mListObservable = listObservable;
         }
 
-        public Observable<List<Album>> getSongList(){
+        public Observable<List<Album>> getSongList() {
             return mListObservable;
         }
     }

@@ -72,7 +72,7 @@ public class LastAddedLoader {
         }).toList();
     }
 
-    public static Observable<List<Artist>> getLastAddedArtist(final Context context){
+    public static Observable<List<Artist>> getLastAddedArtist(final Context context) {
         return getLastAddedSongs(context).flatMap(new Func1<List<Song>, Observable<Song>>() {
             @Override
             public Observable<Song> call(List<Song> songList) {
@@ -100,14 +100,13 @@ public class LastAddedLoader {
             cutoff = fourWeeksAgo;
         }
 
-        final StringBuilder selection = new StringBuilder();
-        selection.append(MediaStore.Audio.AudioColumns.IS_MUSIC + "=1");
-        selection.append(" AND " + MediaStore.Audio.AudioColumns.TITLE + " != ''");
-        selection.append(" AND " + MediaStore.Audio.Media.DATE_ADDED + ">");
-        selection.append(cutoff);
+        String selection = MediaStore.Audio.AudioColumns.IS_MUSIC + "=1" +
+                " AND " + MediaStore.Audio.AudioColumns.TITLE + " != ''" +
+                " AND " + MediaStore.Audio.Media.DATE_ADDED + ">" +
+                cutoff;
 
         return context.getContentResolver().query(MediaStore.Audio.Media.EXTERNAL_CONTENT_URI,
-                new String[]{"_id", "title", "artist", "album", "duration", "track", "artist_id", "album_id"}, selection.toString(), null, MediaStore.Audio.Media.DATE_ADDED + " DESC");
+                new String[]{"_id", "title", "artist", "album", "duration", "track", "artist_id", "album_id"}, selection, null, MediaStore.Audio.Media.DATE_ADDED + " DESC");
     }
 
 }

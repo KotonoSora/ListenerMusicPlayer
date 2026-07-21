@@ -5,7 +5,7 @@ import android.util.Base64;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
-import java.io.UnsupportedEncodingException;
+import java.nio.charset.StandardCharsets;
 
 import rx.Observable;
 
@@ -51,7 +51,7 @@ public class LyricUtil {
         File file = new File(getLrcPath(title, artist));
         if (file.exists()) {
             return Observable.just(file);
-        }else {
+        } else {
             return Observable.error(new Throwable("lyric file not exist"));
         }
     }
@@ -60,19 +60,13 @@ public class LyricUtil {
         return lrcRootPath + title + " - " + artist + ".lrc";
     }
 
-    public static  String decryptBASE64(String str) {
+    public static String decryptBASE64(String str) {
         if (str == null || str.length() == 0) {
             return null;
         }
-        try {
-            byte[] encode = str.getBytes("UTF-8");
-            // base64 解密
-            return new String(Base64.decode(encode, 0, encode.length, Base64.DEFAULT), "UTF-8");
+        byte[] encode = str.getBytes(StandardCharsets.UTF_8);
+        // base64 解密
+        return new String(Base64.decode(encode, 0, encode.length, Base64.DEFAULT), StandardCharsets.UTF_8);
 
-        } catch (UnsupportedEncodingException e) {
-            e.printStackTrace();
-        }
-
-        return null;
     }
 }

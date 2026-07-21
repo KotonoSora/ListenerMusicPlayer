@@ -40,7 +40,7 @@ public class ArtistSongLoader {
                         songsList.add(new Song(id, albumId, artistId, title, artist, album, duration, trackNumber));
                     }
                     while (cursor.moveToNext());
-                if (cursor != null){
+                if (cursor != null) {
                     cursor.close();
                     cursor = null;
                 }

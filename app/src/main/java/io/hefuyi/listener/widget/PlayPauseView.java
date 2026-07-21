@@ -10,13 +10,14 @@ import android.graphics.Outline;
 import android.graphics.Paint;
 import android.graphics.drawable.Drawable;
 import android.os.Build;
-import android.support.annotation.ColorInt;
 import android.util.AttributeSet;
 import android.util.Property;
 import android.view.View;
 import android.view.ViewOutlineProvider;
 import android.view.animation.DecelerateInterpolator;
 import android.widget.FrameLayout;
+
+import androidx.annotation.ColorInt;
 
 import io.hefuyi.listener.R;
 import io.hefuyi.listener.util.ATEUtil;
@@ -40,14 +41,14 @@ public class PlayPauseView extends FrameLayout {
 
     private final PlayPauseDrawable mDrawable;
     private final Paint mPaint = new Paint();
-    private int mDrawableColor;
     public boolean isDrawCircle;
     public int circleAlpha;
-
+    private int mDrawableColor;
     private AnimatorSet mAnimatorSet;
     private int mBackgroundColor;
     private int mWidth;
     private int mHeight;
+    private boolean mIsPlay;
 
     public PlayPauseView(Context context, AttributeSet attrs) {
         super(context, attrs);
@@ -95,17 +96,6 @@ public class PlayPauseView extends FrameLayout {
         }
     }
 
-    public void setCircleColor(@ColorInt int color) {
-        mBackgroundColor = color;
-        invalidate();
-    }
-
-    public void setDrawableColor(@ColorInt int color) {
-        mDrawableColor = color;
-        mDrawable.setDrawableColor(color);
-        invalidate();
-    }
-
     public void setCircleAlpah(int alpah) {
         circleAlpha = alpah;
         invalidate();
@@ -115,8 +105,19 @@ public class PlayPauseView extends FrameLayout {
         return mBackgroundColor;
     }
 
+    public void setCircleColor(@ColorInt int color) {
+        mBackgroundColor = color;
+        invalidate();
+    }
+
     public int getDrawableColor() {
         return mDrawableColor;
+    }
+
+    public void setDrawableColor(@ColorInt int color) {
+        mDrawableColor = color;
+        mDrawable.setDrawableColor(color);
+        invalidate();
     }
 
     @Override
@@ -142,14 +143,15 @@ public class PlayPauseView extends FrameLayout {
         mDrawable.draw(canvas);
     }
 
-    private boolean mIsPlay;
-
     public boolean isPlay() {
         return mIsPlay;
     }
 
     //此时为待暂停标识
     public void Play() {
+        if (mIsPlay) {
+            return;
+        }
         if (mAnimatorSet != null) {
             mAnimatorSet.cancel();
         }
@@ -164,6 +166,9 @@ public class PlayPauseView extends FrameLayout {
 
     //此时为为待播放标识
     public void Pause() {
+        if (!mIsPlay) {
+            return;
+        }
         if (mAnimatorSet != null) {
             mAnimatorSet.cancel();
         }

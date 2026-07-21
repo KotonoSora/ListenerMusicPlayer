@@ -10,7 +10,6 @@ import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.ColorDrawable;
 import android.graphics.drawable.Drawable;
 import android.os.Build;
-import android.support.design.widget.CoordinatorLayout;
 import android.text.TextUtils;
 import android.view.Gravity;
 import android.view.View;
@@ -23,6 +22,8 @@ import android.widget.ProgressBar;
 import android.widget.RelativeLayout;
 import android.widget.SeekBar;
 import android.widget.TextView;
+
+import androidx.coordinatorlayout.widget.CoordinatorLayout;
 
 import com.sothree.slidinguppanel.SlidingUpPanelLayout;
 
@@ -51,46 +52,44 @@ import rx.schedulers.Schedulers;
  * Created by hefuyi on 2016/11/7.
  */
 
-public class PanelSlideListener implements SlidingUpPanelLayout.PanelSlideListener{
+public class PanelSlideListener implements SlidingUpPanelLayout.PanelSlideListener {
 
     private static final String TAG = PanelSlideListener.class.getSimpleName();
 
     private final SlidingUpPanelLayout mPanelLayout;
     private final Context mContext;
-    private View nowPlayingCard;
-    private RelativeLayout toolbar;
-    private LinearLayout content;
-    private ProgressBar progressBar;
-    private TextView title;
-    private TextView artist;
-    private ForegroundImageView albumImage;
+    private final View nowPlayingCard;
+    private final RelativeLayout toolbar;
+    private final LinearLayout content;
+    private final ProgressBar progressBar;
+    private final TextView title;
+    private final TextView artist;
+    private final ForegroundImageView albumImage;
+    private final RelativeLayout iconContainer;
+    private final MaterialIconView heart;
+    private final MaterialIconView previous;
+    private final PlayPauseView playPause;
+    private final MaterialIconView next;
+    private final MaterialIconView playqueue;
+    private final LyricView lyricView;
+    private final SeekBar seekbar;
+    private final int screenWidth;
+    private final int screenHeight;
+    private final IntEvaluator intEvaluator = new IntEvaluator();
+    private final FloatEvaluator floatEvaluator = new FloatEvaluator();
+    private final ArgbEvaluator colorEvaluator = new ArgbEvaluator();
     private Drawable albumImageDrawable;
-    private RelativeLayout iconContainer;
-    private MaterialIconView heart;
-    private MaterialIconView previous;
-    private PlayPauseView playPause;
-    private MaterialIconView next;
-    private MaterialIconView playqueue;
-    private LyricView lyricView;
-    private SeekBar seekbar;
-
-    private int screenWidth;
-    private int screenHeight;
-
     private int titleEndTranslationX;
     private int artistEndTranslationX;
     private int artistNormalEndTranslationY;
     private int artistFullEndTranslationY;
     private int contentNormalEndTranslationY;
     private int contentFullEndTranslationY;
-
     private int lyricLineHeight;
     private int lyricFullHeight;
-
     private int lyricLineStartTranslationY;
     private int lyricLineEndTranslationY;
     private int lyricFullTranslationY;
-
     private int heartStartX;
     private int previousStartX;
     private int playPauseStartX;
@@ -103,44 +102,34 @@ public class PanelSlideListener implements SlidingUpPanelLayout.PanelSlideListen
     private int playqueueEndX;
     private int iconContainerStartY;
     private int iconContainerEndY;
-
-    private IntEvaluator intEvaluator = new IntEvaluator();
-    private FloatEvaluator floatEvaluator = new FloatEvaluator();
-    private ArgbEvaluator colorEvaluator = new ArgbEvaluator();
     private int nowPlayingCardColor;
     private int playpauseDrawableColor;
     private Status mStatus = Status.COLLAPSED;
 
-    public enum Status {
-        EXPANDED,
-        COLLAPSED,
-        FULLSCREEN
-    }
-
     public PanelSlideListener(SlidingUpPanelLayout slidingUpPanelLayout) {
         mPanelLayout = slidingUpPanelLayout;
         nowPlayingCard = mPanelLayout.findViewById(R.id.topContainer);
-        toolbar = (RelativeLayout) nowPlayingCard.findViewById(R.id.custom_toolbar);
+        toolbar = nowPlayingCard.findViewById(R.id.custom_toolbar);
         mContext = mPanelLayout.getContext();
-        albumImage = (ForegroundImageView) nowPlayingCard.findViewById(R.id.album_art);
+        albumImage = nowPlayingCard.findViewById(R.id.album_art);
 
-        content = (LinearLayout) nowPlayingCard.findViewById(R.id.content);
-        progressBar = (ProgressBar) nowPlayingCard.findViewById(R.id.song_progress_normal);
-        title = (TextView) nowPlayingCard.findViewById(R.id.title);
-        artist = (TextView) nowPlayingCard.findViewById(R.id.artist);
+        content = nowPlayingCard.findViewById(R.id.content);
+        progressBar = nowPlayingCard.findViewById(R.id.song_progress_normal);
+        title = nowPlayingCard.findViewById(R.id.title);
+        artist = nowPlayingCard.findViewById(R.id.artist);
         screenWidth = DensityUtil.getScreenWidth(mContext);
         screenHeight = DensityUtil.getScreenHeight(mContext);
 
-        iconContainer = (RelativeLayout) nowPlayingCard.findViewById(R.id.icon_container);
-        heart = (MaterialIconView) nowPlayingCard.findViewById(R.id.heart);
-        previous = (MaterialIconView) nowPlayingCard.findViewById(R.id.previous);
-        playPause = (PlayPauseView) nowPlayingCard.findViewById(R.id.play_pause);
-        next = (MaterialIconView) nowPlayingCard.findViewById(R.id.next);
-        playqueue = (MaterialIconView) nowPlayingCard.findViewById(R.id.ic_play_queue);
-        lyricView = (LyricView) nowPlayingCard.findViewById(R.id.lyric_view);
+        iconContainer = nowPlayingCard.findViewById(R.id.icon_container);
+        heart = nowPlayingCard.findViewById(R.id.heart);
+        previous = nowPlayingCard.findViewById(R.id.previous);
+        playPause = nowPlayingCard.findViewById(R.id.play_pause);
+        next = nowPlayingCard.findViewById(R.id.next);
+        playqueue = nowPlayingCard.findViewById(R.id.ic_play_queue);
+        lyricView = nowPlayingCard.findViewById(R.id.lyric_view);
         playpauseDrawableColor = ATEUtil.getThemeAccentColor(mContext);
 
-        seekbar = (SeekBar) mPanelLayout.findViewById(R.id.seek_song_touch);
+        seekbar = mPanelLayout.findViewById(R.id.seek_song_touch);
 
         QuickControlsFragment.setPaletteColorChangeListener(new PaletteColorChangeListener() {
             @Override
@@ -151,15 +140,18 @@ public class PanelSlideListener implements SlidingUpPanelLayout.PanelSlideListen
                 if (mPanelLayout.getPanelState() == SlidingUpPanelLayout.PanelState.COLLAPSED) {
                     playPause.setCircleAlpah(0);
                     playPause.setDrawableColor(playpauseDrawableColor);
-                }else {
+                } else {
                     playPause.setCircleAlpah(255);
                     playPause.setDrawableColor(nowPlayingCardColor);
                 }
 
                 switch (mStatus) {
                     case FULLSCREEN:
-                        albumImageDrawable = albumImage.getDrawable();
-                        setBlurredAlbumArt();
+                        if (albumImage.getDrawable() != null && !(albumImage.getDrawable() instanceof ColorDrawable)) {
+                            albumImageDrawable = albumImage.getDrawable();
+                            setBlurredAlbumArt();
+                        }
+                        break;
                 }
             }
         });
@@ -228,11 +220,11 @@ public class PanelSlideListener implements SlidingUpPanelLayout.PanelSlideListen
             nowPlayingCard.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View v) {
-                    if (mStatus==Status.EXPANDED){
+                    if (mStatus == Status.EXPANDED) {
                         animateToFullscreen();
-                    }else if (mStatus==Status.FULLSCREEN){
+                    } else if (mStatus == Status.FULLSCREEN) {
                         animateToNormal();
-                    }else {
+                    } else {
                         mPanelLayout.setPanelState(SlidingUpPanelLayout.PanelState.COLLAPSED);
                     }
                 }
@@ -273,10 +265,10 @@ public class PanelSlideListener implements SlidingUpPanelLayout.PanelSlideListen
         contentNormalEndTranslationY = screenWidth + DensityUtil.dip2px(mContext, 32);
         contentFullEndTranslationY = DensityUtil.dip2px(mContext, 32);
 
-        if (mStatus==Status.COLLAPSED) {
+        if (mStatus == Status.COLLAPSED) {
             title.setTranslationX(0);
             artist.setTranslationX(0);
-        }else {
+        } else {
             title.setTranslationX(titleEndTranslationX);
             artist.setTranslationX(artistEndTranslationX);
         }
@@ -296,7 +288,8 @@ public class PanelSlideListener implements SlidingUpPanelLayout.PanelSlideListen
         nextEndX = playPauseEndX + gap + size;
         playqueueEndX = nextEndX + gap + size;
         iconContainerStartY = iconContainer.getTop();
-        iconContainerEndY = screenHeight - iconContainer.getHeight() - seekbar.getHeight();
+        int bottomMargin = DensityUtil.dip2px(mContext, 36);
+        iconContainerEndY = screenHeight - iconContainer.getHeight() - seekbar.getHeight() - bottomMargin;
     }
 
     private void caculateLyricView() {
@@ -312,16 +305,18 @@ public class PanelSlideListener implements SlidingUpPanelLayout.PanelSlideListen
         lyricFullTranslationY = toolbar.getTop() + toolbar.getHeight() + DensityUtil.dip2px(mContext, 32);
     }
 
-
     private void setBlurredAlbumArt() {
         Observable.create(new Observable.OnSubscribe<Drawable>() {
-            @Override
-            public void call(Subscriber<? super Drawable> subscriber) {
-                Bitmap bitmap = ((BitmapDrawable)albumImage.getDrawable()).getBitmap();
-                Drawable drawable = ImageUtil.createBlurredImageFromBitmap(bitmap, mContext, 3);
-                subscriber.onNext(drawable);
-            }
-        }).subscribeOn(Schedulers.io())
+                    @Override
+                    public void call(Subscriber<? super Drawable> subscriber) {
+                        Drawable current = albumImage.getDrawable();
+                        if (current instanceof BitmapDrawable) {
+                            Bitmap bitmap = ((BitmapDrawable) current).getBitmap();
+                            Drawable drawable = ImageUtil.createBlurredImageFromBitmap(bitmap, mContext, 3);
+                            subscriber.onNext(drawable);
+                        }
+                    }
+                }).subscribeOn(Schedulers.io())
                 .observeOn(AndroidSchedulers.mainThread())
                 .subscribe(new Action1<Drawable>() {
                     @Override
@@ -331,7 +326,7 @@ public class PanelSlideListener implements SlidingUpPanelLayout.PanelSlideListen
                         imageLayout.width = FrameLayout.LayoutParams.MATCH_PARENT;
                         albumImage.setLayoutParams(imageLayout);
                         albumImage.setImageDrawable(drawable);
-                        if(Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.JELLY_BEAN) {
+                        if (Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.JELLY_BEAN) {
                             ColorDrawable colorDrawable = new ColorDrawable(nowPlayingCardColor);
                             colorDrawable.setAlpha(200);
                             albumImage.setForeground(colorDrawable);
@@ -366,7 +361,7 @@ public class PanelSlideListener implements SlidingUpPanelLayout.PanelSlideListen
         });
     }
 
-    private void animateToFullscreen(){
+    private void animateToFullscreen() {
         //album art fullscreen
         albumImageDrawable = albumImage.getDrawable();
         setBlurredAlbumArt();
@@ -429,7 +424,7 @@ public class PanelSlideListener implements SlidingUpPanelLayout.PanelSlideListen
         imageLayout.width = screenWidth;
         albumImage.setImageDrawable(albumImageDrawable);
         albumImage.setLayoutParams(imageLayout);
-        if(Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.JELLY_BEAN) {
+        if (Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.JELLY_BEAN) {
             albumImage.setForeground(
                     ScrimUtil.makeCubicGradientScrimDrawable(
                             nowPlayingCardColor, //颜色
@@ -511,6 +506,12 @@ public class PanelSlideListener implements SlidingUpPanelLayout.PanelSlideListen
                     }
                 });
         RxBus.getInstance().addSubscription(this, subscription);
+    }
+
+    public enum Status {
+        EXPANDED,
+        COLLAPSED,
+        FULLSCREEN
     }
 
 }

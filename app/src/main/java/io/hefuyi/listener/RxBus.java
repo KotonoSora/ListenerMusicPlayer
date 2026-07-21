@@ -17,8 +17,8 @@ import rx.subscriptions.CompositeSubscription;
 
 public class RxBus {
     private static volatile RxBus mInstance;
-    private SerializedSubject<Object, Object> mSubject;
-    private HashMap<String, CompositeSubscription> mSubscriptionMap;
+    private final SerializedSubject<Object, Object> mSubject;
+    private HashMap<Object, CompositeSubscription> mSubscriptionMap;
 
     private RxBus() {
         mSubject = new SerializedSubject<>(PublishSubject.create());
@@ -41,6 +41,7 @@ public class RxBus {
      * @param o
      */
     public void post(Object o) {
+        android.util.Log.d("RxBus", "Post event: " + o.getClass().getSimpleName());
         mSubject.onNext(o);
     }
 
@@ -82,6 +83,7 @@ public class RxBus {
 
     /**
      * 保存订阅后的subscription
+     *
      * @param o
      * @param subscription
      */
@@ -89,18 +91,18 @@ public class RxBus {
         if (mSubscriptionMap == null) {
             mSubscriptionMap = new HashMap<>();
         }
-        String key = o.getClass().getName();
-        if (mSubscriptionMap.get(key) != null) {
-            mSubscriptionMap.get(key).add(subscription);
+        if (mSubscriptionMap.get(o) != null) {
+            mSubscriptionMap.get(o).add(subscription);
         } else {
             CompositeSubscription compositeSubscription = new CompositeSubscription();
             compositeSubscription.add(subscription);
-            mSubscriptionMap.put(key, compositeSubscription);
+            mSubscriptionMap.put(o, compositeSubscription);
         }
     }
 
     /**
      * 取消订阅
+     *
      * @param o
      */
     public void unSubscribe(Object o) {
@@ -108,14 +110,13 @@ public class RxBus {
             return;
         }
 
-        String key = o.getClass().getName();
-        if (!mSubscriptionMap.containsKey(key)){
+        if (!mSubscriptionMap.containsKey(o)) {
             return;
         }
-        if (mSubscriptionMap.get(key) != null) {
-            mSubscriptionMap.get(key).unsubscribe();
+        if (mSubscriptionMap.get(o) != null) {
+            mSubscriptionMap.get(o).unsubscribe();
         }
 
-        mSubscriptionMap.remove(key);
+        mSubscriptionMap.remove(o);
     }
 }

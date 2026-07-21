@@ -18,7 +18,7 @@ public class TopTracksLoader extends SongLoader {
 
     public static Observable<List<Song>> getTopPlaySongs(Context context) {
         Cursor songsIdWithScore = SongPlayCount.getInstance(context).getTopPlayedResults(NUMBER_OF_SONGS);
-        SortedCursor retCursor=makeSortedCursor(context, songsIdWithScore,
+        SortedCursor retCursor = makeSortedCursor(context, songsIdWithScore,
                 songsIdWithScore.getColumnIndex(SongPlayCount.SongPlayCountColumns.ID));
 
         if (retCursor != null) {
@@ -54,6 +54,7 @@ public class TopTracksLoader extends SongLoader {
 
     /**
      * 获取最近播放歌曲的cursor
+     *
      * @param context
      * @return
      */
@@ -73,6 +74,7 @@ public class TopTracksLoader extends SongLoader {
 
     /**
      * 根据包含song id的cursor,获取排序好的song cursor
+     *
      * @param context
      * @param cursor
      * @param idColumn
@@ -97,7 +99,7 @@ public class TopTracksLoader extends SongLoader {
 
                 id = cursor.getLong(idColumn);
                 order[cursor.getPosition()] = id;
-                selection.append(String.valueOf(id));
+                selection.append(id);
             }
 
             selection.append(")");

@@ -3,9 +3,9 @@ package io.hefuyi.listener.mvp.presenter;
 import android.graphics.Bitmap;
 import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.Drawable;
-import android.os.AsyncTask;
-import android.support.v7.graphics.Palette;
 import android.text.TextUtils;
+
+import androidx.palette.graphics.Palette;
 
 import com.bumptech.glide.Glide;
 import com.bumptech.glide.load.engine.DiskCacheStrategy;
@@ -20,6 +20,7 @@ import io.hefuyi.listener.mvp.contract.QuickControlsContract;
 import io.hefuyi.listener.mvp.usecase.GetLyric;
 import io.hefuyi.listener.util.ATEUtil;
 import io.hefuyi.listener.util.ListenerUtil;
+import io.hefuyi.listener.util.PreferencesUtility;
 import rx.Subscriber;
 import rx.Subscription;
 import rx.android.schedulers.AndroidSchedulers;
@@ -32,7 +33,7 @@ import rx.subscriptions.CompositeSubscription;
 
 public class QuickControlsPresenter implements QuickControlsContract.Presenter {
 
-    private GetLyric mGetLyric;
+    private final GetLyric mGetLyric;
     private CompositeSubscription mCompositeSubscription;
     private QuickControlsContract.View mView;
 
@@ -60,24 +61,12 @@ public class QuickControlsPresenter implements QuickControlsContract.Presenter {
     @Override
     public void onPlayPauseClick() {
         mDuetoplaypause = true;
-        new AsyncTask<Void, Void, Boolean>() {
+        Schedulers.io().createWorker().schedule(new rx.functions.Action0() {
             @Override
-            protected Boolean doInBackground(final Void... unused) {
-                boolean isPlaying = MusicPlayer.isPlaying();
+            public void call() {
                 MusicPlayer.playOrPause();
-                return isPlaying;
             }
-
-            @Override
-            protected void onPostExecute(Boolean isPlaying) {
-                if (isPlaying) {
-                    mView.setPlayPauseButton(false);
-                } else {
-                    mView.setPlayPauseButton(true);
-                }
-            }
-        }.execute();
-
+        });
     }
 
     @Override
@@ -87,6 +76,10 @@ public class QuickControlsPresenter implements QuickControlsContract.Presenter {
 
     @Override
     public void loadLyric() {
+        if (PreferencesUtility.getInstance(mView.getContext()).isWorkOffline()) {
+            mView.showLyric(null);
+            return;
+        }
         mCompositeSubscription.clear();
         String title = MusicPlayer.getTrackName();
         String artist = MusicPlayer.getArtistName();
@@ -110,11 +103,7 @@ public class QuickControlsPresenter implements QuickControlsContract.Presenter {
 
                     @Override
                     public void onNext(File file) {
-                        if (file == null) {
-                            mView.showLyric(null);
-                        } else {
-                            mView.showLyric(file);
-                        }
+                        mView.showLyric(file);
                     }
                 });
         mCompositeSubscription.add(subscription);
@@ -147,23 +136,27 @@ public class QuickControlsPresenter implements QuickControlsContract.Presenter {
             mView.setArtist(artist);
         }
 
-        if (!mDuetoplaypause){
+        if (!mDuetoplaypause) {
             Glide.with(mView.getContext())
-                    .load(ListenerUtil.getAlbumArtUri(MusicPlayer.getCurrentAlbumId()).toString())
+                    .load(ListenerUtil.getAlbumArtUri(MusicPlayer.getCurrentAlbumId()))
                     .asBitmap()
                     .error(ATEUtil.getDefaultAlbumDrawable(mView.getContext()))
                     .diskCacheStrategy(DiskCacheStrategy.SOURCE)
-                    .into(new SimpleTarget<Bitmap>(){
+                    .into(new SimpleTarget<Bitmap>() {
                         @Override
                         public void onLoadFailed(Exception e, Drawable errorDrawable) {
                             mView.setAlbumArt(errorDrawable);
                             if (!TextUtils.isEmpty(title) || !TextUtils.isEmpty(artist)) {
-                                new Palette.Builder(((BitmapDrawable) errorDrawable).getBitmap()).generate(new Palette.PaletteAsyncListener() {
-                                    @Override
-                                    public void onGenerated(Palette palette) {
-                                        mView.setPalette(palette);
-                                    }
-                                });
+                                if (errorDrawable instanceof BitmapDrawable) {
+                                    new Palette.Builder(((BitmapDrawable) errorDrawable).getBitmap()).generate(new Palette.PaletteAsyncListener() {
+                                        @Override
+                                        public void onGenerated(Palette palette) {
+                                            mView.setPalette(palette);
+                                        }
+                                    });
+                                } else {
+                                    mView.setPalette(null);
+                                }
                             }
                         }
 

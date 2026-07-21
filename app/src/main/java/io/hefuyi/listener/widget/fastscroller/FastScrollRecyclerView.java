@@ -19,42 +19,25 @@ package io.hefuyi.listener.widget.fastscroller;
 import android.content.Context;
 import android.graphics.Canvas;
 import android.graphics.Typeface;
-import android.support.annotation.ColorInt;
-import android.support.annotation.NonNull;
-import android.support.v7.widget.GridLayoutManager;
-import android.support.v7.widget.LinearLayoutManager;
-import android.support.v7.widget.RecyclerView;
 import android.util.AttributeSet;
 import android.view.MotionEvent;
 import android.view.View;
+
+import androidx.annotation.ColorInt;
+import androidx.annotation.NonNull;
+import androidx.recyclerview.widget.GridLayoutManager;
+import androidx.recyclerview.widget.LinearLayoutManager;
+import androidx.recyclerview.widget.RecyclerView;
 
 import io.hefuyi.listener.util.ListenerUtil;
 
 public class FastScrollRecyclerView extends RecyclerView implements RecyclerView.OnItemTouchListener {
 
-    private FastScroller mScrollbar;
-
-    /**
-     * The current scroll state of the recycler view.  We use this in onUpdateScrollbar()
-     * and scrollToPositionAtProgress() to determine the scroll position of the recycler view so
-     * that we can calculate what the scroll bar looks like, and where to jump to from the fast
-     * scroller.
-     */
-    public static class ScrollPositionState {
-        // The index of the first visible row
-        public int rowIndex;
-        // The offset of the first visible row
-        public int rowTopOffset;
-        // The height of a given row (they are currently all the same height)
-        public int rowHeight;
-    }
-
-    private ScrollPositionState mScrollPosState = new ScrollPositionState();
-
+    private final FastScroller mScrollbar;
+    private final ScrollPositionState mScrollPosState = new ScrollPositionState();
     private int mDownX;
     private int mDownY;
     private int mLastY;
-
     private OnFastScrollStateChangeListener mStateChangeListener;
 
     public FastScrollRecyclerView(Context context) {
@@ -336,5 +319,20 @@ public class FastScrollRecyclerView extends RecyclerView implements RecyclerView
     public interface SectionedAdapter {
         @NonNull
         String getSectionName(int position);
+    }
+
+    /**
+     * The current scroll state of the recycler view.  We use this in onUpdateScrollbar()
+     * and scrollToPositionAtProgress() to determine the scroll position of the recycler view so
+     * that we can calculate what the scroll bar looks like, and where to jump to from the fast
+     * scroller.
+     */
+    public static class ScrollPositionState {
+        // The index of the first visible row
+        public int rowIndex;
+        // The offset of the first visible row
+        public int rowTopOffset;
+        // The height of a given row (they are currently all the same height)
+        public int rowHeight;
     }
 }

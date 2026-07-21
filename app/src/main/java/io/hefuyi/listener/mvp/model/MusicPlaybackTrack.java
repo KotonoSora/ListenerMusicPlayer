@@ -12,12 +12,7 @@ import io.hefuyi.listener.util.ListenerUtil;
  * 用来记录当前播放曲目来自什么资源(专辑,歌手,播放列表或无),资源id,在资源中的序号
  */
 
-public class MusicPlaybackTrack implements Parcelable{
-
-    public long mId;
-    public long mSourceId;
-    public ListenerUtil.IdType mSourceType;
-    public int mSourcePosition;
+public class MusicPlaybackTrack implements Parcelable {
 
     public static final Creator<MusicPlaybackTrack> CREATOR = new Creator<MusicPlaybackTrack>() {
         @Override
@@ -30,6 +25,10 @@ public class MusicPlaybackTrack implements Parcelable{
             return new MusicPlaybackTrack[size];
         }
     };
+    public long mId;
+    public long mSourceId;
+    public ListenerUtil.IdType mSourceType;
+    public int mSourcePosition;
 
     public MusicPlaybackTrack(Parcel in) {
         mId = in.readLong();

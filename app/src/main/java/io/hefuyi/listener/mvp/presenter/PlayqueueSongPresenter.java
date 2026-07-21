@@ -16,11 +16,11 @@ import rx.subscriptions.CompositeSubscription;
  * Created by hefuyi on 2016/12/27.
  */
 
-public class PlayqueueSongPresenter implements PlayqueueSongContract.Presenter{
+public class PlayqueueSongPresenter implements PlayqueueSongContract.Presenter {
 
-    private GetSongs mUsecase;
+    private final GetSongs mUsecase;
+    private final CompositeSubscription mCompositeSubscription;
     private PlayqueueSongContract.View mView;
-    private CompositeSubscription mCompositeSubscription;
 
     public PlayqueueSongPresenter(GetSongs getSongs) {
         mUsecase = getSongs;

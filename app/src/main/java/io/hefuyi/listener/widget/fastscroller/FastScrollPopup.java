@@ -31,28 +31,21 @@ import io.hefuyi.listener.util.ListenerUtil;
 
 class FastScrollPopup {
 
-    private FastScrollRecyclerView mRecyclerView;
+    private final FastScrollRecyclerView mRecyclerView;
 
-    private Resources mRes;
-
+    private final Resources mRes;
+    private final Path mBackgroundPath = new Path();
+    private final RectF mBackgroundRect = new RectF();
+    private final Paint mBackgroundPaint;
+    private final Rect mInvalidateRect = new Rect();
+    private final Rect mTmpRect = new Rect();
+    // The absolute bounds of the fast scroller bg
+    private final Rect mBgBounds = new Rect();
+    private final Paint mTextPaint;
+    private final Rect mTextBounds = new Rect();
     private int mBackgroundSize;
     private int mCornerRadius;
-
-    private Path mBackgroundPath = new Path();
-    private RectF mBackgroundRect = new RectF();
-    private Paint mBackgroundPaint;
-
-    private Rect mInvalidateRect = new Rect();
-    private Rect mTmpRect = new Rect();
-
-    // The absolute bounds of the fast scroller bg
-    private Rect mBgBounds = new Rect();
-
     private String mSectionName;
-
-    private Paint mTextPaint;
-    private Rect mTextBounds = new Rect();
-
     private float mAlpha = 1;
 
     private ObjectAnimator mAlphaAnimator;
@@ -69,8 +62,8 @@ class FastScrollPopup {
         mTextPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
         mTextPaint.setAlpha(0);
 
-        setTextSize(DensityUtil.dip2sp(recyclerView.getContext(),56));
-        setBackgroundSize(DensityUtil.dip2px(recyclerView.getContext(),88));
+        setTextSize(DensityUtil.dip2sp(recyclerView.getContext(), 56));
+        setBackgroundSize(DensityUtil.dip2px(recyclerView.getContext(), 88));
     }
 
     public void setBgColor(int color) {
@@ -114,20 +107,20 @@ class FastScrollPopup {
         }
     }
 
+    public float getAlpha() {
+        return mAlpha;
+    }
+
     // Setter/getter for the popup alpha for animations
     public void setAlpha(float alpha) {
         mAlpha = alpha;
         mRecyclerView.invalidate(mBgBounds);
     }
 
-    public float getAlpha() {
-        return mAlpha;
-    }
-
     public void draw(Canvas canvas) {
         if (isVisible()) {
             // Draw the fast scroller popup
-            int restoreCount = canvas.save(Canvas.MATRIX_SAVE_FLAG);
+            int restoreCount = canvas.save();
             canvas.translate(mBgBounds.left, mBgBounds.top);
             mTmpRect.set(mBgBounds);
             mTmpRect.offsetTo(0, 0);

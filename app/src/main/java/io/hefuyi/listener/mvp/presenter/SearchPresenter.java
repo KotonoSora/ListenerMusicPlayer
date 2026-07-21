@@ -13,9 +13,9 @@ import rx.schedulers.Schedulers;
  * Created by hefuyi on 2017/1/3.
  */
 
-public class SearchPresenter implements SearchContract.Presenter{
+public class SearchPresenter implements SearchContract.Presenter {
 
-    private GetSearchResult mUsecase;
+    private final GetSearchResult mUsecase;
     private SearchContract.View mView;
     private Subscription mSubscription;
 

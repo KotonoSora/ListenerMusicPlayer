@@ -42,7 +42,7 @@ public class NetworkModule {
     @Provides
     @Named("lastfm")
     @PerApplication
-    Retrofit provideLastFMRetrofit(){
+    Retrofit provideLastFMRetrofit() {
         String endpointUrl = Constants.BASE_API_URL_LASTFM;
         Gson gson = new GsonBuilder().create();
         GsonConverterFactory gsonConverterFactory = GsonConverterFactory.create(gson);
@@ -68,7 +68,7 @@ public class NetworkModule {
     @Provides
     @Named("kugou")
     @PerApplication
-    Retrofit provideKuGouRetrofit(){
+    Retrofit provideKuGouRetrofit() {
         String endpointUrl = Constants.BASE_API_URL_KUGOU;
         Gson gson = new GsonBuilder().create();
         GsonConverterFactory gsonConverterFactory = GsonConverterFactory.create(gson);

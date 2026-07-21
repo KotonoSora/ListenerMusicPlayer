@@ -1,36 +1,34 @@
 <?xml version="1.0" encoding="utf-8"?>
-<RelativeLayout
-    xmlns:android="http://schemas.android.com/apk/res/android"
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent">
 
     <ViewStub
         android:id="@+id/view_empty"
-        android:layout="@layout/layout_empty_view_default"
         android:layout_width="match_parent"
-        android:layout_height="match_parent"/>
+        android:layout_height="match_parent"
+        android:layout="@layout/layout_empty_view_default" />
 
-    <include layout="@layout/status_bar"/>
-
-    <android.support.v7.widget.Toolbar
+    <androidx.appcompat.widget.Toolbar
         android:id="@+id/toolbar"
-        android:layout_below="@id/status_bar"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
+        android:layout_alignParentTop="true"
         android:background="?colorPrimary"
+        android:tag="bg_primary_color"
         android:theme="@style/ThemeOverlay.AppCompat.Dark.ActionBar"
-        app:popupTheme="?ttPopupMenuStyle"
-        android:tag="bg_primary_color"/>
+        app:popupTheme="?ttPopupMenuStyle" />
 
     <io.hefuyi.listener.widget.fastscroller.FastScrollRecyclerView
         android:id="@+id/recyclerview"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:layout_below="@id/toolbar"
-        app:fastScrollPopupTextColor="@android:color/primary_text_dark"
+        android:clipToPadding="false"
         app:fastScrollAutoHide="true"
         app:fastScrollAutoHideDelay="1500"
+        app:fastScrollPopupTextColor="@android:color/primary_text_dark"
         app:layout_behavior="@string/appbar_scrolling_view_behavior" />
 
 </RelativeLayout>

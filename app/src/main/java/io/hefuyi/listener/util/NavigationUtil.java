@@ -1,18 +1,21 @@
 package io.hefuyi.listener.util;
 
+import static io.hefuyi.listener.util.ListenerUtil.isLollipop;
+
 import android.annotation.TargetApi;
 import android.app.Activity;
 import android.content.ActivityNotFoundException;
 import android.content.Context;
 import android.content.Intent;
-import android.support.v4.app.Fragment;
-import android.support.v4.app.FragmentTransaction;
-import android.support.v7.app.AppCompatActivity;
 import android.transition.Transition;
 import android.transition.TransitionInflater;
 import android.util.Pair;
 import android.view.View;
 import android.widget.Toast;
+
+import androidx.appcompat.app.AppCompatActivity;
+import androidx.fragment.app.Fragment;
+import androidx.fragment.app.FragmentTransaction;
 
 import io.hefuyi.listener.Constants;
 import io.hefuyi.listener.R;
@@ -22,8 +25,6 @@ import io.hefuyi.listener.ui.fragment.AlbumDetailFragment;
 import io.hefuyi.listener.ui.fragment.ArtistDetailFragment;
 import io.hefuyi.listener.ui.fragment.FolderSongsFragment;
 import io.hefuyi.listener.ui.fragment.PlaylistDetailFragment;
-
-import static io.hefuyi.listener.util.ListenerUtil.isLollipop;
 
 /**
  * Created by hefuyi on 2016/11/6.
@@ -137,7 +138,7 @@ public class NavigationUtil {
             // The google MusicFX apps need to be started using startActivityForResult
             context.startActivityForResult(ListenerUtil.createEffectsIntent(), 666);
         } catch (final ActivityNotFoundException notFound) {
-            Toast.makeText(context, "Equalizer not found", Toast.LENGTH_SHORT).show();
+            Toast.makeText(context, R.string.equalizer_not_found, Toast.LENGTH_SHORT).show();
         }
     }
 

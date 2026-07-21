@@ -23,10 +23,10 @@
 -keep class io.hefuyi.listener.api.model.** { *; }
 -keep class io.hefuyi.listener.mvp.model.** { *; }
 
--keep class android.support.v4.app.** { *; }
--keep interface android.support.v4.app.** { *; }
--keep class android.support.v7.app.** { *; }
--keep interface android.support.v7.app.** { *; }
+-keep class androidx.fragment.app.** { *; }
+-keep interface androidx.fragment.app.** { *; }
+-keep class androidx.appcompat.app.** { *; }
+-keep interface androidx.appcompat.app.** { *; }
 
 -dontwarn com.squareup.okhttp.**
 -dontwarn okio.**
@@ -41,11 +41,8 @@
 -keepattributes Signature
 -keepattributes *Annotation*
 
-#renderscript
--keep class android.support.v8.renderscript.** { *; }
-
 #searchview
--keep class android.support.v7.widget.SearchView { *; }
+-keep class androidx.appcompat.widget.SearchView { *; }
 
 # RxJava RxAndroid
 -dontwarn sun.misc.**

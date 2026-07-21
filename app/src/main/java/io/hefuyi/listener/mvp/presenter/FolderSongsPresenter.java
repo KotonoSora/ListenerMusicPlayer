@@ -15,9 +15,9 @@ import rx.subscriptions.CompositeSubscription;
  * Created by hefuyi on 2016/12/12.
  */
 
-public class FolderSongsPresenter implements FolderSongsContract.Presenter{
+public class FolderSongsPresenter implements FolderSongsContract.Presenter {
 
-    private GetFolderSongs mUsecase;
+    private final GetFolderSongs mUsecase;
     private FolderSongsContract.View mView;
     private CompositeSubscription mCompositeSubscription;
 

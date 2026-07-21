@@ -20,20 +20,20 @@ public class MetaChangedEvent {
         return songId;
     }
 
-    public String getSongName() {
-        return songName;
-    }
-
-    public String getArtistName() {
-        return artistName;
-    }
-
     public void setSongId(long songId) {
         this.songId = songId;
     }
 
+    public String getSongName() {
+        return songName;
+    }
+
     public void setSongName(String songName) {
         this.songName = songName;
+    }
+
+    public String getArtistName() {
+        return artistName;
     }
 
     public void setArtistName(String artistName) {

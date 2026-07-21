@@ -1,7 +1,7 @@
 package io.hefuyi.listener.mvp.usecase;
 
 
-import android.support.annotation.NonNull;
+import androidx.annotation.NonNull;
 
 import java.io.File;
 
@@ -13,9 +13,9 @@ import rx.Observable;
  * Created by hefuyi on 2016/11/7.
  */
 
-public class GetLyric extends UseCase<GetLyric.RequestValues,GetLyric.ResponseValue>{
+public class GetLyric extends UseCase<GetLyric.RequestValues, GetLyric.ResponseValue> {
 
-    private Repository mRepository;
+    private final Repository mRepository;
 
     public GetLyric(Repository repository) {
         this.mRepository = repository;
@@ -28,18 +28,18 @@ public class GetLyric extends UseCase<GetLyric.RequestValues,GetLyric.ResponseVa
         long duration = requestValues.getDuration();
         if (LyricUtil.isLrcFileExist(title, artist)) {
             return new ResponseValue(LyricUtil.getLocalLyricFile(title, artist));
-        }else{
+        } else {
             return new ResponseValue(mRepository.downloadLrcFile(title, artist, duration));
         }
     }
 
-    public static final class RequestValues implements UseCase.RequestValues{
+    public static final class RequestValues implements UseCase.RequestValues {
 
         private final String mTitle;
         private final String mArtist;
         private final long mDuration;
 
-        public RequestValues(@NonNull String title, @NonNull String artist,long duration) {
+        public RequestValues(@NonNull String title, @NonNull String artist, long duration) {
             mTitle = title;
             mArtist = artist;
             mDuration = duration;
@@ -66,7 +66,7 @@ public class GetLyric extends UseCase<GetLyric.RequestValues,GetLyric.ResponseVa
             mLyricFile = lyricFile;
         }
 
-        public Observable<File> getLyricFile(){
+        public Observable<File> getLyricFile() {
             return mLyricFile;
         }
     }

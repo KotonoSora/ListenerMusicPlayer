@@ -5,10 +5,11 @@ import android.content.res.TypedArray;
 import android.graphics.Canvas;
 import android.graphics.Rect;
 import android.graphics.drawable.Drawable;
-import android.support.v4.content.ContextCompat;
-import android.support.v7.widget.LinearLayoutManager;
-import android.support.v7.widget.RecyclerView;
 import android.view.View;
+
+import androidx.core.content.ContextCompat;
+import androidx.recyclerview.widget.LinearLayoutManager;
+import androidx.recyclerview.widget.RecyclerView;
 
 import io.hefuyi.listener.R;
 import io.hefuyi.listener.util.ATEUtil;
@@ -17,12 +18,12 @@ import io.hefuyi.listener.util.DensityUtil;
 
 public class DividerItemDecoration extends RecyclerView.ItemDecoration {
 
-    private static final int HORIZONTAL_LIST = LinearLayoutManager.HORIZONTAL;
     public static final int VERTICAL_LIST = LinearLayoutManager.VERTICAL;
+    private static final int HORIZONTAL_LIST = LinearLayoutManager.HORIZONTAL;
     private static final int[] ATTRS = new int[]{
             android.R.attr.listDivider
     };
-    private Drawable mDivider;
+    private final Drawable mDivider;
 
     private int mOrientation;
     private boolean withHeader;
@@ -65,13 +66,13 @@ public class DividerItemDecoration extends RecyclerView.ItemDecoration {
         final int right = parent.getWidth() - parent.getPaddingRight();
 
         final int childCount = parent.getChildCount();
-        for (int i = 0; i < childCount-1; i++) {
+        for (int i = 0; i < childCount - 1; i++) {
             final View child = parent.getChildAt(i);
             final RecyclerView.LayoutParams params = (RecyclerView.LayoutParams) child
                     .getLayoutParams();
             final int top = child.getBottom() + params.bottomMargin;
             final int bottom = top + mDivider.getIntrinsicHeight();
-            if (i != 0||(!withHeader)) {
+            if (i != 0 || (!withHeader)) {
                 left = parent.getPaddingLeft() + DensityUtil.dip2px(parent.getContext(), 72);
             }
             mDivider.setBounds(left, top, right, bottom);

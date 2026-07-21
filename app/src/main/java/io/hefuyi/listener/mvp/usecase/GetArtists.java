@@ -11,7 +11,7 @@ import rx.Observable;
  * Created by hefuyi on 2016/11/13.
  */
 
-public class GetArtists extends UseCase<GetArtists.RequestValues,GetArtists.ResponseValue>{
+public class GetArtists extends UseCase<GetArtists.RequestValues, GetArtists.ResponseValue> {
 
     private final Repository mRepository;
 
@@ -37,15 +37,15 @@ public class GetArtists extends UseCase<GetArtists.RequestValues,GetArtists.Resp
     }
 
 
-    public static final class RequestValues implements UseCase.RequestValues{
+    public static final class RequestValues implements UseCase.RequestValues {
 
-        private String action;
+        private final String action;
 
         public RequestValues(String action) {
             this.action = action;
         }
 
-        public String getAction(){
+        public String getAction() {
             return action;
         }
     }
@@ -58,7 +58,7 @@ public class GetArtists extends UseCase<GetArtists.RequestValues,GetArtists.Resp
             mListObservable = listObservable;
         }
 
-        public Observable<List<Artist>> getArtistList(){
+        public Observable<List<Artist>> getArtistList() {
             return mListObservable;
         }
     }

@@ -29,12 +29,9 @@ public class CrashHandler implements UncaughtExceptionHandler {
     private static final String TAG = CrashHandler.class.getSimpleName();
 
     private static CrashHandler instance = null;
-
-    private Context mContext;
-
-    private UncaughtExceptionHandler mDefaultHandler;
-
     private final Map<String, String> infos = new HashMap<>();
+    private final Context mContext;
+    private final UncaughtExceptionHandler mDefaultHandler;
 
     private CrashHandler(Context context) {
         mContext = context;

@@ -2,13 +2,14 @@ package io.hefuyi.listener.ui.fragment;
 
 
 import android.os.Bundle;
-import android.support.annotation.Nullable;
-import android.support.v4.app.Fragment;
-import android.support.v7.widget.LinearLayoutManager;
-import android.support.v7.widget.RecyclerView;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+
+import androidx.annotation.Nullable;
+import androidx.fragment.app.Fragment;
+import androidx.recyclerview.widget.LinearLayoutManager;
+import androidx.recyclerview.widget.RecyclerView;
 
 import com.afollestad.appthemeengine.ATE;
 
@@ -16,8 +17,6 @@ import java.util.List;
 
 import javax.inject.Inject;
 
-import butterknife.BindView;
-import butterknife.ButterKnife;
 import io.hefuyi.listener.Constants;
 import io.hefuyi.listener.ListenerApp;
 import io.hefuyi.listener.R;
@@ -31,6 +30,7 @@ import io.hefuyi.listener.mvp.contract.ArtistSongContract;
 import io.hefuyi.listener.mvp.model.Song;
 import io.hefuyi.listener.ui.adapter.ArtistSongAdapter;
 import io.hefuyi.listener.util.ATEUtil;
+import io.hefuyi.listener.util.ListenerUtil;
 import io.hefuyi.listener.widget.DividerItemDecoration;
 import rx.Subscription;
 import rx.android.schedulers.AndroidSchedulers;
@@ -44,10 +44,9 @@ public class ArtistMusicFragment extends Fragment implements ArtistSongContract.
 
     @Inject
     ArtistSongContract.Presenter mPresenter;
-    @BindView(R.id.recycler_view_songs)
     RecyclerView songsRecyclerview;
-    private long artistID = -1;
     ArtistSongAdapter mSongAdapter;
+    private long artistID = -1;
 
     public static ArtistMusicFragment newInstance(long id) {
         ArtistMusicFragment fragment = new ArtistMusicFragment();
@@ -84,12 +83,16 @@ public class ArtistMusicFragment extends Fragment implements ArtistSongContract.
     @Override
     public void onViewCreated(View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
-        ButterKnife.bind(this, view);
+
+        songsRecyclerview = view.findViewById(R.id.recycler_view_songs);
 
         ATE.apply(this, ATEUtil.getATEKey(getActivity()));
 
         songsRecyclerview.setLayoutManager(new LinearLayoutManager(getActivity()));
         songsRecyclerview.addItemDecoration(new DividerItemDecoration(getActivity(), DividerItemDecoration.VERTICAL_LIST, true));
+
+        ListenerUtil.applyBottomInsetWithPlayer(songsRecyclerview);
+
         mSongAdapter = new ArtistSongAdapter(getActivity(), null, artistID);
         songsRecyclerview.setAdapter(mSongAdapter);
 

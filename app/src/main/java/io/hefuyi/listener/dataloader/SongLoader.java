@@ -42,7 +42,7 @@ public class SongLoader {
                         arrayList.add(new Song(id, albumId, artistId, title, artist, album, duration, trackNumber, path));
                     }
                     while (cursor.moveToNext());
-                if (cursor != null){
+                if (cursor != null) {
                     cursor.close();
                 }
                 subscriber.onNext(arrayList);
@@ -62,7 +62,7 @@ public class SongLoader {
             @Override
             public void call(Subscriber<? super List<Song>> subscriber) {
                 List<Song> arrayList = new ArrayList<Song>();
-                if ((cursor != null&&scoreCursor!=null) && (cursor.moveToFirst()&&scoreCursor.moveToFirst()))
+                if ((cursor != null && scoreCursor != null) && (cursor.moveToFirst() && scoreCursor.moveToFirst()))
                     do {
                         long id = cursor.getLong(0);
                         String title = cursor.getString(1);
@@ -79,7 +79,7 @@ public class SongLoader {
                         arrayList.add(song);
                     }
                     while (cursor.moveToNext() && scoreCursor.moveToNext());
-                if (cursor != null){
+                if (cursor != null) {
                     cursor.close();
                 }
                 if (scoreCursor != null) {

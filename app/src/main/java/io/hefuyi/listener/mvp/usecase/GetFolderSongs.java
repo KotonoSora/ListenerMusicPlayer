@@ -10,7 +10,7 @@ import rx.Observable;
  * Created by hefuyi on 2016/12/12.
  */
 
-public class GetFolderSongs extends UseCase<GetFolderSongs.RequestValues,GetFolderSongs.ResponseValue>{
+public class GetFolderSongs extends UseCase<GetFolderSongs.RequestValues, GetFolderSongs.ResponseValue> {
 
     private final Repository mRepository;
 
@@ -45,7 +45,7 @@ public class GetFolderSongs extends UseCase<GetFolderSongs.RequestValues,GetFold
             mListObservable = listObservable;
         }
 
-        public Observable<List<Song>> getSongList(){
+        public Observable<List<Song>> getSongList() {
             return mListObservable;
         }
     }

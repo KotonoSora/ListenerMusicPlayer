@@ -8,7 +8,7 @@ import rx.Observable;
  * Created by hefuyi on 2016/11/13.
  */
 
-public class GetArtistInfo extends UseCase<GetArtistInfo.RequestValues,GetArtistInfo.ResponseValue>{
+public class GetArtistInfo extends UseCase<GetArtistInfo.RequestValues, GetArtistInfo.ResponseValue> {
 
     private final Repository mRepository;
 
@@ -21,11 +21,11 @@ public class GetArtistInfo extends UseCase<GetArtistInfo.RequestValues,GetArtist
         return new ResponseValue(mRepository.getArtistInfo(requestValues.getArtistName()));
     }
 
-    public static final class RequestValues implements UseCase.RequestValues{
+    public static final class RequestValues implements UseCase.RequestValues {
 
         private final String artistName;
 
-        public RequestValues(String name){
+        public RequestValues(String name) {
             artistName = name;
         }
 
@@ -42,7 +42,7 @@ public class GetArtistInfo extends UseCase<GetArtistInfo.RequestValues,GetArtist
             mArtistInfoObservable = artistInfoObservable;
         }
 
-        public Observable<ArtistInfo> getArtistInfo(){
+        public Observable<ArtistInfo> getArtistInfo() {
             return mArtistInfoObservable;
         }
     }

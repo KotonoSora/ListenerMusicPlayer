@@ -2,15 +2,7 @@ package io.hefuyi.listener.ui.fragment;
 
 
 import android.graphics.Rect;
-import android.os.Build;
 import android.os.Bundle;
-import android.support.annotation.Nullable;
-import android.support.v4.app.Fragment;
-import android.support.v7.app.ActionBar;
-import android.support.v7.app.AppCompatActivity;
-import android.support.v7.widget.GridLayoutManager;
-import android.support.v7.widget.RecyclerView;
-import android.support.v7.widget.Toolbar;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuInflater;
@@ -18,14 +10,21 @@ import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 
+import androidx.annotation.Nullable;
+import androidx.appcompat.app.ActionBar;
+import androidx.appcompat.app.AppCompatActivity;
+import androidx.appcompat.widget.Toolbar;
+import androidx.fragment.app.Fragment;
+
+import androidx.recyclerview.widget.GridLayoutManager;
+import androidx.recyclerview.widget.RecyclerView;
+
 import com.afollestad.appthemeengine.ATE;
 
 import java.util.List;
 
 import javax.inject.Inject;
 
-import butterknife.BindView;
-import butterknife.ButterKnife;
 import io.hefuyi.listener.Constants;
 import io.hefuyi.listener.ListenerApp;
 import io.hefuyi.listener.R;
@@ -40,7 +39,7 @@ import io.hefuyi.listener.mvp.model.Playlist;
 import io.hefuyi.listener.ui.adapter.PlaylistAdapter;
 import io.hefuyi.listener.ui.dialogs.CreatePlaylistDialog;
 import io.hefuyi.listener.util.ATEUtil;
-import io.hefuyi.listener.util.DensityUtil;
+import io.hefuyi.listener.util.ListenerUtil;
 import io.hefuyi.listener.util.PreferencesUtility;
 import io.hefuyi.listener.widget.DividerItemDecoration;
 import io.hefuyi.listener.widget.fastscroller.FastScrollRecyclerView;
@@ -54,11 +53,8 @@ public class PlaylistFragment extends Fragment implements PlaylistContract.View 
 
     @Inject
     PlaylistContract.Presenter mPresenter;
-    @BindView(R.id.recyclerview)
     FastScrollRecyclerView recyclerView;
-    @BindView(R.id.view_empty)
     View emptyView;
-    @BindView(R.id.toolbar)
     Toolbar toolbar;
     private PlaylistAdapter mAdapter;
     private GridLayoutManager layoutManager;
@@ -94,7 +90,6 @@ public class PlaylistFragment extends Fragment implements PlaylistContract.View 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         View rootView = inflater.inflate(R.layout.fragment_list_layout, container, false);
-        ButterKnife.bind(this, rootView);
         return rootView;
     }
 
@@ -102,15 +97,13 @@ public class PlaylistFragment extends Fragment implements PlaylistContract.View 
     public void onViewCreated(View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
 
+        recyclerView = view.findViewById(R.id.recyclerview);
+        emptyView = view.findViewById(R.id.view_empty);
+        toolbar = view.findViewById(R.id.toolbar);
+
         ATE.apply(this, ATEUtil.getATEKey(getActivity()));
 
-        if (Build.VERSION.SDK_INT < 21 && view.findViewById(R.id.status_bar) != null) {
-            view.findViewById(R.id.status_bar).setVisibility(View.GONE);
-            if (Build.VERSION.SDK_INT >= 19) {
-                int statusBarHeight = DensityUtil.getStatusBarHeight(getContext());
-                view.findViewById(R.id.toolbar).setPadding(0, statusBarHeight, 0, 0);
-            }
-        }
+        ListenerUtil.applySystemBarPaddingAndHeight(toolbar, true, false);
 
         ((AppCompatActivity) getActivity()).setSupportActionBar(toolbar);
 
@@ -122,6 +115,9 @@ public class PlaylistFragment extends Fragment implements PlaylistContract.View 
         recyclerView.setLayoutManager(layoutManager);
         recyclerView.setAdapter(mAdapter);
         setItemDecoration();
+
+        ListenerUtil.applyBottomInsetWithPlayer(recyclerView);
+
         mPresenter.subscribe();
         subscribePlaylistUpdateEvent();
     }
@@ -147,24 +143,24 @@ public class PlaylistFragment extends Fragment implements PlaylistContract.View 
 
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
-        switch (item.getItemId()) {
-            case R.id.action_new_playlist:
-                CreatePlaylistDialog.newInstance().show(getChildFragmentManager(), "CREATE_PLAYLIST");
-                return true;
-            case R.id.menu_show_as_list:
-                if (isGrid) {
-                    mPreferences.setPlaylistView(Constants.PLAYLIST_VIEW_LIST);
-                    isGrid = false;
-                    updateLayoutManager(1);
-                }
-                return true;
-            case R.id.menu_show_as_grid:
-                if (!isGrid) {
-                    mPreferences.setPlaylistView(Constants.PLAYLIST_VIEW_GRID);
-                    isGrid = true;
-                    updateLayoutManager(2);
-                }
-                return true;
+        int itemId = item.getItemId();
+        if (itemId == R.id.action_new_playlist) {
+            CreatePlaylistDialog.newInstance().show(getChildFragmentManager(), "CREATE_PLAYLIST");
+            return true;
+        } else if (itemId == R.id.menu_show_as_list) {
+            if (isGrid) {
+                mPreferences.setPlaylistView(Constants.PLAYLIST_VIEW_LIST);
+                isGrid = false;
+                updateLayoutManager(1);
+            }
+            return true;
+        } else if (itemId == R.id.menu_show_as_grid) {
+            if (!isGrid) {
+                mPreferences.setPlaylistView(Constants.PLAYLIST_VIEW_GRID);
+                isGrid = true;
+                updateLayoutManager(2);
+            }
+            return true;
         }
         return super.onOptionsItemSelected(item);
     }
@@ -222,7 +218,7 @@ public class PlaylistFragment extends Fragment implements PlaylistContract.View 
     }
 
     public class SpacesItemDecoration extends RecyclerView.ItemDecoration {
-        private int space;
+        private final int space;
 
         public SpacesItemDecoration(int space) {
             this.space = space;
