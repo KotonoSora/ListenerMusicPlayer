@@ -29,8 +29,8 @@ public class GetAlbums extends UseCase<GetAlbums.RequestValues, GetAlbums.Respon
                 return new ResponseValue(mRepository.getRecentlyAddedAlbums());
             case Constants.NAVIGATE_PLAYLIST_RECENTPLAY:
                 return new ResponseValue(mRepository.getRecentlyPlayedAlbums());
-            case Constants.NAVIGATE_PLAYLIST_FAVOURATE:
-                return new ResponseValue(mRepository.getFavourateAlbums());
+            case Constants.NAVIGATE_PLAYLIST_FAVORITE:
+                return new ResponseValue(mRepository.getFavoriteAlbums());
             default:
                 throw new RuntimeException("wrong action type");
         }

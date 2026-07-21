@@ -60,7 +60,6 @@ public class SearchFragment extends Fragment implements SearchView.OnQueryTextLi
     @Inject
     SearchContract.Presenter mPresenter;
     Toolbar toolbar;
-    View statusBar;
     RecyclerView recyclerView;
     ViewStub emptyView;
     private SearchView mSearchView;
@@ -99,7 +98,6 @@ public class SearchFragment extends Fragment implements SearchView.OnQueryTextLi
         super.onViewCreated(view, savedInstanceState);
 
         toolbar = view.findViewById(R.id.toolbar);
-        statusBar = view.findViewById(R.id.status_bar);
         recyclerView = view.findViewById(R.id.recyclerview);
         emptyView = view.findViewById(R.id.view_empty);
 

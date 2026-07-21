@@ -136,6 +136,7 @@ public class SongsListAdapter extends RecyclerView.Adapter<RecyclerView.ViewHold
         }
     }
 
+
     private void setOnPopupMenuListener(ItemHolder itemHolder, final int position) {
 
         final int realSongPosition;
@@ -173,8 +174,8 @@ public class SongsListAdapter extends RecyclerView.Adapter<RecyclerView.ViewHold
                         } else if (itemId == R.id.popup_song_delete) {
                             long[] deleteIds = {arraylist.get(realSongPosition).id};
                             switch (action) {
-                                case Constants.NAVIGATE_PLAYLIST_FAVOURATE:
-                                    ListenerUtil.showDeleteFromFavourate(mContext, deleteIds);
+                                case Constants.NAVIGATE_PLAYLIST_FAVORITE:
+                                    ListenerUtil.showDeleteFromFavorite(mContext, deleteIds);
                                     break;
                                 case Constants.NAVIGATE_PLAYLIST_RECENTPLAY:
                                     ListenerUtil.showDeleteFromRecentlyPlay(mContext, deleteIds);

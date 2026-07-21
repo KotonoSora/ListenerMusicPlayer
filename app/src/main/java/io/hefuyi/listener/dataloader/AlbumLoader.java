@@ -39,8 +39,8 @@ public class AlbumLoader {
         });
     }
 
-    public static Observable<List<Album>> getFavourateAlbums(final Context context) {
-        return SongLoader.getFavoriteSong(context).flatMap(new Func1<List<Song>, Observable<Song>>() {
+    public static Observable<List<Album>> getFavoriteAlbums(final Context context) {
+        return SongLoader.getFavoriteSongs(context).flatMap(new Func1<List<Song>, Observable<Song>>() {
             @Override
             public Observable<Song> call(List<Song> songList) {
                 return Observable.from(songList);

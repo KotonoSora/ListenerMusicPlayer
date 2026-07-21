@@ -63,8 +63,8 @@ public class PlaylistLoader {
     private static void makeDefaultPlaylists(Context context) {
         final Resources resources = context.getResources();
 
-        final Playlist topTracks = new Playlist(ListenerUtil.PlaylistType.Favourate.mId,
-                resources.getString(ListenerUtil.PlaylistType.Favourate.mTitleId), -1);
+        final Playlist topTracks = new Playlist(ListenerUtil.PlaylistType.Favorite.mId,
+                resources.getString(ListenerUtil.PlaylistType.Favorite.mTitleId), -1);
         mPlaylistList.add(topTracks);
     }
 

@@ -17,10 +17,10 @@ import java.io.File;
 import io.hefuyi.listener.MusicPlayer;
 import io.hefuyi.listener.R;
 import io.hefuyi.listener.mvp.contract.QuickControlsContract;
-import io.hefuyi.listener.mvp.usecase.GetLyric;
+import io.hefuyi.listener.respository.interfaces.Repository;
 import io.hefuyi.listener.util.ATEUtil;
 import io.hefuyi.listener.util.ListenerUtil;
-import io.hefuyi.listener.util.PreferencesUtility;
+import io.hefuyi.listener.util.LyricUtil;
 import rx.Subscriber;
 import rx.Subscription;
 import rx.android.schedulers.AndroidSchedulers;
@@ -33,14 +33,14 @@ import rx.subscriptions.CompositeSubscription;
 
 public class QuickControlsPresenter implements QuickControlsContract.Presenter {
 
-    private final GetLyric mGetLyric;
+    private final Repository mRepository;
     private CompositeSubscription mCompositeSubscription;
     private QuickControlsContract.View mView;
 
     private boolean mDuetoplaypause = false;
 
-    public QuickControlsPresenter(GetLyric getLyric) {
-        this.mGetLyric = getLyric;
+    public QuickControlsPresenter(Repository repository) {
+        this.mRepository = repository;
     }
 
     @Override
@@ -71,24 +71,24 @@ public class QuickControlsPresenter implements QuickControlsContract.Presenter {
 
     @Override
     public void onPreviousClick() {
-        MusicPlayer.previous(mView.getContext(), true);
+        if (mView.getContext() != null) {
+            MusicPlayer.previous(mView.getContext(), true);
+        }
     }
 
     @Override
     public void loadLyric() {
-        if (PreferencesUtility.getInstance(mView.getContext()).isWorkOffline()) {
-            mView.showLyric(null);
+        if (mView.getContext() == null) {
             return;
         }
         mCompositeSubscription.clear();
         String title = MusicPlayer.getTrackName();
         String artist = MusicPlayer.getArtistName();
-        long duration = MusicPlayer.duration();
         if (TextUtils.isEmpty(title) || TextUtils.isEmpty(artist)) {
             return;
         }
-        Subscription subscription = mGetLyric.execute(new GetLyric.RequestValues(title, artist, duration))
-                .getLyricFile()
+
+        Subscription subscription = LyricUtil.getLocalLyricFile(title, artist)
                 .subscribeOn(Schedulers.io())
                 .observeOn(AndroidSchedulers.mainThread())
                 .subscribe(new Subscriber<File>() {
@@ -116,6 +116,9 @@ public class QuickControlsPresenter implements QuickControlsContract.Presenter {
 
     @Override
     public void updateNowPlayingCard() {
+        if (mView.getContext() == null) {
+            return;
+        }
         if (MusicPlayer.isPlaying()) {
             if (!mView.getPlayPauseStatus()) {//true表示按钮为待暂停状态
                 mView.setPlayPauseButton(true);

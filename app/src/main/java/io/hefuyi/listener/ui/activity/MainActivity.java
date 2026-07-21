@@ -114,10 +114,10 @@ public class MainActivity extends BaseActivity implements ATEActivityThemeCustom
 
         }
     };
-    private final Runnable navigateFavourate = new Runnable() {
+    private final Runnable navigateFavorite = new Runnable() {
         public void run() {
-            navigationView.getMenu().findItem(R.id.nav_favourate).setChecked(true);
-            Fragment fragment = MainFragment.newInstance(Constants.NAVIGATE_PLAYLIST_FAVOURATE);
+            navigationView.getMenu().findItem(R.id.nav_favorite).setChecked(true);
+            Fragment fragment = MainFragment.newInstance(Constants.NAVIGATE_PLAYLIST_FAVORITE);
             FragmentTransaction transaction = getSupportFragmentManager().beginTransaction();
             transaction.replace(R.id.fragment_container, fragment).commit();
         }
@@ -194,6 +194,7 @@ public class MainActivity extends BaseActivity implements ATEActivityThemeCustom
         navigationMap.put(Constants.NAVIGATE_LIBRARY, navigateLibrary);
         navigationMap.put(Constants.NAVIGATE_ALBUM, navigateAlbum);
         navigationMap.put(Constants.NAVIGATE_ARTIST, navigateArtist);
+        navigationMap.put(Constants.NAVIGATE_PLAYLIST_FAVORITE, navigateFavorite);
 
         View header = navigationView.inflateHeaderView(R.layout.nav_header);
         albumart = header.findViewById(R.id.album_art);
@@ -231,11 +232,7 @@ public class MainActivity extends BaseActivity implements ATEActivityThemeCustom
         }, 700);
 
 
-        if (ListenerUtil.isMarshmallow()) {
-            checkPermissionAndThenLoad();
-        } else {
-            loadEverything();
-        }
+        checkPermissionAndThenLoad();
 
         addBackstackListener();
 
@@ -351,7 +348,7 @@ public class MainActivity extends BaseActivity implements ATEActivityThemeCustom
             navigationView.getMenu().findItem(R.id.nav_library).setIcon(R.drawable.ic_music_note_black_48dp);
             navigationView.getMenu().findItem(R.id.nav_playlists).setIcon(R.drawable.ic_queue_music_black_48dp);
             navigationView.getMenu().findItem(R.id.nav_folders).setIcon(R.drawable.ic_folder_black_48dp);
-            navigationView.getMenu().findItem(R.id.nav_favourate).setIcon(R.drawable.ic_favorite_black_48dp);
+            navigationView.getMenu().findItem(R.id.nav_favorite).setIcon(R.drawable.ic_favorite_black_48dp);
             navigationView.getMenu().findItem(R.id.nav_recent_play).setIcon(R.drawable.ic_watch_later_black_48dp);
             navigationView.getMenu().findItem(R.id.nav_recent_add).setIcon(R.drawable.ic_add_box_black_48dp);
             navigationView.getMenu().findItem(R.id.nav_play_ranking).setIcon(R.drawable.ic_sort_black_48dp);
@@ -361,7 +358,7 @@ public class MainActivity extends BaseActivity implements ATEActivityThemeCustom
             navigationView.getMenu().findItem(R.id.nav_library).setIcon(R.drawable.ic_music_note_white_48dp);
             navigationView.getMenu().findItem(R.id.nav_playlists).setIcon(R.drawable.ic_queue_music_white_48dp);
             navigationView.getMenu().findItem(R.id.nav_folders).setIcon(R.drawable.ic_folder_white_48dp);
-            navigationView.getMenu().findItem(R.id.nav_favourate).setIcon(R.drawable.ic_favorite_white_48dp);
+            navigationView.getMenu().findItem(R.id.nav_favorite).setIcon(R.drawable.ic_favorite_white_48dp);
             navigationView.getMenu().findItem(R.id.nav_recent_play).setIcon(R.drawable.ic_watch_later_white_48dp);
             navigationView.getMenu().findItem(R.id.nav_recent_add).setIcon(R.drawable.ic_add_box_white_48dp);
             navigationView.getMenu().findItem(R.id.nav_play_ranking).setIcon(R.drawable.ic_sort_white_48dp);
@@ -386,8 +383,8 @@ public class MainActivity extends BaseActivity implements ATEActivityThemeCustom
             runnable = navigatePlaylist;
         } else if (itemId == R.id.nav_folders) {
             runnable = navigateFolders;
-        } else if (itemId == R.id.nav_favourate) {
-            runnable = navigateFavourate;
+        } else if (itemId == R.id.nav_favorite) {
+            runnable = navigateFavorite;
         } else if (itemId == R.id.nav_recent_play) {
             runnable = navigateRecentPlay;
         } else if (itemId == R.id.nav_recent_add) {

@@ -1,7 +1,6 @@
 package io.hefuyi.listener.util;
 
 import android.Manifest;
-import android.annotation.TargetApi;
 import android.app.Activity;
 import android.app.Dialog;
 import android.content.ContentUris;
@@ -35,7 +34,7 @@ import io.hefuyi.listener.MusicPlayer;
 import io.hefuyi.listener.R;
 import io.hefuyi.listener.RxBus;
 import io.hefuyi.listener.dataloader.PlaylistLoader;
-import io.hefuyi.listener.event.FavourateSongEvent;
+import io.hefuyi.listener.event.FavoriteSongEvent;
 import io.hefuyi.listener.event.MediaUpdateEvent;
 import io.hefuyi.listener.event.PlaylistUpdateEvent;
 import io.hefuyi.listener.event.RecentlyPlayEvent;
@@ -57,9 +56,6 @@ public class ListenerUtil {
     public static final String MUSIC_ONLY_SELECTION = MediaStore.Audio.AudioColumns.IS_MUSIC + "=1"
             + " AND " + MediaStore.Audio.AudioColumns.TITLE + " != ''";
 
-    public static boolean isMarshmallow() {
-        return Build.VERSION.SDK_INT >= Build.VERSION_CODES.M;
-    }
 
     public static boolean isTiramisu() {
         return Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU;
@@ -82,17 +78,6 @@ public class ListenerUtil {
         return new String[]{Manifest.permission.READ_EXTERNAL_STORAGE};
     }
 
-    public static boolean isLollipop() {
-        return Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP;
-    }
-
-    public static boolean isJellyBeanMR2() {
-        return Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN_MR2;
-    }
-
-    public static boolean isJellyBeanMR1() {
-        return Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN_MR1;
-    }
 
     public static Uri getAlbumArtUri(long paramInt) {
         if (paramInt < 0) {
@@ -180,7 +165,7 @@ public class ListenerUtil {
                                             //我喜欢
                                             int num = FavoriteSong.getInstance(context).addFavoriteSong(songIds);
                                             Toast.makeText(context, R.string.add_favorite_success, Toast.LENGTH_SHORT).show();
-                                            RxBus.getInstance().post(new FavourateSongEvent());
+                                            RxBus.getInstance().post(new FavoriteSongEvent());
                                             dialog.dismiss();
                                             return;
                                         }
@@ -202,16 +187,16 @@ public class ListenerUtil {
                 });
     }
 
-    public static void showDeleteFromFavourate(final Context context, final long[] ids) {
+    public static void showDeleteFromFavorite(final Context context, final long[] ids) {
         new MaterialDialog.Builder(context)
-                .title(R.string.delete_song_favourate)
+                .title(R.string.delete_song_favorite)
                 .positiveText(R.string.delete)
                 .negativeText(R.string.cancel)
                 .onPositive(new MaterialDialog.SingleButtonCallback() {
                     @Override
                     public void onClick(@NonNull MaterialDialog dialog, @NonNull DialogAction which) {
                         FavoriteSong.getInstance(context).removeFavoriteSong(ids);
-                        RxBus.getInstance().post(new FavourateSongEvent());
+                        RxBus.getInstance().post(new FavoriteSongEvent());
                         Toast.makeText(context, R.string.remove_favorite_success, Toast.LENGTH_SHORT).show();
                     }
                 })
@@ -307,10 +292,8 @@ public class ListenerUtil {
         MusicPlayer.refresh();
     }
 
-    @TargetApi(Build.VERSION_CODES.JELLY_BEAN_MR1)
     public static boolean isRtl(Resources res) {
-        return (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN_MR1) &&
-                (res.getConfiguration().getLayoutDirection() == View.LAYOUT_DIRECTION_RTL);
+        return res.getConfiguration().getLayoutDirection() == View.LAYOUT_DIRECTION_RTL;
     }
 
     public static void applySystemBarPadding(View view, boolean top, boolean bottom) {
@@ -431,7 +414,7 @@ public class ListenerUtil {
     public enum PlaylistType {
         LastAdded(-1, R.string.playlist_last_added),
         RecentlyPlayed(-2, R.string.playlist_recently_played),
-        Favourate(-3, R.string.playlist_top_tracks);
+        Favorite(-3, R.string.playlist_top_tracks);
 
         public long mId;
         public int mTitleId;

@@ -33,8 +33,8 @@ public class GetSongs extends UseCase<GetSongs.RequestValues, GetSongs.ResponseV
                 return new ResponseValue(mRepository.getTopPlaySongs());
             case Constants.NAVIGATE_QUEUE:
                 return new ResponseValue(mRepository.getQueueSongs());
-            case Constants.NAVIGATE_PLAYLIST_FAVOURATE:
-                return new ResponseValue(mRepository.getFavourateSongs());
+            case Constants.NAVIGATE_PLAYLIST_FAVORITE:
+                return new ResponseValue(mRepository.getFavoriteSongs());
             default:
                 throw new RuntimeException("wrong action type");
         }

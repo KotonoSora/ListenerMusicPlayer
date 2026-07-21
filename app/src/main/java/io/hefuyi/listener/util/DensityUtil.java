@@ -2,7 +2,6 @@ package io.hefuyi.listener.util;
 
 import android.app.Activity;
 import android.content.Context;
-import android.content.res.Resources;
 import android.util.DisplayMetrics;
 import android.util.TypedValue;
 
@@ -28,12 +27,6 @@ public class DensityUtil {
         return (int) (dpVale * scale + 0.5f);
     }
 
-    public static int getStatusBarHeight(Context context) {
-        Resources resources = context.getResources();
-        int resourcesId = resources.getIdentifier("status_bar_height", "dimen", "android");
-        int height = resources.getDimensionPixelSize(resourcesId);
-        return height;
-    }
 
     /**
      * Converts sp to px
@@ -46,9 +39,5 @@ public class DensityUtil {
         return (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_SP, sp, context.getResources().getDisplayMetrics());
     }
 
-    public static int px2dip(Context context, float pxValue) {
-        final float scale = context.getResources().getDisplayMetrics().density;
-        return (int) (pxValue / scale + 0.5f);
-    }
 
 }

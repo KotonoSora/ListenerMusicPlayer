@@ -14,17 +14,12 @@ import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 
-import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
-import androidx.core.content.ContextCompat;
 import androidx.fragment.app.DialogFragment;
 import androidx.palette.graphics.Palette;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
-
-import com.afollestad.materialdialogs.DialogAction;
-import com.afollestad.materialdialogs.MaterialDialog;
 
 import java.util.List;
 
@@ -60,7 +55,6 @@ public class PlayqueueDialog extends DialogFragment implements PlayqueueSongCont
 
     private PlayqueueSongsAdapter mAdapter;
     private Palette.Swatch mSwatch;
-    private PlayMode mPlayMode;
 
     @Override
     public void onStart() {
@@ -108,7 +102,7 @@ public class PlayqueueDialog extends DialogFragment implements PlayqueueSongCont
         tvPlayMode = view.findViewById(R.id.tv_play_mode);
         ivPlayMode = view.findViewById(R.id.iv_play_mode);
         clearAll = view.findViewById(R.id.clear_all);
-        recyclerView = view.findViewById(R.id.recyclerview);
+        recyclerView = view.findViewById(R.id.recycler_view_songs);
 
         io.hefuyi.listener.util.ListenerUtil.applySystemBarPadding(view, false, true);
 
@@ -130,20 +124,17 @@ public class PlayqueueDialog extends DialogFragment implements PlayqueueSongCont
         if (shuffleMode == MusicService.SHUFFLE_NONE) {
             if (repeatMode == MusicService.REPEAT_CURRENT) {
                 //单曲播放模式
-                ivPlayMode.setImageDrawable(ContextCompat.getDrawable(getActivity(), R.drawable.ic_one_shot));
+                ivPlayMode.setImageDrawable(getResources().getDrawable(R.drawable.ic_one_shot));
                 tvPlayMode.setText(R.string.repeat_current);
-                mPlayMode = PlayMode.CURRENT;
             } else {
                 //顺序播放模式
-                ivPlayMode.setImageDrawable(ContextCompat.getDrawable(getActivity(), R.drawable.ic_list_repeat));
+                ivPlayMode.setImageDrawable(getResources().getDrawable(R.drawable.ic_list_repeat));
                 tvPlayMode.setText(R.string.repeat_all);
-                mPlayMode = PlayMode.REPEATALL;
             }
         } else if (shuffleMode == MusicService.SHUFFLE_NORMAL || shuffleMode == MusicService.SHUFFLE_AUTO) {
             //随机播放模式
-            ivPlayMode.setImageDrawable(ContextCompat.getDrawable(getActivity(), R.drawable.ic_list_shuffle));
+            ivPlayMode.setImageDrawable(getResources().getDrawable(R.drawable.ic_list_shuffle));
             tvPlayMode.setText(R.string.shuffle_all);
-            mPlayMode = PlayMode.SHUFFLE;
         }
 
         mAdapter.registerAdapterDataObserver(new RecyclerView.AdapterDataObserver() {
@@ -194,53 +185,5 @@ public class PlayqueueDialog extends DialogFragment implements PlayqueueSongCont
 
     public void dismiss() {
         getDialog().dismiss();
-    }
-
-    public void onPlayModeClick() {
-        if (mPlayMode == PlayMode.REPEATALL) {
-            ivPlayMode.setImageDrawable(ContextCompat.getDrawable(getActivity(), R.drawable.ic_one_shot));
-            tvPlayMode.setText(R.string.repeat_current);
-            MusicPlayer.setShuffleMode(MusicService.SHUFFLE_NONE);
-            MusicPlayer.setRepeatMode(MusicService.REPEAT_CURRENT);
-            mPlayMode = PlayMode.CURRENT;
-        } else if (mPlayMode == PlayMode.CURRENT) {
-            ivPlayMode.setImageDrawable(ContextCompat.getDrawable(getActivity(), R.drawable.ic_list_shuffle));
-            tvPlayMode.setText(R.string.shuffle_all);
-            MusicPlayer.setShuffleMode(MusicService.SHUFFLE_NORMAL);
-            MusicPlayer.setRepeatMode(MusicService.REPEAT_ALL);
-            mPlayMode = PlayMode.SHUFFLE;
-        } else if (mPlayMode == PlayMode.SHUFFLE) {
-            ivPlayMode.setImageDrawable(ContextCompat.getDrawable(getActivity(), R.drawable.ic_list_repeat));
-            tvPlayMode.setText(R.string.repeat_all);
-            MusicPlayer.setShuffleMode(MusicService.SHUFFLE_NONE);
-            mPlayMode = PlayMode.REPEATALL;
-        }
-    }
-
-    public void onClearAllClick() {
-        new MaterialDialog.Builder(getActivity())
-                .title(R.string.clear_song_queue)
-                .positiveText(R.string.sure)
-                .negativeText(R.string.cancel)
-                .onPositive(new MaterialDialog.SingleButtonCallback() {
-                    @Override
-                    public void onClick(@NonNull MaterialDialog dialog, @NonNull DialogAction which) {
-                        dismiss();
-                        MusicPlayer.clearQueue();
-                    }
-                })
-                .onNegative(new MaterialDialog.SingleButtonCallback() {
-                    @Override
-                    public void onClick(@NonNull MaterialDialog dialog, @NonNull DialogAction which) {
-                        dialog.dismiss();
-                    }
-                })
-                .show();
-    }
-
-    public enum PlayMode {
-        REPEATALL,
-        CURRENT,
-        SHUFFLE
     }
 }

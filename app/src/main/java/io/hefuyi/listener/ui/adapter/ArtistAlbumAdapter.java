@@ -56,8 +56,7 @@ public class ArtistAlbumAdapter extends RecyclerView.Adapter<ArtistAlbumAdapter.
                 .centerCrop()
                 .into(itemHolder.albumArt);
 
-        if (ListenerUtil.isLollipop())
-            itemHolder.albumArt.setTransitionName("transition_album_art" + i);
+        itemHolder.albumArt.setTransitionName("transition_album_art" + i);
     }
 
     @Override

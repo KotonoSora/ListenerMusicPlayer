@@ -29,8 +29,8 @@ public class GetArtists extends UseCase<GetArtists.RequestValues, GetArtists.Res
                 return new ResponseValue(mRepository.getRecentlyAddedArtists());
             case Constants.NAVIGATE_PLAYLIST_RECENTPLAY:
                 return new ResponseValue(mRepository.getRecentlyPlayedArtist());
-            case Constants.NAVIGATE_PLAYLIST_FAVOURATE:
-                return new ResponseValue(mRepository.getFavourateArtist());
+            case Constants.NAVIGATE_PLAYLIST_FAVORITE:
+                return new ResponseValue(mRepository.getFavoriteArtist());
             default:
                 throw new RuntimeException("wrong action type");
         }

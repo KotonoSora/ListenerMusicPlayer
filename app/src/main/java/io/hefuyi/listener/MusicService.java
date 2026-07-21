@@ -90,8 +90,6 @@ public class MusicService extends Service {
     public static final String SHUFFLEMODE_CHANGED = "io.hefuyi.listener.shufflemodechanged";
 
     public static final String TRACK_ERROR = "io.hefuyi.listener.trackerror";
-    public static final String LISTENER_PACKAGE_NAME = "io.hefuyi.listener";
-    public static final String MUSIC_PACKAGE_NAME = "com.android.music";
 
     public static final String SERVICECMD = "io.hefuyi.listener.musicservicecommand";
     public static final String TOGGLEPAUSE_ACTION = "io.hefuyi.listener.togglepause";
@@ -286,8 +284,7 @@ public class MusicService extends Service {
                 MediaButtonIntentReceiver.class.getName());
         mAudioManager.registerMediaButtonEventReceiver(mediaButtonReceiverComponent);
 
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP)
-            setUpMediaSession();
+        setUpMediaSession();
 
         mPreferences = getSharedPreferences("Service", 0);
         mCardId = getCardId();
@@ -337,9 +334,7 @@ public class MusicService extends Service {
 
         mAlarmManager = (AlarmManager) getSystemService(Context.ALARM_SERVICE);
         // mShutdownIntent = PendingIntent.getService(this, 0, shutdownIntent, 0);
-        int flags = Build.VERSION.SDK_INT >= Build.VERSION_CODES.M
-                ? PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE
-                : PendingIntent.FLAG_UPDATE_CURRENT;
+        int flags = PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE;
 
         mShutdownIntent = PendingIntent.getService(this, 0, shutdownIntent, flags);
 
@@ -410,16 +405,13 @@ public class MusicService extends Service {
 
         mPlayerHandler.removeCallbacksAndMessages(null);
 
-        if (ListenerUtil.isJellyBeanMR2())
-            mHandlerThread.quitSafely();
-        else mHandlerThread.quit();
+        mHandlerThread.quitSafely();
 
         mPlayer.release();
         mPlayer = null;
 
         mAudioManager.abandonAudioFocus(mAudioFocusListener);
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP)
-            mSession.release();
+        mSession.release();
 
         getContentResolver().unregisterContentObserver(mMediaStoreObserver);
 
@@ -473,8 +465,7 @@ public class MusicService extends Service {
         if (D) Log.d(TAG, "Nothing is playing anymore, releasing notification");
         cancelNotification();
         mAudioManager.abandonAudioFocus(mAudioFocusListener); // 不需要 audio focus
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP)
-            mSession.setActive(false); //不再接受媒体按钮事件
+        mSession.setActive(false); //不再接受媒体按钮事件
 
         if (!mServiceInUse) {
             saveQueue(true);
@@ -529,18 +520,16 @@ public class MusicService extends Service {
     }
 
     private void createNotificationChannel() {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            CharSequence name = getString(R.string.app_name);
-            String description = getString(R.string.notification_channel_description);
-            int importance = NotificationManager.IMPORTANCE_LOW;
-            NotificationChannel channel = new NotificationChannel(CHANNEL_ID, name, importance);
-            channel.setDescription(description);
-            channel.setShowBadge(false);
-            // Register the channel with the system
-            NotificationManager notificationManager = getSystemService(NotificationManager.class);
-            if (notificationManager != null) {
-                notificationManager.createNotificationChannel(channel);
-            }
+        CharSequence name = getString(R.string.app_name);
+        String description = getString(R.string.notification_channel_description);
+        int importance = NotificationManager.IMPORTANCE_LOW;
+        NotificationChannel channel = new NotificationChannel(CHANNEL_ID, name, importance);
+        channel.setDescription(description);
+        channel.setShowBadge(false);
+        // Register the channel with the system
+        NotificationManager notificationManager = getSystemService(NotificationManager.class);
+        if (notificationManager != null) {
+            notificationManager.createNotificationChannel(channel);
         }
     }
 
@@ -634,13 +623,9 @@ public class MusicService extends Service {
     }
 
     private int getCardId() {
-        if (ListenerUtil.isMarshmallow()) {
-            if (PermissionManager.checkPermission(ListenerUtil.getStoragePermission())) {
-                return getmCardId();
-            } else return 0;
-        } else {
+        if (PermissionManager.checkPermission(ListenerUtil.getStoragePermission())) {
             return getmCardId();
-        }
+        } else return 0;
     }
 
     private int getmCardId() {
@@ -731,7 +716,7 @@ public class MusicService extends Service {
         if (goToIdle) {
             setIsSupposedToBePlaying(false, false);
         } else {
-            stopForeground(!ListenerUtil.isLollipop());
+            stopForeground(STOP_FOREGROUND_REMOVE);
         }
     }
 
@@ -1277,34 +1262,29 @@ public class MusicService extends Service {
                 ? PlaybackStateCompat.STATE_PLAYING
                 : PlaybackStateCompat.STATE_PAUSED;
 
-        if (what.equals(PLAYSTATE_CHANGED) || what.equals(POSITION_CHANGED)) { //播放状态改变时
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
-                mSession.setPlaybackState(new PlaybackStateCompat.Builder()
-                        .setState(playState, position(), 1.0f)
-                        .setActions(PlaybackStateCompat.ACTION_PLAY | PlaybackStateCompat.ACTION_PAUSE | PlaybackStateCompat.ACTION_PLAY_PAUSE |
-                                PlaybackStateCompat.ACTION_SKIP_TO_NEXT | PlaybackStateCompat.ACTION_SKIP_TO_PREVIOUS)
-                        .build());
-            }
-        } else if (what.equals(META_CHANGED) || what.equals(QUEUE_CHANGED)) { //当前播放歌曲的信息或者播放队列改变
-            final Uri albumArtUri = ListenerUtil.getAlbumArtUri(getAlbumId());
-            if (albumArtUri != null) {
-                Glide.with(MusicService.this)
-                        .load(albumArtUri)
-                        .asBitmap()
-                        .into(new SimpleTarget<Bitmap>(500, 500) {
-                            @Override
-                            public void onResourceReady(Bitmap resource, GlideAnimation<? super Bitmap> glideAnimation) {
-                                setMediaSessionMetadata(resource);
-                            }
+        mSession.setPlaybackState(new PlaybackStateCompat.Builder()
+                .setState(playState, position(), 1.0f)
+                .setActions(PlaybackStateCompat.ACTION_PLAY | PlaybackStateCompat.ACTION_PAUSE | PlaybackStateCompat.ACTION_PLAY_PAUSE |
+                        PlaybackStateCompat.ACTION_SKIP_TO_NEXT | PlaybackStateCompat.ACTION_SKIP_TO_PREVIOUS)
+                .build());
+        final Uri albumArtUri = ListenerUtil.getAlbumArtUri(getAlbumId());
+        if (albumArtUri != null) {
+            Glide.with(MusicService.this)
+                    .load(albumArtUri)
+                    .asBitmap()
+                    .into(new SimpleTarget<Bitmap>(500, 500) {
+                        @Override
+                        public void onResourceReady(Bitmap resource, GlideAnimation<? super Bitmap> glideAnimation) {
+                            setMediaSessionMetadata(resource);
+                        }
 
-                            @Override
-                            public void onLoadFailed(Exception e, Drawable errorDrawable) {
-                                setMediaSessionMetadata(null);
-                            }
-                        });
-            } else {
-                setMediaSessionMetadata(null);
-            }
+                        @Override
+                        public void onLoadFailed(Exception e, Drawable errorDrawable) {
+                            setMediaSessionMetadata(null);
+                        }
+                    });
+        } else {
+            setMediaSessionMetadata(null);
         }
     }
 
@@ -1321,26 +1301,24 @@ public class MusicService extends Service {
                 ? PlaybackStateCompat.STATE_PLAYING
                 : PlaybackStateCompat.STATE_PAUSED;
 
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
-            mSession.setMetadata(new MediaMetadataCompat.Builder()
-                    .putString(MediaMetadataCompat.METADATA_KEY_ARTIST, getArtistName())
-                    .putString(MediaMetadataCompat.METADATA_KEY_ALBUM_ARTIST, getAlbumArtistName())
-                    .putString(MediaMetadataCompat.METADATA_KEY_ALBUM, getAlbumName())
-                    .putString(MediaMetadataCompat.METADATA_KEY_TITLE, getTrackName())
-                    .putLong(MediaMetadataCompat.METADATA_KEY_DURATION, duration())
-                    .putLong(MediaMetadataCompat.METADATA_KEY_TRACK_NUMBER, getQueuePosition() + 1)
-                    .putLong(MediaMetadataCompat.METADATA_KEY_NUM_TRACKS, getQueue().length)
-                    .putString(MediaMetadataCompat.METADATA_KEY_GENRE, getGenreName())
-                    .putBitmap(MediaMetadataCompat.METADATA_KEY_ALBUM_ART,
-                            mShowAlbumArtOnLockscreen ? albumArt : null)
-                    .build());
+        mSession.setMetadata(new MediaMetadataCompat.Builder()
+                .putString(MediaMetadataCompat.METADATA_KEY_ARTIST, getArtistName())
+                .putString(MediaMetadataCompat.METADATA_KEY_ALBUM_ARTIST, getAlbumArtistName())
+                .putString(MediaMetadataCompat.METADATA_KEY_ALBUM, getAlbumName())
+                .putString(MediaMetadataCompat.METADATA_KEY_TITLE, getTrackName())
+                .putLong(MediaMetadataCompat.METADATA_KEY_DURATION, duration())
+                .putLong(MediaMetadataCompat.METADATA_KEY_TRACK_NUMBER, getQueuePosition() + 1)
+                .putLong(MediaMetadataCompat.METADATA_KEY_NUM_TRACKS, getQueue().length)
+                .putString(MediaMetadataCompat.METADATA_KEY_GENRE, getGenreName())
+                .putBitmap(MediaMetadataCompat.METADATA_KEY_ALBUM_ART,
+                        mShowAlbumArtOnLockscreen ? albumArt : null)
+                .build());
 
-            mSession.setPlaybackState(new PlaybackStateCompat.Builder()
-                    .setState(playState, position(), 1.0f)
-                    .setActions(PlaybackStateCompat.ACTION_PLAY | PlaybackStateCompat.ACTION_PAUSE | PlaybackStateCompat.ACTION_PLAY_PAUSE |
-                            PlaybackStateCompat.ACTION_SKIP_TO_NEXT | PlaybackStateCompat.ACTION_SKIP_TO_PREVIOUS)
-                    .build());
-        }
+        mSession.setPlaybackState(new PlaybackStateCompat.Builder()
+                .setState(playState, position(), 1.0f)
+                .setActions(PlaybackStateCompat.ACTION_PLAY | PlaybackStateCompat.ACTION_PAUSE | PlaybackStateCompat.ACTION_PLAY_PAUSE |
+                        PlaybackStateCompat.ACTION_SKIP_TO_NEXT | PlaybackStateCompat.ACTION_SKIP_TO_PREVIOUS)
+                .build());
     }
 
     /**
@@ -1389,20 +1367,15 @@ public class MusicService extends Service {
                         "",
                         retrievePlaybackAction(NEXT_ACTION));
 
-        if (ListenerUtil.isJellyBeanMR1()) {
-            builder.setShowWhen(false);
-        }
-        if (ListenerUtil.isLollipop()) {
-            builder.setVisibility(NotificationCompat.VISIBILITY_PUBLIC);
+        builder.setVisibility(NotificationCompat.VISIBILITY_PUBLIC);
 
-            // Use the constructor that accepts the builder
-            MediaStyle style = new androidx.media.app.NotificationCompat.MediaStyle(builder)
-                    .setMediaSession(mSession.getSessionToken())
-                    .setShowActionsInCompactView(0, 1, 2, 3);
+        // Use the constructor that accepts the builder
+        MediaStyle style = new androidx.media.app.NotificationCompat.MediaStyle(builder)
+                .setMediaSession(mSession.getSessionToken())
+                .setShowActionsInCompactView(0, 1, 2, 3);
 
-            builder.setStyle(style);
-        }
-        if (artwork != null && ListenerUtil.isLollipop()) {
+        builder.setStyle(style);
+        if (artwork != null) {
             builder.setColor(Palette.from(artwork).generate().getMutedColor(ATEUtil.getThemePrimaryColor(getApplicationContext())));
         }
 
@@ -1421,9 +1394,7 @@ public class MusicService extends Service {
         intent.setComponent(serviceName);
 
         // return PendingIntent.getService(this, 0, intent, 0);
-        int flags = Build.VERSION.SDK_INT >= Build.VERSION_CODES.M
-                ? PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE
-                : PendingIntent.FLAG_UPDATE_CURRENT;
+        int flags = PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE;
 
         return PendingIntent.getService(this, 0, intent, flags);
     }
@@ -1454,11 +1425,7 @@ public class MusicService extends Service {
     }
 
     private void reloadQueueAfterPermissionCheck() {
-        if (ListenerUtil.isMarshmallow()) {
-            if (PermissionManager.checkPermission(ListenerUtil.getStoragePermission())) {
-                reloadQueue();
-            }
-        } else {
+        if (PermissionManager.checkPermission(ListenerUtil.getStoragePermission())) {
             reloadQueue();
         }
     }
@@ -2123,8 +2090,7 @@ public class MusicService extends Service {
 
         mAudioManager.registerMediaButtonEventReceiver(new ComponentName(getPackageName(),
                 MediaButtonIntentReceiver.class.getName()));
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP)
-            mSession.setActive(true);
+        mSession.setActive(true);
 
         if (createNewNextTrack) {
             setNextTrack(); //重新产生mNextPlayPos

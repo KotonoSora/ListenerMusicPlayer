@@ -853,22 +853,7 @@ public class LyricView extends View {
 
     public int getDefaultColor() {
         return mDefaultColor;
-    }    Handler postman = new Handler() {
-
-        @Override
-        public void handleMessage(Message msg) {
-            super.handleMessage(msg);
-            switch (msg.what) {
-                case MSG_PLAYER_HIDE:
-                    postman.sendEmptyMessageDelayed(MSG_PLAYER_SLIDE, 1200);
-                    mIndicatorShow = false;
-                    invalidateView();
-                case MSG_PLAYER_SLIDE:
-                    smoothScrollTo(measureCurrentScrollY(mCurrentPlayLine));
-                    invalidateView();
-            }
-        }
-    };
+    }
 
     public void setDefaultColor(int color) {
         if (mDefaultColor != color) {
@@ -919,7 +904,22 @@ public class LyricView extends View {
 
     public void setTouchable(boolean touchable) {
         mTouchable = touchable;
-    }
+    }    Handler postman = new Handler() {
+
+        @Override
+        public void handleMessage(Message msg) {
+            super.handleMessage(msg);
+            switch (msg.what) {
+                case MSG_PLAYER_HIDE:
+                    postman.sendEmptyMessageDelayed(MSG_PLAYER_SLIDE, 1200);
+                    mIndicatorShow = false;
+                    invalidateView();
+                case MSG_PLAYER_SLIDE:
+                    smoothScrollTo(measureCurrentScrollY(mCurrentPlayLine));
+                    invalidateView();
+            }
+        }
+    };
 
     public void setHintColor(int color) {
         if (mHintColor != color) {

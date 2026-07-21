@@ -26,7 +26,7 @@ import io.hefuyi.listener.Constants;
 import io.hefuyi.listener.ListenerApp;
 import io.hefuyi.listener.R;
 import io.hefuyi.listener.RxBus;
-import io.hefuyi.listener.event.FavourateSongEvent;
+import io.hefuyi.listener.event.FavoriteSongEvent;
 import io.hefuyi.listener.event.MediaUpdateEvent;
 import io.hefuyi.listener.event.MetaChangedEvent;
 import io.hefuyi.listener.event.RecentlyPlayEvent;
@@ -76,7 +76,7 @@ public class SongsFragment extends Fragment implements SongsContract.View {
             case Constants.NAVIGATE_PLAYLIST_RECENTPLAY:
                 args.putString(Constants.PLAYLIST_TYPE, action);
                 break;
-            case Constants.NAVIGATE_PLAYLIST_FAVOURATE:
+            case Constants.NAVIGATE_PLAYLIST_FAVORITE:
                 args.putString(Constants.PLAYLIST_TYPE, action);
                 break;
             default:
@@ -134,8 +134,8 @@ public class SongsFragment extends Fragment implements SongsContract.View {
 
         mPresenter.loadSongs(action);
 
-        if (Constants.NAVIGATE_PLAYLIST_FAVOURATE.equals(action)) {
-            subscribeFavourateSongEvent();
+        if (Constants.NAVIGATE_PLAYLIST_FAVORITE.equals(action)) {
+            subscribeFavoriteSongEvent();
         } else if (Constants.NAVIGATE_PLAYLIST_RECENTPLAY.equals(action)) {
             subscribeRecentlyPlayEvent();
         } else {
@@ -230,14 +230,14 @@ public class SongsFragment extends Fragment implements SongsContract.View {
         recyclerView.setVisibility(View.INVISIBLE);
     }
 
-    private void subscribeFavourateSongEvent() {
+    private void subscribeFavoriteSongEvent() {
         Subscription subscription = RxBus.getInstance()
-                .toObservable(FavourateSongEvent.class)
+                .toObservable(FavoriteSongEvent.class)
                 .subscribeOn(Schedulers.io())
                 .observeOn(AndroidSchedulers.mainThread())
-                .subscribe(new Action1<FavourateSongEvent>() {
+                .subscribe(new Action1<FavoriteSongEvent>() {
                     @Override
-                    public void call(FavourateSongEvent event) {
+                    public void call(FavoriteSongEvent event) {
                         mPresenter.loadSongs(action);
                     }
                 }, new Action1<Throwable>() {

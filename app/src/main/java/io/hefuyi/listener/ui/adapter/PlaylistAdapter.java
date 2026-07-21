@@ -147,8 +147,7 @@ public class PlaylistAdapter extends RecyclerView.Adapter<PlaylistAdapter.ItemHo
                     }
                 });
 
-        if (ListenerUtil.isLollipop())
-            itemHolder.playlistArt.setTransitionName("transition_album_art" + i);
+        itemHolder.playlistArt.setTransitionName("transition_album_art" + i);
 
         setOnPopupMenuListener(itemHolder, i);
     }

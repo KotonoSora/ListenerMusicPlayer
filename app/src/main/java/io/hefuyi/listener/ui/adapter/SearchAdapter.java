@@ -103,8 +103,7 @@ public class SearchAdapter extends RecyclerView.Adapter<SearchAdapter.ItemHolder
                         .centerCrop()
                         .into(itemHolder.image);
 
-                if (ListenerUtil.isLollipop())
-                    itemHolder.image.setTransitionName("transition_album_art" + position);
+                itemHolder.image.setTransitionName("transition_album_art" + position);
 
                 setOnPopupMenuListener(itemHolder, 1, position);
                 break;
@@ -126,8 +125,7 @@ public class SearchAdapter extends RecyclerView.Adapter<SearchAdapter.ItemHolder
                             .into(itemHolder.image);
                 }
 
-                if (ListenerUtil.isLollipop())
-                    itemHolder.image.setTransitionName("transition_artist_art" + position);
+                itemHolder.image.setTransitionName("transition_artist_art" + position);
 
                 setOnPopupMenuListener(itemHolder, 2, position);
                 break;

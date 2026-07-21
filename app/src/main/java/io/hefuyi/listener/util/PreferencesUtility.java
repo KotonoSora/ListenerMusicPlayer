@@ -20,7 +20,6 @@ public class PreferencesUtility {
     private static final String TOGGLE_ALBUM_GRID = "toggle_album_grid";
     private static final String TOGGLE_PLAYLIST_VIEW = "toggle_playlist_view";
     private static final String START_PAGE_INDEX = "start_page_index";
-    private static final String TOGGLE_WORK_OFFLINE = "toggle_work_offline";
     private static PreferencesUtility sInstance;
 
     private static volatile SharedPreferences mPreferences;
@@ -138,14 +137,5 @@ public class PreferencesUtility {
         editor.apply();
     }
 
-    public boolean isWorkOffline() {
-        return mPreferences.getBoolean(TOGGLE_WORK_OFFLINE, true);
-    }
-
-    public void setWorkOffline(final boolean b) {
-        final SharedPreferences.Editor editor = mPreferences.edit();
-        editor.putBoolean(TOGGLE_WORK_OFFLINE, b);
-        editor.apply();
-    }
 
 }

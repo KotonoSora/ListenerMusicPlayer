@@ -1,9 +1,7 @@
 package io.hefuyi.listener.respository.interfaces;
 
-import java.io.File;
 import java.util.List;
 
-import io.hefuyi.listener.api.model.ArtistInfo;
 import io.hefuyi.listener.mvp.model.Album;
 import io.hefuyi.listener.mvp.model.Artist;
 import io.hefuyi.listener.mvp.model.FolderInfo;
@@ -19,9 +17,6 @@ public interface Repository {
 
     //from network
 
-    Observable<ArtistInfo> getArtistInfo(String artist);
-
-    Observable<File> downloadLrcFile(String title, String artist, long duration);
 
     //form local
 
@@ -61,11 +56,11 @@ public interface Repository {
 
     Observable<List<Song>> getQueueSongs();
 
-    Observable<List<Song>> getFavourateSongs();
+    Observable<List<Song>> getFavoriteSongs();
 
-    Observable<List<Album>> getFavourateAlbums();
+    Observable<List<Album>> getFavoriteAlbums();
 
-    Observable<List<Artist>> getFavourateArtist();
+    Observable<List<Artist>> getFavoriteArtist();
 
     Observable<List<Song>> getAllSongs();
 

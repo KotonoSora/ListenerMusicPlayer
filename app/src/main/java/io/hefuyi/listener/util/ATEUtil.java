@@ -26,13 +26,11 @@ public class ATEUtil {
         return Config.primaryColor(context, getATEKey(context));
     }
 
-    public static int getThemePrimaryColorDark(Context context) {
-        return Config.primaryColorDark(context, getATEKey(context));
-    }
 
     public static int getThemeAccentColor(Context context) {
         return Config.accentColor(context, getATEKey(context));
     }
+
 
     public static int getThemeTextColorPrimary(Context context) {
         TypedValue textColorPrimary = new TypedValue();

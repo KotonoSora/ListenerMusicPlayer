@@ -141,19 +141,13 @@ public class PermissionManager {
         //Group Phone
         permissions.add(Manifest.permission.CALL_PHONE);
         permissions.add(Manifest.permission.READ_PHONE_STATE);
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN) {
-            permissions.add(Manifest.permission.READ_CALL_LOG);
-        }
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN) {
-            permissions.add(Manifest.permission.WRITE_CALL_LOG);
-        }
+        permissions.add(Manifest.permission.READ_CALL_LOG);
+        permissions.add(Manifest.permission.WRITE_CALL_LOG);
         permissions.add(Manifest.permission.ADD_VOICEMAIL);
         permissions.add(Manifest.permission.USE_SIP);
         permissions.add(Manifest.permission.PROCESS_OUTGOING_CALLS);
         //Group Body sensors
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT_WATCH) {
-            permissions.add(Manifest.permission.BODY_SENSORS);
-        }
+        permissions.add(Manifest.permission.BODY_SENSORS);
         //Group SMS
         permissions.add(Manifest.permission.SEND_SMS);
         permissions.add(Manifest.permission.READ_SMS);
@@ -164,7 +158,7 @@ public class PermissionManager {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
             permissions.add(Manifest.permission.READ_MEDIA_AUDIO);
             permissions.add(Manifest.permission.POST_NOTIFICATIONS);
-        } else if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN) {
+        } else {
             permissions.add(Manifest.permission.READ_EXTERNAL_STORAGE);
         }
         permissions.add(Manifest.permission.WRITE_EXTERNAL_STORAGE);

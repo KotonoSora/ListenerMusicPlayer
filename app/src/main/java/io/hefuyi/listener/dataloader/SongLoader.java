@@ -51,7 +51,7 @@ public class SongLoader {
         });
     }
 
-    public static Observable<List<Song>> getFavoriteSong(final Context context) {
+    public static Observable<List<Song>> getFavoriteSongs(final Context context) {
         Cursor cursor = FavoriteSong.getInstance(context).getFavoriteSong();
         SortedCursor retCursor = TopTracksLoader.makeSortedCursor(context, cursor, 0);
         return SongLoader.getSongsForCursor(retCursor);

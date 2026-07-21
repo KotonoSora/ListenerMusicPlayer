@@ -27,14 +27,10 @@ import com.google.gson.Gson;
 
 import java.util.List;
 
-import javax.inject.Inject;
-
 import io.hefuyi.listener.Constants;
 import io.hefuyi.listener.ListenerApp;
 import io.hefuyi.listener.MusicPlayer;
 import io.hefuyi.listener.R;
-import io.hefuyi.listener.api.model.ArtistInfo;
-import io.hefuyi.listener.api.model.Artwork;
 import io.hefuyi.listener.dataloader.ArtistSongLoader;
 import io.hefuyi.listener.injector.component.ApplicationComponent;
 import io.hefuyi.listener.injector.component.ArtistInfoComponent;
@@ -43,7 +39,6 @@ import io.hefuyi.listener.injector.module.ArtistInfoModule;
 import io.hefuyi.listener.mvp.model.Artist;
 import io.hefuyi.listener.mvp.model.ArtistArt;
 import io.hefuyi.listener.mvp.model.Song;
-import io.hefuyi.listener.mvp.usecase.GetArtistInfo;
 import io.hefuyi.listener.util.ATEUtil;
 import io.hefuyi.listener.util.ColorUtil;
 import io.hefuyi.listener.util.ListenerUtil;
@@ -61,8 +56,6 @@ public class ArtistAdapter extends RecyclerView.Adapter<ArtistAdapter.ItemHolder
 
     private final Activity mContext;
     private final boolean isGrid;
-    @Inject
-    GetArtistInfo getArtistInfo;
     private List<Artist> arraylist;
     private String action;
 
@@ -113,42 +106,15 @@ public class ArtistAdapter extends RecyclerView.Adapter<ArtistAdapter.ItemHolder
         itemHolder.albumCount.setText(ListenerUtil.makeLabel(mContext, R.plurals.Nalbums, localItem.albumCount));
         itemHolder.songCount.setText(ListenerUtil.makeLabel(mContext, R.plurals.Nsongs, localItem.songCount));
 
-        if (PreferencesUtility.getInstance(mContext).isWorkOffline()) {
+        String artistArtJson = PreferencesUtility.getInstance(mContext).getArtistArt(localItem.id);
+        if (TextUtils.isEmpty(artistArtJson)) {
             loadArtistArt(null, itemHolder);
         } else {
-            String artistArtJson = PreferencesUtility.getInstance(mContext).getArtistArt(localItem.id);
-            if (TextUtils.isEmpty(artistArtJson)) {
-                getArtistInfo.execute(new GetArtistInfo.RequestValues(localItem.name))
-                        .getArtistInfo()
-                        .subscribeOn(Schedulers.io())
-                        .observeOn(AndroidSchedulers.mainThread())
-                        .onErrorReturn(new Func1<Throwable, ArtistInfo>() {
-                            @Override
-                            public ArtistInfo call(Throwable throwable) {
-                                return null;
-                            }
-                        })
-                        .subscribe(new Action1<ArtistInfo>() {
-                            @Override
-                            public void call(ArtistInfo artistInfo) {
-                                if (artistInfo != null && artistInfo.mArtist != null && artistInfo.mArtist.mArtwork != null) {
-                                    List<Artwork> artworks = artistInfo.mArtist.mArtwork;
-                                    ArtistArt artistArt = new ArtistArt(artworks.get(0).mUrl, artworks.get(1).mUrl,
-                                            artworks.get(2).mUrl, artworks.get(3).mUrl);
-                                    PreferencesUtility.getInstance(mContext).setArtistArt(localItem.id, new Gson().toJson(artistArt));
-                                    loadArtistArt(artistArt, itemHolder);
-                                }
-                            }
-                        });
-
-            } else {
-                ArtistArt artistArt = new Gson().fromJson(artistArtJson, ArtistArt.class);
-                loadArtistArt(artistArt, itemHolder);
-            }
+            ArtistArt artistArt = new Gson().fromJson(artistArtJson, ArtistArt.class);
+            loadArtistArt(artistArt, itemHolder);
         }
 
-        if (ListenerUtil.isLollipop())
-            itemHolder.artistImage.setTransitionName("transition_artist_art" + i);
+        itemHolder.artistImage.setTransitionName("transition_artist_art" + i);
 
         setOnPopupMenuListener(itemHolder, i);
 
@@ -263,14 +229,14 @@ public class ArtistAdapter extends RecyclerView.Adapter<ArtistAdapter.ItemHolder
                                     });
                         } else if (itemId == R.id.popup_artist_delete) {
                             switch (action) {
-                                case Constants.NAVIGATE_PLAYLIST_FAVOURATE:
+                                case Constants.NAVIGATE_PLAYLIST_FAVORITE:
                                     getSongListIdByArtist(artist.id)
                                             .subscribeOn(Schedulers.io())
                                             .observeOn(AndroidSchedulers.mainThread())
                                             .subscribe(new Action1<long[]>() {
                                                 @Override
                                                 public void call(long[] ids) {
-                                                    ListenerUtil.showDeleteFromFavourate(mContext, ids);
+                                                    ListenerUtil.showDeleteFromFavorite(mContext, ids);
                                                 }
                                             });
                                     break;

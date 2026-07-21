@@ -4,7 +4,6 @@ import dagger.Module;
 import dagger.Provides;
 import io.hefuyi.listener.mvp.contract.QuickControlsContract;
 import io.hefuyi.listener.mvp.presenter.QuickControlsPresenter;
-import io.hefuyi.listener.mvp.usecase.GetLyric;
 import io.hefuyi.listener.respository.interfaces.Repository;
 
 /**
@@ -14,13 +13,9 @@ import io.hefuyi.listener.respository.interfaces.Repository;
 public class QuickControlsModule {
 
     @Provides
-    QuickControlsContract.Presenter getQuickControlsPresenter(GetLyric getLyric) {
-        return new QuickControlsPresenter(getLyric);
+    QuickControlsContract.Presenter getQuickControlsPresenter(Repository repository) {
+        return new QuickControlsPresenter(repository);
     }
 
-    @Provides
-    GetLyric getLyricUsecase(Repository repository) {
-        return new GetLyric(repository);
-    }
 
 }

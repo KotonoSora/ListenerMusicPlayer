@@ -1,8 +1,6 @@
 package io.hefuyi.listener.util;
 
-import static io.hefuyi.listener.util.ListenerUtil.isLollipop;
 
-import android.annotation.TargetApi;
 import android.app.Activity;
 import android.content.ActivityNotFoundException;
 import android.content.Context;
@@ -32,12 +30,11 @@ import io.hefuyi.listener.ui.fragment.PlaylistDetailFragment;
 
 public class NavigationUtil {
 
-    @TargetApi(21)
     public static void navigateToAlbum(Activity context, long albumID, String albumName, Pair<View, String> transitionViews) {
         FragmentTransaction transaction = ((AppCompatActivity) context).getSupportFragmentManager().beginTransaction();
         Fragment fragment;
 
-        if (isLollipop() && transitionViews != null) {
+        if (transitionViews != null) {
             Transition changeImage = TransitionInflater.from(context).inflateTransition(R.transition.image_transform);
             transaction.addSharedElement(transitionViews.first, transitionViews.second);
             fragment = AlbumDetailFragment.newInstance(albumID, albumName, true, transitionViews.second);
@@ -54,12 +51,11 @@ public class NavigationUtil {
 
     }
 
-    @TargetApi(21)
     public static void navigateToArtist(Activity context, long artistID, String name, Pair<View, String> transitionViews) {
         FragmentTransaction transaction = ((AppCompatActivity) context).getSupportFragmentManager().beginTransaction();
         Fragment fragment;
 
-        if (ListenerUtil.isLollipop() && transitionViews != null) {
+        if (transitionViews != null) {
             Transition changeImage = TransitionInflater.from(context).inflateTransition(R.transition.image_transform);
             transaction.addSharedElement(transitionViews.first, transitionViews.second);
             fragment = ArtistDetailFragment.newInstance(artistID, name, true, transitionViews.second);
@@ -102,12 +98,11 @@ public class NavigationUtil {
         context.startActivity(intent);
     }
 
-    @TargetApi(21)
     public static void navigateToPlaylistDetail(Activity context, long playlistID, String playlistName, long firstAlbumID, Pair<View, String> transitionViews) {
         FragmentTransaction transaction = ((AppCompatActivity) context).getSupportFragmentManager().beginTransaction();
         Fragment fragment;
 
-        if (isLollipop() && transitionViews != null) {
+        if (transitionViews != null) {
             Transition changeImage = TransitionInflater.from(context).inflateTransition(R.transition.image_transform);
             transaction.addSharedElement(transitionViews.first, transitionViews.second);
             fragment = PlaylistDetailFragment.newInstance(playlistID, playlistName, firstAlbumID, true, transitionViews.second);
@@ -116,7 +111,7 @@ public class NavigationUtil {
         } else {
             transaction.setCustomAnimations(R.anim.activity_fade_in,
                     R.anim.activity_fade_out, R.anim.activity_fade_in, R.anim.activity_fade_out);
-            fragment = PlaylistDetailFragment.newInstance(playlistID, playlistName, firstAlbumID, false, transitionViews.second);
+            fragment = PlaylistDetailFragment.newInstance(playlistID, playlistName, firstAlbumID, false, null);
         }
         transaction.hide(((AppCompatActivity) context).getSupportFragmentManager().findFragmentById(R.id.fragment_container));
         transaction.add(R.id.fragment_container, fragment);

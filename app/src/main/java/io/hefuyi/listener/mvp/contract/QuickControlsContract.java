@@ -49,9 +49,9 @@ public interface QuickControlsContract {
 
         void onPreviousClick();
 
-        void loadLyric();
-
         void onNextClick();
+
+        void loadLyric();
 
         void updateNowPlayingCard();
 

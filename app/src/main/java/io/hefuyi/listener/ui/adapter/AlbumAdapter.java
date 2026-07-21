@@ -119,8 +119,7 @@ public class AlbumAdapter extends RecyclerView.Adapter<AlbumAdapter.ItemHolder> 
                     }
                 });
 
-        if (ListenerUtil.isLollipop())
-            itemHolder.albumArt.setTransitionName("transition_album_art" + i);
+        itemHolder.albumArt.setTransitionName("transition_album_art" + i);
 
         setOnPopupMenuListener(itemHolder, i);
 
@@ -185,14 +184,14 @@ public class AlbumAdapter extends RecyclerView.Adapter<AlbumAdapter.ItemHolder> 
                                     arraylist.get(position).artistName);
                         } else if (itemId == R.id.popup_artist_delete) {
                             switch (action) {
-                                case Constants.NAVIGATE_PLAYLIST_FAVOURATE:
+                                case Constants.NAVIGATE_PLAYLIST_FAVORITE:
                                     getSongListIdByAlbum(album.id)
                                             .subscribeOn(Schedulers.io())
                                             .observeOn(AndroidSchedulers.mainThread())
                                             .subscribe(new Action1<long[]>() {
                                                 @Override
                                                 public void call(long[] ids) {
-                                                    ListenerUtil.showDeleteFromFavourate(mContext, ids);
+                                                    ListenerUtil.showDeleteFromFavorite(mContext, ids);
                                                 }
                                             });
                                     break;

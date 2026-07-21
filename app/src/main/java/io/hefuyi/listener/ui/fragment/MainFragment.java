@@ -53,7 +53,7 @@ public class MainFragment extends Fragment {
             case Constants.NAVIGATE_PLAYLIST_RECENTPLAY:
                 bundle.putString(Constants.PLAYLIST_TYPE, action);
                 break;
-            case Constants.NAVIGATE_PLAYLIST_FAVOURATE:
+            case Constants.NAVIGATE_PLAYLIST_FAVORITE:
                 bundle.putString(Constants.PLAYLIST_TYPE, action);
                 break;
             default:
@@ -107,8 +107,8 @@ public class MainFragment extends Fragment {
             case Constants.NAVIGATE_PLAYLIST_RECENTPLAY:
                 ab.setTitle(R.string.recent_play);
                 break;
-            case Constants.NAVIGATE_PLAYLIST_FAVOURATE:
-                ab.setTitle(R.string.favourate);
+            case Constants.NAVIGATE_PLAYLIST_FAVORITE:
+                ab.setTitle(R.string.favorite);
                 break;
         }
 

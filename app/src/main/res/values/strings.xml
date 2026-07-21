@@ -18,7 +18,7 @@
 
     <string name="playlist_last_added">Last Added</string>
     <string name="playlist_recently_played">Recently Played</string>
-    <string name="playlist_top_tracks">My Favourate Tracks</string>
+    <string name="playlist_top_tracks">My Favorite Tracks</string>
 
     <string name="menu_show_as">View As</string>
     <string name="menu_show_as_entry_list">List</string>
@@ -30,11 +30,12 @@
     <string name="library">Library</string>
     <string name="playlists">Playlists</string>
     <string name="folders">Folders</string>
-    <string name="favourate">Favourate</string>
+    <string name="favorite">Favorite</string>
     <string name="recent_play">Recent Play</string>
     <string name="recent_add">Recent Add</string>
     <string name="settings">Settings</string>
     <string name="exit">Exit</string>
+    <string name="tags">Tags</string>
     <string name="search">Search</string>
     <string name="action_equalizer">Equalizer</string>
     <string name="equalizer_not_found">Equalizer not found</string>
@@ -84,10 +85,10 @@
     <string name="repeat_current">Repeat Current</string>
     <string name="repeat_all">Repeat All</string>
     <string name="shuffle_all">Shuffle All</string>
-    <string name="add_favorite_success">Add Favourite Song Success</string>
-    <string name="add_favorite_fail">Add Favourite Song Fail</string>
-    <string name="remove_favorite_success">Remove Favourite Song Success</string>
-    <string name="remove_favorite_fail">Remove Favourite Song Fail</string>
+    <string name="add_favorite_success">Add Favorite Song Success</string>
+    <string name="add_favorite_fail">Add Favorite Song Fail</string>
+    <string name="remove_favorite_success">Remove Favorite Song Success</string>
+    <string name="remove_favorite_fail">Remove Favorite Song Fail</string>
     <string name="create_new_playlist">Create new playlist</string>
     <string name="create">Create</string>
     <string name="cancel">Cancel</string>
@@ -106,7 +107,7 @@
     <string name="delete_playlist_song">Delete Song From Playlist?</string>
     <string name="delete_folder">Delete Folder</string>
     <string name="delete_folder_confirmation">Delete %d songs in this folder?</string>
-    <string name="delete_song_favourate">Delete Song From Favourate?</string>
+    <string name="delete_song_favorite">Delete Song From Favorite?</string>
     <string name="delete_song_recentlyplay">Delete Song From Recently Play?</string>
     <string name="clear_song_queue">Remove Song From Quene?</string>
     <string name="delete_song_confirmation">Delete %s ?</string>
@@ -114,5 +115,9 @@
     <string name="color">Color</string>
     <string name="sure">Sure</string>
     <string name="no_lyrics">No lyrics</string>
+    <string name="lyric_search_hint">Search by song or artist</string>
+    <string name="searching">Searching...</string>
+    <string name="download_lyric_success">Download lyric success</string>
+    <string name="download_lyric_fail">Download lyric fail</string>
     <string name="colon" translatable="false">:</string>
 </resources>

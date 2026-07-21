@@ -8,7 +8,6 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.ServiceConnection;
-import android.os.Build;
 import android.os.Bundle;
 import android.os.IBinder;
 import android.view.Menu;
@@ -50,9 +49,7 @@ public class BaseActivity extends ATEActivity implements ServiceConnection {
         EdgeToEdge.enable(this);
         super.onCreate(savedInstanceState);
 
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-            getWindow().setNavigationBarContrastEnforced(false);
-        }
+        getWindow().setNavigationBarContrastEnforced(false);
 
         mToken = MusicPlayer.bindToService(this, this);
         mPlaybackStatus = new PlaybackStatus(this);

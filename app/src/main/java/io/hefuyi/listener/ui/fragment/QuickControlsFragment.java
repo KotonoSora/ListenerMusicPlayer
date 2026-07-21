@@ -51,7 +51,7 @@ import io.hefuyi.listener.MusicPlayer;
 import io.hefuyi.listener.R;
 import io.hefuyi.listener.RxBus;
 import io.hefuyi.listener.databinding.FragmentPlaybackControlsBinding;
-import io.hefuyi.listener.event.FavourateSongEvent;
+import io.hefuyi.listener.event.FavoriteSongEvent;
 import io.hefuyi.listener.event.MetaChangedEvent;
 import io.hefuyi.listener.event.PlayStateChangedEvent;
 import io.hefuyi.listener.injector.component.ApplicationComponent;
@@ -217,7 +217,7 @@ public class QuickControlsFragment extends Fragment implements QuickControlsCont
 
         mLyricView.setLineSpace(15.0f);
         mLyricView.setTextSize(17.0f);
-        mLyricView.setPlayable(false);
+        mLyricView.setPlayable(true);
         mLyricView.setTranslationY(DensityUtil.getScreenWidth(getActivity()) + DensityUtil.dip2px(getActivity(), 120));
         mLyricView.setOnPlayerClickListener(new LyricView.OnPlayerClickListener() {
             @Override
@@ -282,6 +282,7 @@ public class QuickControlsFragment extends Fragment implements QuickControlsCont
             }
         });
 
+
         binding.upIndicator.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -297,7 +298,7 @@ public class QuickControlsFragment extends Fragment implements QuickControlsCont
 
         mPresenter.updateNowPlayingCard();
 
-        subscribeFavourateSongEvent();
+        subscribeFavoriteSongEvent();
         subscribeMetaChangedEvent();
         subscribePlayStateChangedEvent();
     }
@@ -454,21 +455,7 @@ public class QuickControlsFragment extends Fragment implements QuickControlsCont
     @Override
     public void startUpdateProgress() {
         mProgress.postDelayed(mUpdateProgress, 10);
-    }    private final Runnable mUpdateProgress = new Runnable() {
-
-        @Override
-        public void run() {
-
-            long position = MusicPlayer.position();
-            mProgress.setProgress((int) position);
-            mSeekBar.setProgress((int) position);
-            mLyricView.setCurrentTimeMillis(position);
-            if (MusicPlayer.isPlaying()) {
-                mProgress.postDelayed(mUpdateProgress, 50);
-            } else mProgress.removeCallbacks(this);
-
-        }
-    };
+    }
 
     @Override
     public void setProgressMax(int max) {
@@ -486,15 +473,18 @@ public class QuickControlsFragment extends Fragment implements QuickControlsCont
         mAlbumArt.setImageDrawable(albumArt);
         if (TextUtils.isEmpty(MusicPlayer.getTrackName()) && TextUtils.isEmpty(MusicPlayer.getArtistName())) {
             mAlbumArt.setForeground(null);
+            if (getContext() == null) {
+                return;
+            }
             TypedValue paletteColor = new TypedValue();
             getContext().getTheme().resolveAttribute(R.attr.album_default_palette_color, paletteColor, true);
             topContainer.setBackgroundColor(paletteColor.data);
-            mPlayPauseView.setDrawableColor(ATEUtil.getThemeAccentColor(getActivity()));
+            mPlayPauseView.setDrawableColor(ATEUtil.getThemeAccentColor(getContext()));
             mPlayPauseView.setEnabled(false);
             next.setEnabled(false);
             next.setColor(ATEUtil.getThemeAccentColor(getContext()));
             if (sListener != null) {
-                sListener.onPaletteColorChange(paletteColor.data, ATEUtil.getThemeAccentColor(getActivity()));
+                sListener.onPaletteColorChange(paletteColor.data, ATEUtil.getThemeAccentColor(getContext()));
             }
         }
     }
@@ -515,6 +505,9 @@ public class QuickControlsFragment extends Fragment implements QuickControlsCont
 
     @Override
     public void setPalette(Palette palette) {
+        if (getContext() == null) {
+            return;
+        }
         if (palette != null) {
             mSwatch = ColorUtil.getMostPopulousSwatch(palette);
         } else {
@@ -591,7 +584,21 @@ public class QuickControlsFragment extends Fragment implements QuickControlsCont
             sListener.onPaletteColorChange(paletteColor, blackWhiteColor);
         }
 
-    }
+    }    private final Runnable mUpdateProgress = new Runnable() {
+
+        @Override
+        public void run() {
+
+            long position = MusicPlayer.position();
+            mProgress.setProgress((int) position);
+            mSeekBar.setProgress((int) position);
+            mLyricView.setCurrentTimeMillis(position);
+            if (MusicPlayer.isPlaying()) {
+                mProgress.postDelayed(mUpdateProgress, 50);
+            } else mProgress.removeCallbacks(this);
+
+        }
+    };
 
     public void onUpIndicatorClick() {
         if (mSlidingUpPanelLayout != null) {
@@ -629,7 +636,7 @@ public class QuickControlsFragment extends Fragment implements QuickControlsCont
             if (num == 1) {
                 favorite.setColor(blackWhiteColor);
                 mIsFavorite = false;
-                RxBus.getInstance().post(new FavourateSongEvent());
+                RxBus.getInstance().post(new FavoriteSongEvent());
                 Toast.makeText(getContext(), R.string.remove_favorite_success, Toast.LENGTH_SHORT).show();
             } else {
                 Toast.makeText(getContext(), R.string.remove_favorite_fail, Toast.LENGTH_SHORT).show();
@@ -639,7 +646,7 @@ public class QuickControlsFragment extends Fragment implements QuickControlsCont
             if (num == 1) {
                 favorite.setColor(Color.parseColor("#E97767"));
                 mIsFavorite = true;
-                RxBus.getInstance().post(new FavourateSongEvent());
+                RxBus.getInstance().post(new FavoriteSongEvent());
                 Toast.makeText(getContext(), R.string.add_favorite_success, Toast.LENGTH_SHORT).show();
             } else {
                 Toast.makeText(getContext(), R.string.add_favorite_fail, Toast.LENGTH_SHORT).show();
@@ -647,14 +654,17 @@ public class QuickControlsFragment extends Fragment implements QuickControlsCont
         }
     }
 
-    private void subscribeFavourateSongEvent() {
+    private void subscribeFavoriteSongEvent() {
         Subscription subscription = RxBus.getInstance()
-                .toObservable(FavourateSongEvent.class)
+                .toObservable(FavoriteSongEvent.class)
                 .subscribeOn(Schedulers.io())
                 .observeOn(AndroidSchedulers.mainThread())
-                .subscribe(new Action1<FavourateSongEvent>() {
+                .subscribe(new Action1<FavoriteSongEvent>() {
                     @Override
-                    public void call(FavourateSongEvent event) {
+                    public void call(FavoriteSongEvent event) {
+                        if (getContext() == null) {
+                            return;
+                        }
                         mIsFavorite = FavoriteSong.getInstance(getContext()).isFavorite(MusicPlayer.getCurrentAudioId());
                         if (mIsFavorite) {
                             favorite.setColor(Color.parseColor("#E97767"));
