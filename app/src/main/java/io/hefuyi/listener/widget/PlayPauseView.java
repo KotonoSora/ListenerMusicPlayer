@@ -2,21 +2,20 @@ package io.hefuyi.listener.widget;
 
 import android.animation.Animator;
 import android.animation.AnimatorSet;
-import android.annotation.TargetApi;
 import android.content.Context;
 import android.content.res.TypedArray;
 import android.graphics.Canvas;
 import android.graphics.Outline;
 import android.graphics.Paint;
 import android.graphics.drawable.Drawable;
-import android.os.Build;
-import android.support.annotation.ColorInt;
 import android.util.AttributeSet;
 import android.util.Property;
 import android.view.View;
 import android.view.ViewOutlineProvider;
 import android.view.animation.DecelerateInterpolator;
 import android.widget.FrameLayout;
+
+import androidx.annotation.ColorInt;
 
 import io.hefuyi.listener.R;
 import io.hefuyi.listener.util.ATEUtil;
@@ -40,14 +39,14 @@ public class PlayPauseView extends FrameLayout {
 
     private final PlayPauseDrawable mDrawable;
     private final Paint mPaint = new Paint();
-    private int mDrawableColor;
     public boolean isDrawCircle;
     public int circleAlpha;
-
+    private int mDrawableColor;
     private AnimatorSet mAnimatorSet;
     private int mBackgroundColor;
     private int mWidth;
     private int mHeight;
+    private boolean mIsPlay;
 
     public PlayPauseView(Context context, AttributeSet attrs) {
         super(context, attrs);
@@ -83,27 +82,13 @@ public class PlayPauseView extends FrameLayout {
         mWidth = w;
         mHeight = h;
 
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
-            setOutlineProvider(new ViewOutlineProvider() {
-                @TargetApi(Build.VERSION_CODES.LOLLIPOP)
-                @Override
-                public void getOutline(View view, Outline outline) {
-                    outline.setOval(0, 0, view.getWidth(), view.getHeight());
-                }
-            });
-            setClipToOutline(true);
-        }
-    }
-
-    public void setCircleColor(@ColorInt int color) {
-        mBackgroundColor = color;
-        invalidate();
-    }
-
-    public void setDrawableColor(@ColorInt int color) {
-        mDrawableColor = color;
-        mDrawable.setDrawableColor(color);
-        invalidate();
+        setOutlineProvider(new ViewOutlineProvider() {
+            @Override
+            public void getOutline(View view, Outline outline) {
+                outline.setOval(0, 0, view.getWidth(), view.getHeight());
+            }
+        });
+        setClipToOutline(true);
     }
 
     public void setCircleAlpah(int alpah) {
@@ -115,8 +100,19 @@ public class PlayPauseView extends FrameLayout {
         return mBackgroundColor;
     }
 
+    public void setCircleColor(@ColorInt int color) {
+        mBackgroundColor = color;
+        invalidate();
+    }
+
     public int getDrawableColor() {
         return mDrawableColor;
+    }
+
+    public void setDrawableColor(@ColorInt int color) {
+        mDrawableColor = color;
+        mDrawable.setDrawableColor(color);
+        invalidate();
     }
 
     @Override
@@ -142,14 +138,15 @@ public class PlayPauseView extends FrameLayout {
         mDrawable.draw(canvas);
     }
 
-    private boolean mIsPlay;
-
     public boolean isPlay() {
         return mIsPlay;
     }
 
     //此时为待暂停标识
     public void Play() {
+        if (mIsPlay) {
+            return;
+        }
         if (mAnimatorSet != null) {
             mAnimatorSet.cancel();
         }
@@ -164,6 +161,9 @@ public class PlayPauseView extends FrameLayout {
 
     //此时为为待播放标识
     public void Pause() {
+        if (!mIsPlay) {
+            return;
+        }
         if (mAnimatorSet != null) {
             mAnimatorSet.cancel();
         }

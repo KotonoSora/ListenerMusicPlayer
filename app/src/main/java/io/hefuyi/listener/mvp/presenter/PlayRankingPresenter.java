@@ -18,7 +18,7 @@ import rx.subscriptions.CompositeSubscription;
 
 public class PlayRankingPresenter implements PlayRankingContract.Presenter {
 
-    private GetSongs mUsecase;
+    private final GetSongs mUsecase;
     private PlayRankingContract.View mView;
     private CompositeSubscription mCompositeSubscription;
 

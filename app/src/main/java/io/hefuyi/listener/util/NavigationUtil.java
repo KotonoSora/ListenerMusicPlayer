@@ -1,18 +1,19 @@
 package io.hefuyi.listener.util;
 
-import android.annotation.TargetApi;
+
 import android.app.Activity;
 import android.content.ActivityNotFoundException;
 import android.content.Context;
 import android.content.Intent;
-import android.support.v4.app.Fragment;
-import android.support.v4.app.FragmentTransaction;
-import android.support.v7.app.AppCompatActivity;
 import android.transition.Transition;
 import android.transition.TransitionInflater;
 import android.util.Pair;
 import android.view.View;
 import android.widget.Toast;
+
+import androidx.appcompat.app.AppCompatActivity;
+import androidx.fragment.app.Fragment;
+import androidx.fragment.app.FragmentTransaction;
 
 import io.hefuyi.listener.Constants;
 import io.hefuyi.listener.R;
@@ -23,20 +24,17 @@ import io.hefuyi.listener.ui.fragment.ArtistDetailFragment;
 import io.hefuyi.listener.ui.fragment.FolderSongsFragment;
 import io.hefuyi.listener.ui.fragment.PlaylistDetailFragment;
 
-import static io.hefuyi.listener.util.ListenerUtil.isLollipop;
-
 /**
  * Created by hefuyi on 2016/11/6.
  */
 
 public class NavigationUtil {
 
-    @TargetApi(21)
     public static void navigateToAlbum(Activity context, long albumID, String albumName, Pair<View, String> transitionViews) {
         FragmentTransaction transaction = ((AppCompatActivity) context).getSupportFragmentManager().beginTransaction();
         Fragment fragment;
 
-        if (isLollipop() && transitionViews != null) {
+        if (transitionViews != null) {
             Transition changeImage = TransitionInflater.from(context).inflateTransition(R.transition.image_transform);
             transaction.addSharedElement(transitionViews.first, transitionViews.second);
             fragment = AlbumDetailFragment.newInstance(albumID, albumName, true, transitionViews.second);
@@ -53,12 +51,11 @@ public class NavigationUtil {
 
     }
 
-    @TargetApi(21)
     public static void navigateToArtist(Activity context, long artistID, String name, Pair<View, String> transitionViews) {
         FragmentTransaction transaction = ((AppCompatActivity) context).getSupportFragmentManager().beginTransaction();
         Fragment fragment;
 
-        if (ListenerUtil.isLollipop() && transitionViews != null) {
+        if (transitionViews != null) {
             Transition changeImage = TransitionInflater.from(context).inflateTransition(R.transition.image_transform);
             transaction.addSharedElement(transitionViews.first, transitionViews.second);
             fragment = ArtistDetailFragment.newInstance(artistID, name, true, transitionViews.second);
@@ -101,12 +98,11 @@ public class NavigationUtil {
         context.startActivity(intent);
     }
 
-    @TargetApi(21)
     public static void navigateToPlaylistDetail(Activity context, long playlistID, String playlistName, long firstAlbumID, Pair<View, String> transitionViews) {
         FragmentTransaction transaction = ((AppCompatActivity) context).getSupportFragmentManager().beginTransaction();
         Fragment fragment;
 
-        if (isLollipop() && transitionViews != null) {
+        if (transitionViews != null) {
             Transition changeImage = TransitionInflater.from(context).inflateTransition(R.transition.image_transform);
             transaction.addSharedElement(transitionViews.first, transitionViews.second);
             fragment = PlaylistDetailFragment.newInstance(playlistID, playlistName, firstAlbumID, true, transitionViews.second);
@@ -115,7 +111,7 @@ public class NavigationUtil {
         } else {
             transaction.setCustomAnimations(R.anim.activity_fade_in,
                     R.anim.activity_fade_out, R.anim.activity_fade_in, R.anim.activity_fade_out);
-            fragment = PlaylistDetailFragment.newInstance(playlistID, playlistName, firstAlbumID, false, transitionViews.second);
+            fragment = PlaylistDetailFragment.newInstance(playlistID, playlistName, firstAlbumID, false, null);
         }
         transaction.hide(((AppCompatActivity) context).getSupportFragmentManager().findFragmentById(R.id.fragment_container));
         transaction.add(R.id.fragment_container, fragment);
@@ -137,7 +133,7 @@ public class NavigationUtil {
             // The google MusicFX apps need to be started using startActivityForResult
             context.startActivityForResult(ListenerUtil.createEffectsIntent(), 666);
         } catch (final ActivityNotFoundException notFound) {
-            Toast.makeText(context, "Equalizer not found", Toast.LENGTH_SHORT).show();
+            Toast.makeText(context, R.string.equalizer_not_found, Toast.LENGTH_SHORT).show();
         }
     }
 

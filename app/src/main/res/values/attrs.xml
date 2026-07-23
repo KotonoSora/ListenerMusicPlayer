@@ -19,7 +19,7 @@
     </declare-styleable>
 
     <declare-styleable name="ForegroundImageView">
-        <attr name="android:foreground"/>
+        <attr name="android:foreground" />
     </declare-styleable>
 
     <declare-styleable name="PlayPause">

@@ -15,19 +15,18 @@ import android.view.animation.Interpolator;
 public class SongPlayCount {
     // how many weeks worth of playback to track
     private static final int NUM_WEEKS = 52;
-    private static volatile SongPlayCount sInstance = null;
     // interpolator curve applied for measuring the curve
-    private static Interpolator sInterpolator = new AccelerateInterpolator(1.5f);
+    private static final Interpolator sInterpolator = new AccelerateInterpolator(1.5f);
     // how high to multiply the interpolation curve
-    private static int INTERPOLATOR_HEIGHT = 50;
+    private static final int INTERPOLATOR_HEIGHT = 50;
     // how high the base value is. The ratio of the Height to Base is what really matters
-    private static int INTERPOLATOR_BASE = 25;
-    private static int ONE_WEEK_IN_MS = 1000 * 60 * 60 * 24 * 7;
-    private static String WHERE_ID_EQUALS = SongPlayCountColumns.ID + "=?";
-    private MusicDB mMusicDatabase = null;
+    private static final int INTERPOLATOR_BASE = 25;
+    private static final int ONE_WEEK_IN_MS = 1000 * 60 * 60 * 24 * 7;
+    private static final String WHERE_ID_EQUALS = SongPlayCountColumns.ID + "=?";
+    private static volatile SongPlayCount sInstance = null;
     // number of weeks since epoch time
-    private int mNumberOfWeeksSinceEpoch;
-
+    private final int mNumberOfWeeksSinceEpoch;
+    private MusicDB mMusicDatabase = null;
     // used to track if we've walkd through the db and updated all the rows
     private boolean mDatabaseUpdated;
 
@@ -87,7 +86,7 @@ public class SongPlayCount {
      * @return the column name
      */
     private static String getColumnNameForWeek(final int week) {
-        return SongPlayCountColumns.WEEK_PLAY_COUNT + String.valueOf(week);
+        return SongPlayCountColumns.WEEK_PLAY_COUNT + week;
     }
 
     /**
@@ -298,7 +297,7 @@ public class SongPlayCount {
         updateResults();
 
         final SQLiteDatabase database = mMusicDatabase.getReadableDatabase();
-        return database.query(SongPlayCountColumns.NAME, new String[]{SongPlayCountColumns.ID,SongPlayCountColumns.PLAYCOUNTSCORE},
+        return database.query(SongPlayCountColumns.NAME, new String[]{SongPlayCountColumns.ID, SongPlayCountColumns.PLAYCOUNTSCORE},
                 null, null, null, null, SongPlayCountColumns.PLAYCOUNTSCORE + " DESC",
                 (numResults <= 0 ? null : String.valueOf(numResults)));
     }

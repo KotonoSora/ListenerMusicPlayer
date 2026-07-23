@@ -4,11 +4,13 @@ import android.app.FragmentManager;
 import android.os.Bundle;
 import android.preference.PreferenceFragment;
 import android.preference.PreferenceManager;
-import android.support.annotation.ColorInt;
-import android.support.annotation.NonNull;
-import android.support.v7.widget.Toolbar;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.view.View;
+
+import androidx.annotation.ColorInt;
+import androidx.annotation.NonNull;
+import androidx.appcompat.widget.Toolbar;
 
 import com.afollestad.appthemeengine.ATE;
 import com.afollestad.appthemeengine.Config;
@@ -18,6 +20,7 @@ import com.afollestad.materialdialogs.color.ColorChooserDialog;
 import io.hefuyi.listener.R;
 import io.hefuyi.listener.ui.fragment.SettingFragment;
 import io.hefuyi.listener.util.ColorUtil;
+import io.hefuyi.listener.util.ListenerUtil;
 
 public class SettingActivity extends BaseActivity implements ColorChooserDialog.ColorCallback, ATEActivityThemeCustomizer {
 
@@ -27,7 +30,12 @@ public class SettingActivity extends BaseActivity implements ColorChooserDialog.
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_settings);
 
-        Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
+        Toolbar toolbar = findViewById(R.id.toolbar);
+        ListenerUtil.applySystemBarPaddingAndHeight(toolbar, true, false);
+
+        View fragmentContainer = findViewById(R.id.fragment_container);
+        ListenerUtil.applySystemBarPadding(fragmentContainer, false, true);
+
         setSupportActionBar(toolbar);
         getSupportActionBar().setDisplayHomeAsUpEnabled(true);
         getSupportActionBar().setTitle(R.string.settings);

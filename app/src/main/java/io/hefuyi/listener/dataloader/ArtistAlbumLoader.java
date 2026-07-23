@@ -32,7 +32,7 @@ public class ArtistAlbumLoader {
                         }
                         while (cursor.moveToNext());
                 }
-                if (cursor != null){
+                if (cursor != null) {
                     cursor.close();
                 }
                 subscriber.onNext(albumList);

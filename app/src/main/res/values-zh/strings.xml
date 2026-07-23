@@ -34,13 +34,15 @@
     <string name="library">我的歌曲</string>
     <string name="playlists">我的歌单</string>
     <string name="folders">文件夹</string>
-    <string name="favourate">我喜欢</string>
+    <string name="favorite">我喜欢</string>
     <string name="recent_play">最近播放</string>
     <string name="recent_add">最近添加</string>
     <string name="settings">设置</string>
     <string name="exit">退出</string>
+    <string name="tags">标签</string>
     <string name="search">搜索</string>
     <string name="action_equalizer">均衡</string>
+    <string name="equalizer_not_found">未找到均衡器</string>
     <string name="search_library">本地搜索</string>
 
     <string name="play_shuffle">随机播放全部</string>
@@ -50,6 +52,10 @@
 
     <string name="primary_color">主题色</string>
     <string name="primary_color_summary">保护你的眼睛</string>
+
+    <string name="notification_channel_description">音乐播放控制</string>
+    <string name="permission_rationale_storage">听听需要读取外部存储权限来显示您设备上的歌曲。</string>
+    <string name="permission_rationale_tiramisu">听听需要访问音频文件和显示通知的权限。</string>
 
     <string name="count_song"><xliff:g id="count">%d</xliff:g> 首歌</string>
     <string name="count_songs"><xliff:g id="count">%d</xliff:g> 首歌</string>
@@ -93,14 +99,20 @@
     <string name="rename_playlist_success">重命名成功</string>
     <string name="delete_playlist">确认删除歌单吗</string>
     <string name="delete_playlist_success">删除歌单成功</string>
-    <string name="delete_playlist_song">确认从歌单删除歌曲吗</string>
+    <string name="delete_playlist_song">确认从歌单删除歌曲吗？</string>
     <string name="delete_folder">删除文件夹</string>
-    <string name="delete_song_favourate">确认从我喜欢删除歌曲吗</string>
-    <string name="delete_song_recentlyplay">确认从最近播放中删除歌曲吗</string>
-    <string name="clear_song_queue">确认清空播放队列吗</string>
+    <string name="delete_folder_confirmation">删除文件夹下 %d 首歌曲？</string>
+    <string name="delete_song_favorite">确认从我喜欢删除歌曲吗？</string>
+    <string name="delete_song_recentlyplay">确认从最近播放中删除歌曲吗？</string>
+    <string name="clear_song_queue">确认清空播放队列吗？</string>
+    <string name="delete_song_confirmation">删除 %s ？</string>
     <string name="remove_recentlyplay_success">删除最近播放歌曲成功</string>
     <string name="color">色彩</string>
     <string name="sure">确定</string>
     <string name="playlistArt">playlist_art</string>
-
+    <string name="no_lyrics">暂无歌词</string>
+    <string name="lyric_search_hint">搜索歌曲或歌手</string>
+    <string name="searching">搜索中…</string>
+    <string name="download_lyric_success">歌词下载成功</string>
+    <string name="download_lyric_fail">歌词下载失败</string>
 </resources>

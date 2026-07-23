@@ -15,10 +15,10 @@ import rx.subscriptions.CompositeSubscription;
  * Created by hefuyi on 2016/11/12.
  */
 
-public class AlbumsPresenter implements AlbumsContract.Presenter{
+public class AlbumsPresenter implements AlbumsContract.Presenter {
 
+    private final GetAlbums mUsecase;
     private AlbumsContract.View mView;
-    private GetAlbums mUsecase;
     private CompositeSubscription mCompositeSubscription;
 
     public AlbumsPresenter(GetAlbums getAlbums) {
@@ -52,7 +52,7 @@ public class AlbumsPresenter implements AlbumsContract.Presenter{
                     public void call(List<Album> albumList) {
                         if (albumList == null || albumList.size() == 0) {
                             mView.showEmptyView();
-                        }else {
+                        } else {
                             mView.showAlbums(albumList);
                         }
                     }

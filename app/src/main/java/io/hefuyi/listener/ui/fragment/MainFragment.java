@@ -1,32 +1,30 @@
 package io.hefuyi.listener.ui.fragment;
 
 
-import android.os.Build;
 import android.os.Bundle;
-import android.support.design.widget.AppBarLayout;
-import android.support.design.widget.TabLayout;
-import android.support.v4.app.Fragment;
-import android.support.v4.app.FragmentManager;
-import android.support.v4.app.FragmentPagerAdapter;
-import android.support.v4.view.ViewPager;
-import android.support.v7.app.ActionBar;
-import android.support.v7.app.AppCompatActivity;
-import android.support.v7.widget.Toolbar;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 
+import androidx.appcompat.app.ActionBar;
+import androidx.appcompat.app.AppCompatActivity;
+import androidx.appcompat.widget.Toolbar;
+import androidx.fragment.app.Fragment;
+import androidx.fragment.app.FragmentManager;
+import androidx.fragment.app.FragmentPagerAdapter;
+import androidx.viewpager.widget.ViewPager;
+
 import com.afollestad.appthemeengine.ATE;
+import com.google.android.material.appbar.AppBarLayout;
+import com.google.android.material.tabs.TabLayout;
 
 import java.util.ArrayList;
 import java.util.List;
 
-import butterknife.BindView;
-import butterknife.ButterKnife;
 import io.hefuyi.listener.Constants;
 import io.hefuyi.listener.R;
 import io.hefuyi.listener.util.ATEUtil;
-import io.hefuyi.listener.util.DensityUtil;
+import io.hefuyi.listener.util.ListenerUtil;
 import io.hefuyi.listener.util.PreferencesUtility;
 
 /**
@@ -34,13 +32,9 @@ import io.hefuyi.listener.util.PreferencesUtility;
  */
 public class MainFragment extends Fragment {
 
-    @BindView(R.id.appbar)
     AppBarLayout appBarLayout;
-    @BindView(R.id.toolbar)
     Toolbar toolbar;
-    @BindView(R.id.tabs)
     TabLayout tabLayout;
-    @BindView(R.id.viewpager)
     ViewPager viewPager;
 
     private PreferencesUtility mPreferences;
@@ -59,7 +53,7 @@ public class MainFragment extends Fragment {
             case Constants.NAVIGATE_PLAYLIST_RECENTPLAY:
                 bundle.putString(Constants.PLAYLIST_TYPE, action);
                 break;
-            case Constants.NAVIGATE_PLAYLIST_FAVOURATE:
+            case Constants.NAVIGATE_PLAYLIST_FAVORITE:
                 bundle.putString(Constants.PLAYLIST_TYPE, action);
                 break;
             default:
@@ -88,19 +82,15 @@ public class MainFragment extends Fragment {
     public void onViewCreated(View view, Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
 
+        appBarLayout = view.findViewById(R.id.appbar);
+        toolbar = view.findViewById(R.id.toolbar);
+        tabLayout = view.findViewById(R.id.tabs);
+        viewPager = view.findViewById(R.id.viewpager);
+
         ATE.apply(this, ATEUtil.getATEKey(getActivity()));
 
-        ButterKnife.bind(this, view);
 
-        if (Build.VERSION.SDK_INT < 21 && view.findViewById(R.id.status_bar) != null) {
-            view.findViewById(R.id.status_bar).setVisibility(View.GONE);
-            int statusBarHeight = DensityUtil.getStatusBarHeight(getContext());
-            Toolbar toolbar = (Toolbar) view.findViewById(R.id.toolbar);
-            toolbar.setPadding(0, statusBarHeight, 0, 0);
-            AppBarLayout.LayoutParams params = (AppBarLayout.LayoutParams) toolbar.getLayoutParams();
-            params.setScrollFlags(0);
-            toolbar.setLayoutParams(params);
-        }
+        ListenerUtil.applySystemBarPaddingAndHeight(appBarLayout, true, false);
 
         ((AppCompatActivity) getActivity()).setSupportActionBar(toolbar);
         final ActionBar ab = ((AppCompatActivity) getActivity()).getSupportActionBar();
@@ -117,8 +107,8 @@ public class MainFragment extends Fragment {
             case Constants.NAVIGATE_PLAYLIST_RECENTPLAY:
                 ab.setTitle(R.string.recent_play);
                 break;
-            case Constants.NAVIGATE_PLAYLIST_FAVOURATE:
-                ab.setTitle(R.string.favourate);
+            case Constants.NAVIGATE_PLAYLIST_FAVORITE:
+                ab.setTitle(R.string.favorite);
                 break;
         }
 

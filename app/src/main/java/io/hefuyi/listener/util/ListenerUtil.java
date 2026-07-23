@@ -1,6 +1,6 @@
 package io.hefuyi.listener.util;
 
-import android.annotation.TargetApi;
+import android.Manifest;
 import android.app.Activity;
 import android.app.Dialog;
 import android.content.ContentUris;
@@ -14,11 +14,15 @@ import android.net.Uri;
 import android.os.Build;
 import android.provider.BaseColumns;
 import android.provider.MediaStore;
-import android.support.annotation.NonNull;
-import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 import android.view.View;
+import android.view.ViewGroup;
 import android.widget.Toast;
+
+import androidx.annotation.NonNull;
+import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.view.ViewCompat;
+import androidx.core.view.WindowInsetsCompat;
 
 import com.afollestad.materialdialogs.DialogAction;
 import com.afollestad.materialdialogs.MaterialDialog;
@@ -30,7 +34,7 @@ import io.hefuyi.listener.MusicPlayer;
 import io.hefuyi.listener.R;
 import io.hefuyi.listener.RxBus;
 import io.hefuyi.listener.dataloader.PlaylistLoader;
-import io.hefuyi.listener.event.FavourateSongEvent;
+import io.hefuyi.listener.event.FavoriteSongEvent;
 import io.hefuyi.listener.event.MediaUpdateEvent;
 import io.hefuyi.listener.event.PlaylistUpdateEvent;
 import io.hefuyi.listener.event.RecentlyPlayEvent;
@@ -52,23 +56,33 @@ public class ListenerUtil {
     public static final String MUSIC_ONLY_SELECTION = MediaStore.Audio.AudioColumns.IS_MUSIC + "=1"
             + " AND " + MediaStore.Audio.AudioColumns.TITLE + " != ''";
 
-    public static boolean isMarshmallow() {
-        return Build.VERSION.SDK_INT >= Build.VERSION_CODES.M;
+
+    public static boolean isTiramisu() {
+        return Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU;
     }
 
-    public static boolean isLollipop() {
-        return Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP;
+    public static String getStoragePermission() {
+        if (isTiramisu()) {
+            return Manifest.permission.READ_MEDIA_AUDIO;
+        }
+        return Manifest.permission.READ_EXTERNAL_STORAGE;
     }
 
-    public static boolean isJellyBeanMR2() {
-        return Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN_MR2;
+    public static String[] getRequiredPermissions() {
+        if (isTiramisu()) {
+            return new String[]{
+                    Manifest.permission.READ_MEDIA_AUDIO,
+                    Manifest.permission.POST_NOTIFICATIONS
+            };
+        }
+        return new String[]{Manifest.permission.READ_EXTERNAL_STORAGE};
     }
 
-    public static boolean isJellyBeanMR1() {
-        return Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN_MR1;
-    }
 
     public static Uri getAlbumArtUri(long paramInt) {
+        if (paramInt < 0) {
+            return null;
+        }
         return ContentUris.withAppendedId(Uri.parse("content://media/external/audio/albumart"), paramInt);
     }
 
@@ -106,7 +120,7 @@ public class ListenerUtil {
                                         final MaterialDialog.SingleButtonCallback deleteCallback) {
         new MaterialDialog.Builder(context)
                 .title(R.string.delete_song)
-                .content(context.getString(R.string.delete) +" "+ name + " ?")
+                .content(context.getString(R.string.delete_song_confirmation, name))
                 .positiveText(R.string.delete)
                 .negativeText(R.string.cancel)
                 .onPositive(new MaterialDialog.SingleButtonCallback() {
@@ -151,7 +165,7 @@ public class ListenerUtil {
                                             //我喜欢
                                             int num = FavoriteSong.getInstance(context).addFavoriteSong(songIds);
                                             Toast.makeText(context, R.string.add_favorite_success, Toast.LENGTH_SHORT).show();
-                                            RxBus.getInstance().post(new FavourateSongEvent());
+                                            RxBus.getInstance().post(new FavoriteSongEvent());
                                             dialog.dismiss();
                                             return;
                                         }
@@ -173,16 +187,16 @@ public class ListenerUtil {
                 });
     }
 
-    public static void showDeleteFromFavourate(final Context context, final long[] ids) {
+    public static void showDeleteFromFavorite(final Context context, final long[] ids) {
         new MaterialDialog.Builder(context)
-                .title(context.getResources().getString(R.string.delete_song_favourate) + "?")
+                .title(R.string.delete_song_favorite)
                 .positiveText(R.string.delete)
                 .negativeText(R.string.cancel)
                 .onPositive(new MaterialDialog.SingleButtonCallback() {
                     @Override
                     public void onClick(@NonNull MaterialDialog dialog, @NonNull DialogAction which) {
                         FavoriteSong.getInstance(context).removeFavoriteSong(ids);
-                        RxBus.getInstance().post(new FavourateSongEvent());
+                        RxBus.getInstance().post(new FavoriteSongEvent());
                         Toast.makeText(context, R.string.remove_favorite_success, Toast.LENGTH_SHORT).show();
                     }
                 })
@@ -197,7 +211,7 @@ public class ListenerUtil {
 
     public static void showDeleteFromRecentlyPlay(final Context context, final long[] ids) {
         new MaterialDialog.Builder(context)
-                .title(context.getResources().getString(R.string.delete_song_recentlyplay) + "?")
+                .title(R.string.delete_song_recentlyplay)
                 .positiveText(R.string.delete)
                 .negativeText(R.string.cancel)
                 .onPositive(new MaterialDialog.SingleButtonCallback() {
@@ -278,10 +292,99 @@ public class ListenerUtil {
         MusicPlayer.refresh();
     }
 
-    @TargetApi(Build.VERSION_CODES.JELLY_BEAN_MR1)
     public static boolean isRtl(Resources res) {
-        return (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN_MR1) &&
-                (res.getConfiguration().getLayoutDirection() == View.LAYOUT_DIRECTION_RTL);
+        return res.getConfiguration().getLayoutDirection() == View.LAYOUT_DIRECTION_RTL;
+    }
+
+    public static void applySystemBarPadding(View view, boolean top, boolean bottom) {
+        final int initialPaddingTop = view.getPaddingTop();
+        final int initialPaddingBottom = view.getPaddingBottom();
+        ViewCompat.setOnApplyWindowInsetsListener(view, (v, insets) -> {
+            int topInset = top ? insets.getInsets(WindowInsetsCompat.Type.systemBars() | WindowInsetsCompat.Type.displayCutout()).top : initialPaddingTop;
+            int bottomInset = bottom ? insets.getInsets(WindowInsetsCompat.Type.systemBars()).bottom : initialPaddingBottom;
+            v.setPadding(v.getPaddingLeft(), topInset, v.getPaddingRight(), bottomInset);
+            return insets;
+        });
+        ViewCompat.requestApplyInsets(view);
+    }
+
+    public static void applyBottomInsetWithPlayer(View view) {
+        final int initialPaddingBottom = view.getPaddingBottom();
+        ViewCompat.setOnApplyWindowInsetsListener(view, (v, insets) -> {
+            int systemBottom = insets.getInsets(WindowInsetsCompat.Type.systemBars()).bottom;
+            int playerHeight = v.getResources().getDimensionPixelSize(R.dimen.sliding_up_header);
+            v.setPadding(v.getPaddingLeft(), v.getPaddingTop(), v.getPaddingRight(), systemBottom + playerHeight + initialPaddingBottom);
+            return insets;
+        });
+        ViewCompat.requestApplyInsets(view);
+    }
+
+    public static void applyBottomInsetWithPlayerAndIme(View view) {
+        final int initialPaddingBottom = view.getPaddingBottom();
+        ViewCompat.setOnApplyWindowInsetsListener(view, (v, insets) -> {
+            int systemBottom = insets.getInsets(WindowInsetsCompat.Type.systemBars()).bottom;
+            int imeBottom = insets.getInsets(WindowInsetsCompat.Type.ime()).bottom;
+            int playerHeight = v.getResources().getDimensionPixelSize(R.dimen.sliding_up_header);
+
+            int totalBottom = Math.max(systemBottom + playerHeight, imeBottom);
+            v.setPadding(v.getPaddingLeft(), v.getPaddingTop(), v.getPaddingRight(), totalBottom + initialPaddingBottom);
+            return insets;
+        });
+        ViewCompat.requestApplyInsets(view);
+    }
+
+    public static void applySystemBarPaddingAndHeight(View view, boolean top, boolean bottom) {
+        final int initialPaddingTop = view.getPaddingTop();
+        final int initialPaddingBottom = view.getPaddingBottom();
+
+        ViewCompat.setOnApplyWindowInsetsListener(view, (v, insets) -> {
+            int topInset = insets.getInsets(WindowInsetsCompat.Type.systemBars() | WindowInsetsCompat.Type.displayCutout()).top;
+            int bottomInset = insets.getInsets(WindowInsetsCompat.Type.systemBars()).bottom;
+
+            int newPaddingTop = top ? topInset + initialPaddingTop : initialPaddingTop;
+            int newPaddingBottom = bottom ? bottomInset + initialPaddingBottom : initialPaddingBottom;
+
+            v.setPadding(v.getPaddingLeft(), newPaddingTop, v.getPaddingRight(), newPaddingBottom);
+
+            ViewGroup.LayoutParams lp = v.getLayoutParams();
+            if (lp != null && lp.height > 0) {
+                Object tag = v.getTag(R.id.original_height);
+                int baseHeight;
+                if (tag instanceof Integer) {
+                    baseHeight = (Integer) tag;
+                } else {
+                    baseHeight = lp.height;
+                    v.setTag(R.id.original_height, baseHeight);
+                }
+
+                int extra = (top ? topInset : 0) + (bottom ? bottomInset : 0);
+                lp.height = baseHeight + extra;
+                v.setLayoutParams(lp);
+
+                if (top) {
+                    v.setMinimumHeight(baseHeight + topInset);
+                }
+            }
+            return insets;
+        });
+        ViewCompat.requestApplyInsets(view);
+    }
+
+    public static void applyMarginForSystemBars(View view, boolean top, boolean bottom) {
+        ViewGroup.MarginLayoutParams lp = (ViewGroup.MarginLayoutParams) view.getLayoutParams();
+        final int initialMarginTop = lp.topMargin;
+        final int initialMarginBottom = lp.bottomMargin;
+        ViewCompat.setOnApplyWindowInsetsListener(view, (v, insets) -> {
+            ViewGroup.MarginLayoutParams layoutParams = (ViewGroup.MarginLayoutParams) v.getLayoutParams();
+            if (top) {
+                layoutParams.topMargin = initialMarginTop + insets.getInsets(WindowInsetsCompat.Type.systemBars()).top;
+            }
+            if (bottom) {
+                layoutParams.bottomMargin = initialMarginBottom + insets.getInsets(WindowInsetsCompat.Type.systemBars()).bottom;
+            }
+            v.setLayoutParams(layoutParams);
+            return insets;
+        });
     }
 
     public enum IdType {
@@ -311,7 +414,7 @@ public class ListenerUtil {
     public enum PlaylistType {
         LastAdded(-1, R.string.playlist_last_added),
         RecentlyPlayed(-2, R.string.playlist_recently_played),
-        Favourate(-3, R.string.playlist_top_tracks);
+        Favorite(-3, R.string.playlist_top_tracks);
 
         public long mId;
         public int mTitleId;

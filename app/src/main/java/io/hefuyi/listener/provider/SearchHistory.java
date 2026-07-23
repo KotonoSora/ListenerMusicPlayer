@@ -48,6 +48,7 @@ public class SearchHistory {
 
     /**
      * 添加搜索记录,并删除溢出记录
+     *
      * @param searchString
      */
     public void addSearchString(final String searchString) {
@@ -77,7 +78,7 @@ public class SearchHistory {
 
             Cursor oldest = null;
             try {
-                oldest=database.query(SearchHistoryColumns.NAME,
+                oldest = database.query(SearchHistoryColumns.NAME,
                         new String[]{SearchHistoryColumns.TIMESEARCHED}, null, null, null, null,
                         SearchHistoryColumns.TIMESEARCHED + " ASC");
 
@@ -104,6 +105,7 @@ public class SearchHistory {
 
     /**
      * 获取最近搜索的n条记录
+     *
      * @param limit
      * @return
      */

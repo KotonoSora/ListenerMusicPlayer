@@ -28,7 +28,7 @@ public class MusicPlayer {
 
     private static final WeakHashMap<Context, ServiceBinder> mConnectionMap;
     private static final long[] sEmptyList;
-    public static IListenerService mService = null;
+    public static volatile IListenerService mService = null;
     private static ContentValues[] mContentValuesCache = null;
 
     static {
@@ -85,6 +85,7 @@ public class MusicPlayer {
 
     /**
      * 在锁屏显示专辑封面
+     *
      * @param enabled
      */
     public static void setShowAlbumArtOnLockscreen(final boolean enabled) {
@@ -114,8 +115,11 @@ public class MusicPlayer {
                 } else {
                     mService.play();
                 }
+            } else {
+                android.util.Log.e("MusicPlayer", "playOrPause: mService is null!");
             }
-        } catch (final Exception ignored) {
+        } catch (final Exception e) {
+            android.util.Log.e("MusicPlayer", "playOrPause error", e);
         }
     }
 
@@ -123,8 +127,11 @@ public class MusicPlayer {
         if (mService != null) {
             try {
                 return mService.isPlaying();
-            } catch (final RemoteException ignored) {
+            } catch (final RemoteException e) {
+                android.util.Log.e("MusicPlayer", "isPlaying error", e);
             }
+        } else {
+            android.util.Log.e("MusicPlayer", "isPlaying: mService is null!");
         }
         return false;
     }
@@ -149,16 +156,6 @@ public class MusicPlayer {
         }
     }
 
-    public static void setRepeatMode(int mode) {
-        try {
-            if (mService != null) {
-                mService.setRepeatMode(mode);
-            }
-        } catch (RemoteException ignored) {
-
-        }
-    }
-
     public static int getRepeatMode() {
         if (mService != null) {
             try {
@@ -167,6 +164,16 @@ public class MusicPlayer {
             }
         }
         return 0;
+    }
+
+    public static void setRepeatMode(int mode) {
+        try {
+            if (mService != null) {
+                mService.setRepeatMode(mode);
+            }
+        } catch (RemoteException ignored) {
+
+        }
     }
 
     public static String getTrackName() {
@@ -322,9 +329,10 @@ public class MusicPlayer {
 
     /**
      * 在播放列表当前播放位置插入歌曲
-     * @param context context to use
-     * @param list songs to insert
-     * @param sourceId source id
+     *
+     * @param context    context to use
+     * @param list       songs to insert
+     * @param sourceId   source id
      * @param sourceType source type
      */
     public static void playNext(Context context, final long[] list, final long sourceId, final ListenerUtil.IdType sourceType) {
@@ -380,9 +388,10 @@ public class MusicPlayer {
 
     /**
      * 在播放列表尾部插入歌曲
-     * @param context context to use
-     * @param list song list to insert
-     * @param sourceId source id
+     *
+     * @param context    context to use
+     * @param list       song list to insert
+     * @param sourceId   source id
      * @param sourceType source type
      */
     public static void addToQueue(final Context context, final long[] list, long sourceId,
@@ -400,6 +409,7 @@ public class MusicPlayer {
 
     /**
      * 删除播放队列中歌曲
+     *
      * @param position song position in queue
      */
     public static void removeFromQueue(int position) {
@@ -416,6 +426,7 @@ public class MusicPlayer {
 
     /**
      * 在歌单中批量增加曲目
+     *
      * @param context
      * @param ids
      * @param playlistid
@@ -472,8 +483,9 @@ public class MusicPlayer {
 
     /**
      * 创建歌单
+     *
      * @param context context to use
-     * @param name playlist name
+     * @param name    playlist name
      * @return playlist id or -1 for fail
      */
     public static long createPlaylist(final Context context, final String name) {

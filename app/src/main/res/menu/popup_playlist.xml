@@ -11,7 +11,7 @@
 
     <item
         android:id="@+id/popup_playlist_addto_queue"
-        android:title="@string/add_to_queue"/>
+        android:title="@string/add_to_queue" />
 
     <item
         android:id="@+id/popup_playlist_delete"

@@ -48,6 +48,7 @@ public class RecentStore {
 
     /**
      * 将新播放曲目id插入表中,并保持总记录数在100条
+     *
      * @param songId 新播放曲目的ID
      */
     public void addSongId(final long songId) {
@@ -106,6 +107,7 @@ public class RecentStore {
 
     /**
      * 删除某曲目的播放记录
+     *
      * @param ids
      */
     public void removeItem(final long[] ids) {
@@ -128,6 +130,7 @@ public class RecentStore {
 
     /**
      * 获取最近播放的n首歌曲的id
+     *
      * @param limit
      * @return
      */

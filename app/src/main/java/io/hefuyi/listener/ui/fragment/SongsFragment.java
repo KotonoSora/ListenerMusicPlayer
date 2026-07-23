@@ -2,10 +2,6 @@ package io.hefuyi.listener.ui.fragment;
 
 
 import android.os.Bundle;
-import android.support.annotation.Nullable;
-import android.support.v4.app.Fragment;
-import android.support.v7.app.AppCompatActivity;
-import android.support.v7.widget.LinearLayoutManager;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuInflater;
@@ -14,6 +10,11 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.view.ViewStub;
 
+import androidx.annotation.Nullable;
+import androidx.appcompat.app.AppCompatActivity;
+import androidx.fragment.app.Fragment;
+import androidx.recyclerview.widget.LinearLayoutManager;
+
 import com.afollestad.appthemeengine.ATE;
 
 import java.util.List;
@@ -21,13 +22,11 @@ import java.util.concurrent.TimeUnit;
 
 import javax.inject.Inject;
 
-import butterknife.BindView;
-import butterknife.ButterKnife;
 import io.hefuyi.listener.Constants;
 import io.hefuyi.listener.ListenerApp;
 import io.hefuyi.listener.R;
 import io.hefuyi.listener.RxBus;
-import io.hefuyi.listener.event.FavourateSongEvent;
+import io.hefuyi.listener.event.FavoriteSongEvent;
 import io.hefuyi.listener.event.MediaUpdateEvent;
 import io.hefuyi.listener.event.MetaChangedEvent;
 import io.hefuyi.listener.event.RecentlyPlayEvent;
@@ -40,6 +39,7 @@ import io.hefuyi.listener.mvp.contract.SongsContract;
 import io.hefuyi.listener.mvp.model.Song;
 import io.hefuyi.listener.ui.adapter.SongsListAdapter;
 import io.hefuyi.listener.util.ATEUtil;
+import io.hefuyi.listener.util.ListenerUtil;
 import io.hefuyi.listener.util.PreferencesUtility;
 import io.hefuyi.listener.util.SortOrder;
 import io.hefuyi.listener.widget.DividerItemDecoration;
@@ -57,9 +57,7 @@ public class SongsFragment extends Fragment implements SongsContract.View {
 
     @Inject
     SongsContract.Presenter mPresenter;
-    @BindView(R.id.recyclerview)
     FastScrollRecyclerView recyclerView;
-    @BindView(R.id.view_empty)
     ViewStub emptyView;
     private SongsListAdapter mAdapter;
     private PreferencesUtility mPreferences;
@@ -78,7 +76,7 @@ public class SongsFragment extends Fragment implements SongsContract.View {
             case Constants.NAVIGATE_PLAYLIST_RECENTPLAY:
                 args.putString(Constants.PLAYLIST_TYPE, action);
                 break;
-            case Constants.NAVIGATE_PLAYLIST_FAVOURATE:
+            case Constants.NAVIGATE_PLAYLIST_FAVORITE:
                 args.putString(Constants.PLAYLIST_TYPE, action);
                 break;
             default:
@@ -116,7 +114,6 @@ public class SongsFragment extends Fragment implements SongsContract.View {
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         View rootView = inflater.inflate(R.layout.fragment_recyclerview, container, false);
-        ButterKnife.bind(this, rootView);
         return rootView;
     }
 
@@ -124,16 +121,21 @@ public class SongsFragment extends Fragment implements SongsContract.View {
     public void onViewCreated(View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
 
+        recyclerView = view.findViewById(R.id.recyclerview);
+        emptyView = view.findViewById(R.id.view_empty);
+
         ATE.apply(this, ATEUtil.getATEKey(getActivity()));
 
         recyclerView.setLayoutManager(new LinearLayoutManager(getActivity()));
         recyclerView.setAdapter(mAdapter);
         recyclerView.addItemDecoration(new DividerItemDecoration(getActivity(), DividerItemDecoration.VERTICAL_LIST, true));
 
+        ListenerUtil.applyBottomInsetWithPlayer(recyclerView);
+
         mPresenter.loadSongs(action);
 
-        if (Constants.NAVIGATE_PLAYLIST_FAVOURATE.equals(action)) {
-            subscribeFavourateSongEvent();
+        if (Constants.NAVIGATE_PLAYLIST_FAVORITE.equals(action)) {
+            subscribeFavoriteSongEvent();
         } else if (Constants.NAVIGATE_PLAYLIST_RECENTPLAY.equals(action)) {
             subscribeRecentlyPlayEvent();
         } else {
@@ -186,31 +188,31 @@ public class SongsFragment extends Fragment implements SongsContract.View {
 
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
-        switch (item.getItemId()) {
-            case R.id.menu_sort_by_az:
-                mPreferences.setSongSortOrder(SortOrder.SongSortOrder.SONG_A_Z);
-                mPresenter.loadSongs(action);
-                return true;
-            case R.id.menu_sort_by_za:
-                mPreferences.setSongSortOrder(SortOrder.SongSortOrder.SONG_Z_A);
-                mPresenter.loadSongs(action);
-                return true;
-            case R.id.menu_sort_by_add:
-                mPreferences.setSongSortOrder(SortOrder.SongSortOrder.SONG_DATE);
-                mPresenter.loadSongs(action);
-                return true;
-            case R.id.menu_sort_by_artist:
-                mPreferences.setSongSortOrder(SortOrder.SongSortOrder.SONG_ARTIST);
-                mPresenter.loadSongs(action);
-                return true;
-            case R.id.menu_sort_by_album:
-                mPreferences.setSongSortOrder(SortOrder.SongSortOrder.SONG_ALBUM);
-                mPresenter.loadSongs(action);
-                return true;
-            case R.id.menu_sort_by_duration:
-                mPreferences.setSongSortOrder(SortOrder.SongSortOrder.SONG_DURATION);
-                mPresenter.loadSongs(action);
-                return true;
+        int itemId = item.getItemId();
+        if (itemId == R.id.menu_sort_by_az) {
+            mPreferences.setSongSortOrder(SortOrder.SongSortOrder.SONG_A_Z);
+            mPresenter.loadSongs(action);
+            return true;
+        } else if (itemId == R.id.menu_sort_by_za) {
+            mPreferences.setSongSortOrder(SortOrder.SongSortOrder.SONG_Z_A);
+            mPresenter.loadSongs(action);
+            return true;
+        } else if (itemId == R.id.menu_sort_by_add) {
+            mPreferences.setSongSortOrder(SortOrder.SongSortOrder.SONG_DATE);
+            mPresenter.loadSongs(action);
+            return true;
+        } else if (itemId == R.id.menu_sort_by_artist) {
+            mPreferences.setSongSortOrder(SortOrder.SongSortOrder.SONG_ARTIST);
+            mPresenter.loadSongs(action);
+            return true;
+        } else if (itemId == R.id.menu_sort_by_album) {
+            mPreferences.setSongSortOrder(SortOrder.SongSortOrder.SONG_ALBUM);
+            mPresenter.loadSongs(action);
+            return true;
+        } else if (itemId == R.id.menu_sort_by_duration) {
+            mPreferences.setSongSortOrder(SortOrder.SongSortOrder.SONG_DURATION);
+            mPresenter.loadSongs(action);
+            return true;
         }
         return super.onOptionsItemSelected(item);
     }
@@ -228,14 +230,14 @@ public class SongsFragment extends Fragment implements SongsContract.View {
         recyclerView.setVisibility(View.INVISIBLE);
     }
 
-    private void subscribeFavourateSongEvent() {
+    private void subscribeFavoriteSongEvent() {
         Subscription subscription = RxBus.getInstance()
-                .toObservable(FavourateSongEvent.class)
+                .toObservable(FavoriteSongEvent.class)
                 .subscribeOn(Schedulers.io())
                 .observeOn(AndroidSchedulers.mainThread())
-                .subscribe(new Action1<FavourateSongEvent>() {
+                .subscribe(new Action1<FavoriteSongEvent>() {
                     @Override
-                    public void call(FavourateSongEvent event) {
+                    public void call(FavoriteSongEvent event) {
                         mPresenter.loadSongs(action);
                     }
                 }, new Action1<Throwable>() {

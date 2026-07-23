@@ -3,9 +3,6 @@ package io.hefuyi.listener.ui.adapter;
 import android.app.Activity;
 import android.graphics.Bitmap;
 import android.graphics.drawable.Drawable;
-import android.support.annotation.NonNull;
-import android.support.v7.graphics.Palette;
-import android.support.v7.widget.RecyclerView;
 import android.text.TextUtils;
 import android.util.Pair;
 import android.view.LayoutInflater;
@@ -15,7 +12,10 @@ import android.view.ViewGroup;
 import android.widget.ImageView;
 import android.widget.PopupMenu;
 import android.widget.TextView;
-import android.widget.Toast;
+
+import androidx.annotation.NonNull;
+import androidx.palette.graphics.Palette;
+import androidx.recyclerview.widget.RecyclerView;
 
 import com.afollestad.materialdialogs.DialogAction;
 import com.afollestad.materialdialogs.MaterialDialog;
@@ -27,14 +27,10 @@ import com.google.gson.Gson;
 
 import java.util.List;
 
-import javax.inject.Inject;
-
 import io.hefuyi.listener.Constants;
 import io.hefuyi.listener.ListenerApp;
 import io.hefuyi.listener.MusicPlayer;
 import io.hefuyi.listener.R;
-import io.hefuyi.listener.api.model.ArtistInfo;
-import io.hefuyi.listener.api.model.Artwork;
 import io.hefuyi.listener.dataloader.ArtistSongLoader;
 import io.hefuyi.listener.injector.component.ApplicationComponent;
 import io.hefuyi.listener.injector.component.ArtistInfoComponent;
@@ -43,7 +39,6 @@ import io.hefuyi.listener.injector.module.ArtistInfoModule;
 import io.hefuyi.listener.mvp.model.Artist;
 import io.hefuyi.listener.mvp.model.ArtistArt;
 import io.hefuyi.listener.mvp.model.Song;
-import io.hefuyi.listener.mvp.usecase.GetArtistInfo;
 import io.hefuyi.listener.util.ATEUtil;
 import io.hefuyi.listener.util.ColorUtil;
 import io.hefuyi.listener.util.ListenerUtil;
@@ -57,13 +52,11 @@ import rx.functions.Func1;
 import rx.schedulers.Schedulers;
 
 
-public class ArtistAdapter extends RecyclerView.Adapter<ArtistAdapter.ItemHolder> implements FastScrollRecyclerView.SectionedAdapter{
+public class ArtistAdapter extends RecyclerView.Adapter<ArtistAdapter.ItemHolder> implements FastScrollRecyclerView.SectionedAdapter {
 
-    @Inject
-    GetArtistInfo getArtistInfo;
+    private final Activity mContext;
+    private final boolean isGrid;
     private List<Artist> arraylist;
-    private Activity mContext;
-    private boolean isGrid;
     private String action;
 
     public ArtistAdapter(Activity context, List<Artist> arraylist) {
@@ -115,43 +108,28 @@ public class ArtistAdapter extends RecyclerView.Adapter<ArtistAdapter.ItemHolder
 
         String artistArtJson = PreferencesUtility.getInstance(mContext).getArtistArt(localItem.id);
         if (TextUtils.isEmpty(artistArtJson)) {
-            getArtistInfo.execute(new GetArtistInfo.RequestValues(localItem.name))
-                    .getArtistInfo()
-                    .subscribeOn(Schedulers.io())
-                    .observeOn(AndroidSchedulers.mainThread())
-                    .onErrorReturn(new Func1<Throwable, ArtistInfo>() {
-                        @Override
-                        public ArtistInfo call(Throwable throwable) {
-                            Toast.makeText(itemHolder.itemView.getContext(), R.string.load_artist_fail, Toast.LENGTH_SHORT).show();
-                            return null;
-                        }
-                    })
-                    .subscribe(new Action1<ArtistInfo>() {
-                        @Override
-                        public void call(ArtistInfo artistInfo) {
-                            if (artistInfo != null && artistInfo.mArtist != null && artistInfo.mArtist.mArtwork != null) {
-                                List<Artwork> artworks = artistInfo.mArtist.mArtwork;
-                                ArtistArt artistArt = new ArtistArt(artworks.get(0).mUrl, artworks.get(1).mUrl,
-                                        artworks.get(2).mUrl, artworks.get(3).mUrl);
-                                PreferencesUtility.getInstance(mContext).setArtistArt(localItem.id, new Gson().toJson(artistArt));
-                                loadArtistArt(artistArt, itemHolder);
-                            }
-                        }
-                    });
-
-        }else {
+            loadArtistArt(null, itemHolder);
+        } else {
             ArtistArt artistArt = new Gson().fromJson(artistArtJson, ArtistArt.class);
             loadArtistArt(artistArt, itemHolder);
         }
 
-        if (ListenerUtil.isLollipop())
-            itemHolder.artistImage.setTransitionName("transition_artist_art" + i);
+        itemHolder.artistImage.setTransitionName("transition_artist_art" + i);
 
         setOnPopupMenuListener(itemHolder, i);
 
     }
 
     private void loadArtistArt(ArtistArt artistArt, final ItemHolder itemHolder) {
+        if (artistArt == null) {
+            itemHolder.artistImage.setImageDrawable(ATEUtil.getDefaultSingerDrawable(mContext));
+            itemHolder.name.setTextColor(ATEUtil.getThemeTextColorPrimary(mContext));
+            itemHolder.albumCount.setTextColor(ATEUtil.getThemeTextColorSecondly(mContext));
+            itemHolder.songCount.setTextColor(ATEUtil.getThemeTextColorSecondly(mContext));
+            itemHolder.popupMenu.setColorFilter(mContext.getResources().getColor(R.color.background_floating_material_dark));
+            itemHolder.footer.setBackgroundColor(ATEUtil.getThemeAlbumDefaultPaletteColor(mContext));
+            return;
+        }
         if (isGrid) {
             Glide.with(mContext)
                     .load(artistArt.getExtralarge())
@@ -190,7 +168,7 @@ public class ArtistAdapter extends RecyclerView.Adapter<ArtistAdapter.ItemHolder
                             });
                         }
                     });
-        }else {
+        } else {
             Glide.with(mContext)
                     .load(artistArt.getLarge())
                     .placeholder(ATEUtil.getDefaultSingerDrawable(mContext))
@@ -228,92 +206,89 @@ public class ArtistAdapter extends RecyclerView.Adapter<ArtistAdapter.ItemHolder
                 menu.setOnMenuItemClickListener(new PopupMenu.OnMenuItemClickListener() {
                     @Override
                     public boolean onMenuItemClick(MenuItem item) {
-                        switch (item.getItemId()) {
-                            case R.id.popup_artist_addto_queue:
-                                getSongListIdByArtist(arraylist.get(position).id)
-                                        .subscribeOn(Schedulers.io())
-                                        .observeOn(AndroidSchedulers.mainThread())
-                                        .subscribe(new Action1<long[]>() {
-                                            @Override
-                                            public void call(long[] ids) {
-                                                MusicPlayer.addToQueue(mContext, ids, -1, ListenerUtil.IdType.NA);
-                                            }
-                                        });
-                                break;
-                            case R.id.popup_artist_addto_playlist:
-                                getSongListIdByArtist(arraylist.get(position).id)
-                                        .subscribeOn(Schedulers.io())
-                                        .observeOn(AndroidSchedulers.mainThread())
-                                        .subscribe(new Action1<long[]>() {
-                                            @Override
-                                            public void call(long[] ids) {
-                                                ListenerUtil.showAddPlaylistDialog(mContext,ids);
-                                            }
-                                        });
-                                break;
-                            case R.id.popup_artist_delete:
-                                switch (action) {
-                                    case Constants.NAVIGATE_PLAYLIST_FAVOURATE:
-                                        getSongListIdByArtist(artist.id)
-                                                .subscribeOn(Schedulers.io())
-                                                .observeOn(AndroidSchedulers.mainThread())
-                                                .subscribe(new Action1<long[]>() {
-                                                    @Override
-                                                    public void call(long[] ids) {
-                                                        ListenerUtil.showDeleteFromFavourate(mContext,ids);
+                        int itemId = item.getItemId();
+                        if (itemId == R.id.popup_artist_addto_queue) {
+                            getSongListIdByArtist(arraylist.get(position).id)
+                                    .subscribeOn(Schedulers.io())
+                                    .observeOn(AndroidSchedulers.mainThread())
+                                    .subscribe(new Action1<long[]>() {
+                                        @Override
+                                        public void call(long[] ids) {
+                                            MusicPlayer.addToQueue(mContext, ids, -1, ListenerUtil.IdType.NA);
+                                        }
+                                    });
+                        } else if (itemId == R.id.popup_artist_addto_playlist) {
+                            getSongListIdByArtist(arraylist.get(position).id)
+                                    .subscribeOn(Schedulers.io())
+                                    .observeOn(AndroidSchedulers.mainThread())
+                                    .subscribe(new Action1<long[]>() {
+                                        @Override
+                                        public void call(long[] ids) {
+                                            ListenerUtil.showAddPlaylistDialog(mContext, ids);
+                                        }
+                                    });
+                        } else if (itemId == R.id.popup_artist_delete) {
+                            switch (action) {
+                                case Constants.NAVIGATE_PLAYLIST_FAVORITE:
+                                    getSongListIdByArtist(artist.id)
+                                            .subscribeOn(Schedulers.io())
+                                            .observeOn(AndroidSchedulers.mainThread())
+                                            .subscribe(new Action1<long[]>() {
+                                                @Override
+                                                public void call(long[] ids) {
+                                                    ListenerUtil.showDeleteFromFavorite(mContext, ids);
+                                                }
+                                            });
+                                    break;
+                                case Constants.NAVIGATE_PLAYLIST_RECENTPLAY:
+                                    getSongListIdByArtist(artist.id)
+                                            .subscribeOn(Schedulers.io())
+                                            .observeOn(AndroidSchedulers.mainThread())
+                                            .subscribe(new Action1<long[]>() {
+                                                @Override
+                                                public void call(long[] ids) {
+                                                    ListenerUtil.showDeleteFromRecentlyPlay(mContext, ids);
+                                                }
+                                            });
+                                    break;
+                                default:
+                                    ArtistSongLoader.getSongsForArtist(mContext, arraylist.get(position).id)
+                                            .subscribeOn(Schedulers.io())
+                                            .observeOn(AndroidSchedulers.mainThread())
+                                            .subscribe(new Action1<List<Song>>() {
+                                                @Override
+                                                public void call(List<Song> songs) {
+                                                    long[] ids = new long[songs.size()];
+                                                    int i = 0;
+                                                    for (Song song : songs) {
+                                                        ids[i] = song.id;
+                                                        i++;
                                                     }
-                                                });
-                                        break;
-                                    case Constants.NAVIGATE_PLAYLIST_RECENTPLAY:
-                                        getSongListIdByArtist(artist.id)
-                                                .subscribeOn(Schedulers.io())
-                                                .observeOn(AndroidSchedulers.mainThread())
-                                                .subscribe(new Action1<long[]>() {
-                                                    @Override
-                                                    public void call(long[] ids) {
-                                                        ListenerUtil.showDeleteFromRecentlyPlay(mContext,ids);
+                                                    if (ids.length == 1) {
+                                                        ListenerUtil.showDeleteDialog(mContext, songs.get(0).title, ids,
+                                                                new MaterialDialog.SingleButtonCallback() {
+                                                                    @Override
+                                                                    public void onClick(@NonNull MaterialDialog dialog, @NonNull DialogAction which) {
+                                                                        arraylist.remove(position);
+                                                                        notifyDataSetChanged();
+                                                                    }
+                                                                });
+                                                    } else {
+                                                        String songCount = ListenerUtil.makeLabel(mContext,
+                                                                R.plurals.Nsongs, arraylist.get(position).songCount);
+                                                        ListenerUtil.showDeleteDialog(mContext, songCount, ids,
+                                                                new MaterialDialog.SingleButtonCallback() {
+                                                                    @Override
+                                                                    public void onClick(@NonNull MaterialDialog dialog, @NonNull DialogAction which) {
+                                                                        arraylist.remove(position);
+                                                                        notifyDataSetChanged();
+                                                                    }
+                                                                });
                                                     }
-                                                });
-                                        break;
-                                    default:
-                                        ArtistSongLoader.getSongsForArtist(mContext,arraylist.get(position).id)
-                                                .subscribeOn(Schedulers.io())
-                                                .observeOn(AndroidSchedulers.mainThread())
-                                                .subscribe(new Action1<List<Song>>() {
-                                                    @Override
-                                                    public void call(List<Song> songs) {
-                                                        long[] ids = new long[songs.size()];
-                                                        int i = 0;
-                                                        for (Song song : songs) {
-                                                            ids[i] = song.id;
-                                                            i++;
-                                                        }
-                                                        if (ids.length == 1) {
-                                                            ListenerUtil.showDeleteDialog(mContext, songs.get(0).title, ids,
-                                                                    new MaterialDialog.SingleButtonCallback() {
-                                                                        @Override
-                                                                        public void onClick(@NonNull MaterialDialog dialog, @NonNull DialogAction which) {
-                                                                            arraylist.remove(position);
-                                                                            notifyDataSetChanged();
-                                                                        }
-                                                                    });
-                                                        } else {
-                                                            String songCount = ListenerUtil.makeLabel(mContext,
-                                                                    R.plurals.Nsongs, arraylist.get(position).songCount);
-                                                            ListenerUtil.showDeleteDialog(mContext, songCount, ids,
-                                                                    new MaterialDialog.SingleButtonCallback() {
-                                                                        @Override
-                                                                        public void onClick(@NonNull MaterialDialog dialog, @NonNull DialogAction which) {
-                                                                            arraylist.remove(position);
-                                                                            notifyDataSetChanged();
-                                                                        }
-                                                                    });
-                                                        }
-                                                    }
-                                                });
-                                        break;
-                                }
-                                break;
+                                                }
+                                            });
+                                    break;
+                            }
                         }
                         return false;
                     }
@@ -341,20 +316,20 @@ public class ArtistAdapter extends RecyclerView.Adapter<ArtistAdapter.ItemHolder
     }
 
     public class ItemHolder extends RecyclerView.ViewHolder implements View.OnClickListener {
-        private TextView name;
-        private TextView albumCount;
-        private TextView songCount;
-        private ImageView artistImage;
-        private ImageView popupMenu;
-        private View footer;
+        private final TextView name;
+        private final TextView albumCount;
+        private final TextView songCount;
+        private final ImageView artistImage;
+        private final ImageView popupMenu;
+        private final View footer;
 
         public ItemHolder(View view) {
             super(view);
-            this.name = (TextView) view.findViewById(R.id.text_item_title);
-            this.albumCount = (TextView) view.findViewById(R.id.text_item_subtitle);
-            this.songCount = (TextView) view.findViewById(R.id.text_item_subtitle_2);
-            this.artistImage = (ImageView) view.findViewById(R.id.image);
-            this.popupMenu = (ImageView) view.findViewById(R.id.popup_menu);
+            this.name = view.findViewById(R.id.text_item_title);
+            this.albumCount = view.findViewById(R.id.text_item_subtitle);
+            this.songCount = view.findViewById(R.id.text_item_subtitle_2);
+            this.artistImage = view.findViewById(R.id.image);
+            this.popupMenu = view.findViewById(R.id.popup_menu);
             this.footer = view.findViewById(R.id.footer);
             view.setOnClickListener(this);
         }

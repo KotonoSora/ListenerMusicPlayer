@@ -12,13 +12,13 @@ import io.hefuyi.listener.mvp.view.BaseView;
 
 public interface FolderSongsContract {
 
-    interface View extends BaseView{
+    interface View extends BaseView {
 
         void showSongs(List<Song> songList);
 
     }
 
-    interface Presenter extends BasePresenter<View>{
+    interface Presenter extends BasePresenter<View> {
 
         void loadSongs(String path);
 

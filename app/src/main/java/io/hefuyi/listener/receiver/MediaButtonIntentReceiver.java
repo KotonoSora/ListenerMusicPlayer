@@ -7,9 +7,10 @@ import android.os.Handler;
 import android.os.Message;
 import android.os.PowerManager;
 import android.os.PowerManager.WakeLock;
-import android.support.v4.content.WakefulBroadcastReceiver;
 import android.util.Log;
 import android.view.KeyEvent;
+
+import androidx.legacy.content.WakefulBroadcastReceiver;
 
 import io.hefuyi.listener.MusicService;
 import io.hefuyi.listener.ui.activity.MainActivity;
@@ -40,58 +41,9 @@ public class MediaButtonIntentReceiver extends WakefulBroadcastReceiver {
     private static boolean mDown = false;
     private static boolean mLaunched = false;
 
-    private static Handler mHandler = new Handler() {
-
-        /**
-         * {@inheritDoc}
-         */
-        @Override
-        public void handleMessage(final Message msg) {
-            switch (msg.what) {
-                case MSG_LONGPRESS_TIMEOUT:
-                    if (DEBUG) Log.v(TAG, "Handling longpress timeout, launched " + mLaunched);
-                    if (!mLaunched) {
-                        final Context context = (Context) msg.obj;
-                        final Intent i = new Intent();
-                        i.setClass(context, MainActivity.class);
-                        i.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TOP);
-                        context.startActivity(i);
-                        mLaunched = true;
-                    }
-                    break;
-
-                case MSG_HEADSET_DOUBLE_CLICK_TIMEOUT: //双击时间阈值内
-                    final int clickCount = msg.arg1;
-                    final String command;
-
-                    if (DEBUG) Log.v(TAG, "Handling headset click, count = " + clickCount);
-                    switch (clickCount) {
-                        case 1:
-                            command = MusicService.CMDTOGGLEPAUSE;
-                            break;
-                        case 2:
-                            command = MusicService.CMDNEXT;
-                            break;
-                        case 3:
-                            command = MusicService.CMDPREVIOUS;
-                            break;
-                        default:
-                            command = null;
-                            break;
-                    }
-
-                    if (command != null) {
-                        final Context context = (Context) msg.obj;
-                        startService(context, command);
-                    }
-                    break;
-            }
-            releaseWakeLockIfHandlerIdle();
-        }
-    };
-
     /**
      * 启动musicservice,并拥有wake_lock权限
+     *
      * @param context
      * @param command
      */
@@ -138,7 +90,7 @@ public class MediaButtonIntentReceiver extends WakefulBroadcastReceiver {
     public void onReceive(final Context context, final Intent intent) {
         final String intentAction = intent.getAction();
         if (AudioManager.ACTION_AUDIO_BECOMING_NOISY.equals(intentAction)) { //当耳机拔出时暂停播放
-                startService(context, MusicService.CMDPAUSE);
+            startService(context, MusicService.CMDPAUSE);
         } else if (Intent.ACTION_MEDIA_BUTTON.equals(intentAction)) { //耳机按钮事件
             final KeyEvent event = intent.getParcelableExtra(Intent.EXTRA_KEY_EVENT);
             if (event == null) {
@@ -219,4 +171,56 @@ public class MediaButtonIntentReceiver extends WakefulBroadcastReceiver {
             }
         }
     }
+
+    private static final Handler mHandler = new Handler() {
+
+        /**
+         * {@inheritDoc}
+         */
+        @Override
+        public void handleMessage(final Message msg) {
+            switch (msg.what) {
+                case MSG_LONGPRESS_TIMEOUT:
+                    if (DEBUG) Log.v(TAG, "Handling longpress timeout, launched " + mLaunched);
+                    if (!mLaunched) {
+                        final Context context = (Context) msg.obj;
+                        final Intent i = new Intent();
+                        i.setClass(context, MainActivity.class);
+                        i.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TOP);
+                        context.startActivity(i);
+                        mLaunched = true;
+                    }
+                    break;
+
+                case MSG_HEADSET_DOUBLE_CLICK_TIMEOUT: //双击时间阈值内
+                    final int clickCount = msg.arg1;
+                    final String command;
+
+                    if (DEBUG) Log.v(TAG, "Handling headset click, count = " + clickCount);
+                    switch (clickCount) {
+                        case 1:
+                            command = MusicService.CMDTOGGLEPAUSE;
+                            break;
+                        case 2:
+                            command = MusicService.CMDNEXT;
+                            break;
+                        case 3:
+                            command = MusicService.CMDPREVIOUS;
+                            break;
+                        default:
+                            command = null;
+                            break;
+                    }
+
+                    if (command != null) {
+                        final Context context = (Context) msg.obj;
+                        startService(context, command);
+                    }
+                    break;
+            }
+            releaseWakeLockIfHandlerIdle();
+        }
+    };
+
+
 }

@@ -84,6 +84,7 @@ public class MusicPlaybackState {
 
     /**
      * 将输入数据保存到两个表中(旧数据被清除)
+     *
      * @param queue
      * @param history
      */
@@ -146,6 +147,7 @@ public class MusicPlaybackState {
 
     /**
      * 获取playbackqueue表中的数据
+     *
      * @return
      */
     public ArrayList<MusicPlaybackTrack> getQueue() {
@@ -176,6 +178,7 @@ public class MusicPlaybackState {
 
     /**
      * 获取playbackhistory表中的数据
+     *
      * @param playlistSize
      * @return
      */

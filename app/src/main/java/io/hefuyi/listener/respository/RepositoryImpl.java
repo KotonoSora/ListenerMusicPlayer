@@ -2,15 +2,9 @@ package io.hefuyi.listener.respository;
 
 import android.content.Context;
 
-import java.io.File;
 import java.util.List;
 
 import io.hefuyi.listener.R;
-import io.hefuyi.listener.api.KuGouApiService;
-import io.hefuyi.listener.api.LastFmApiService;
-import io.hefuyi.listener.api.model.ArtistInfo;
-import io.hefuyi.listener.api.model.KuGouRawLyric;
-import io.hefuyi.listener.api.model.KuGouSearchLyricResult;
 import io.hefuyi.listener.dataloader.AlbumLoader;
 import io.hefuyi.listener.dataloader.AlbumSongLoader;
 import io.hefuyi.listener.dataloader.ArtistAlbumLoader;
@@ -29,11 +23,8 @@ import io.hefuyi.listener.mvp.model.FolderInfo;
 import io.hefuyi.listener.mvp.model.Playlist;
 import io.hefuyi.listener.mvp.model.Song;
 import io.hefuyi.listener.respository.interfaces.Repository;
-import io.hefuyi.listener.util.LyricUtil;
-import retrofit2.Retrofit;
 import rx.Observable;
 import rx.functions.Func1;
-import rx.schedulers.Schedulers;
 
 /**
  * Created by hefuyi on 2016/11/3.
@@ -41,49 +32,12 @@ import rx.schedulers.Schedulers;
 
 public class RepositoryImpl implements Repository {
 
-    private KuGouApiService mKuGouApiService;
-    private LastFmApiService mLastFmApiService;
-    private Context mContext;
+    private final Context mContext;
 
-    public RepositoryImpl(Context context, Retrofit kugou, Retrofit lastfm) {
+    public RepositoryImpl(Context context) {
         mContext = context;
-        mKuGouApiService = kugou.create(KuGouApiService.class);
-        mLastFmApiService = lastfm.create(LastFmApiService.class);
     }
 
-    @Override
-    public Observable<ArtistInfo> getArtistInfo(String artist) {
-        return mLastFmApiService.getArtistInfo(artist);
-    }
-
-    @Override
-    public Observable<File> downloadLrcFile(final String title, final String artist, final long duration) {
-        return mKuGouApiService.searchLyric(title, String.valueOf(duration))
-                .subscribeOn(Schedulers.io())
-                .flatMap(new Func1<KuGouSearchLyricResult, Observable<KuGouRawLyric>>() {
-                    @Override
-                    public Observable<KuGouRawLyric> call(KuGouSearchLyricResult kuGouSearchLyricResult) {
-                        if (kuGouSearchLyricResult.status == 200
-                                && kuGouSearchLyricResult.candidates != null
-                                && kuGouSearchLyricResult.candidates.size() != 0) {
-                            KuGouSearchLyricResult.Candidates candidates = kuGouSearchLyricResult.candidates.get(0);
-                            return mKuGouApiService.getRawLyric(candidates.id, candidates.accesskey);
-                        } else {
-                            return Observable.just(null);
-                        }
-                    }
-                })
-                .map(new Func1<KuGouRawLyric, File>() {
-                    @Override
-                    public File call(KuGouRawLyric kuGouRawLyric) {
-                        if (kuGouRawLyric == null) {
-                            return null;
-                        }
-                        String rawLyric = LyricUtil.decryptBASE64(kuGouRawLyric.content);
-                        return LyricUtil.writeLrcToLoc(title, artist, rawLyric);
-                    }
-                });
-    }
 
     @Override
     public Observable<List<Album>> getAllAlbums() {
@@ -176,18 +130,18 @@ public class RepositoryImpl implements Repository {
     }
 
     @Override
-    public Observable<List<Song>> getFavourateSongs() {
-        return SongLoader.getFavoriteSong(mContext);
+    public Observable<List<Song>> getFavoriteSongs() {
+        return SongLoader.getFavoriteSongs(mContext);
     }
 
     @Override
-    public Observable<List<Album>> getFavourateAlbums() {
-        return AlbumLoader.getFavourateAlbums(mContext);
+    public Observable<List<Album>> getFavoriteAlbums() {
+        return AlbumLoader.getFavoriteAlbums(mContext);
     }
 
     @Override
-    public Observable<List<Artist>> getFavourateArtist() {
-        return ArtistLoader.getFavouriteArtists(mContext);
+    public Observable<List<Artist>> getFavoriteArtist() {
+        return ArtistLoader.getFavoriteArtists(mContext);
     }
 
     @Override

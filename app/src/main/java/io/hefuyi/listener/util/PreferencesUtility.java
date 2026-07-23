@@ -2,7 +2,6 @@ package io.hefuyi.listener.util;
 
 import android.content.Context;
 import android.content.SharedPreferences;
-import android.os.AsyncTask;
 import android.preference.PreferenceManager;
 
 /**
@@ -69,15 +68,9 @@ public class PreferencesUtility {
     }
 
     public void setStartPageIndex(final int index) {
-        new AsyncTask<Void, Void, Void>() {
-            @Override
-            protected Void doInBackground(final Void... unused) {
-                final SharedPreferences.Editor editor = mPreferences.edit();
-                editor.putInt(START_PAGE_INDEX, index);
-                editor.apply();
-                return null;
-            }
-        }.execute();
+        final SharedPreferences.Editor editor = mPreferences.edit();
+        editor.putInt(START_PAGE_INDEX, index);
+        editor.apply();
     }
 
     private void setSortOrder(final String key, final String value) {
@@ -131,11 +124,11 @@ public class PreferencesUtility {
     }
 
     public String getArtistArt(long artistID) {
-        return mPreferences.getString(ARTIST_ART_URL+artistID,"");
+        return mPreferences.getString(ARTIST_ART_URL + artistID, "");
     }
 
     public int getPlaylistView() {
-        return mPreferences.getInt(TOGGLE_PLAYLIST_VIEW ,0);
+        return mPreferences.getInt(TOGGLE_PLAYLIST_VIEW, 0);
     }
 
     public void setPlaylistView(final int i) {
@@ -143,5 +136,6 @@ public class PreferencesUtility {
         editor.putInt(TOGGLE_PLAYLIST_VIEW, i);
         editor.apply();
     }
+
 
 }

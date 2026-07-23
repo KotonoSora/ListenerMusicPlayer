@@ -1,13 +1,14 @@
 package io.hefuyi.listener.ui.adapter;
 
 import android.app.Activity;
-import android.support.v7.widget.RecyclerView;
 import android.util.Pair;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageView;
 import android.widget.TextView;
+
+import androidx.recyclerview.widget.RecyclerView;
 
 import com.bumptech.glide.Glide;
 import com.bumptech.glide.load.engine.DiskCacheStrategy;
@@ -24,10 +25,10 @@ import io.hefuyi.listener.util.NavigationUtil;
  * Created by hefuyi on 2016/11/24.
  */
 
-public class ArtistAlbumAdapter extends RecyclerView.Adapter<ArtistAlbumAdapter.ItemHolder>{
+public class ArtistAlbumAdapter extends RecyclerView.Adapter<ArtistAlbumAdapter.ItemHolder> {
 
-    private List<Album> arraylist;
-    private Activity mContext;
+    private final List<Album> arraylist;
+    private final Activity mContext;
 
     public ArtistAlbumAdapter(Activity context, List<Album> arraylist) {
         this.arraylist = arraylist;
@@ -49,14 +50,13 @@ public class ArtistAlbumAdapter extends RecyclerView.Adapter<ArtistAlbumAdapter.
         String songCount = ListenerUtil.makeLabel(mContext, R.plurals.Nsongs, localItem.songCount);
         itemHolder.details.setText(songCount);
 
-        Glide.with(mContext).load(ListenerUtil.getAlbumArtUri(localItem.id).toString())
+        Glide.with(mContext).load(ListenerUtil.getAlbumArtUri(localItem.id))
                 .diskCacheStrategy(DiskCacheStrategy.SOURCE)
                 .error(ATEUtil.getDefaultAlbumDrawable(mContext))
                 .centerCrop()
                 .into(itemHolder.albumArt);
 
-        if (ListenerUtil.isLollipop())
-            itemHolder.albumArt.setTransitionName("transition_album_art" + i);
+        itemHolder.albumArt.setTransitionName("transition_album_art" + i);
     }
 
     @Override
@@ -71,9 +71,9 @@ public class ArtistAlbumAdapter extends RecyclerView.Adapter<ArtistAlbumAdapter.
 
         public ItemHolder(View view) {
             super(view);
-            this.title = (TextView) view.findViewById(R.id.album_title);
-            this.details = (TextView) view.findViewById(R.id.album_details);
-            this.albumArt = (ImageView) view.findViewById(R.id.album_art);
+            this.title = view.findViewById(R.id.album_title);
+            this.details = view.findViewById(R.id.album_details);
+            this.albumArt = view.findViewById(R.id.album_art);
             view.setOnClickListener(this);
         }
 

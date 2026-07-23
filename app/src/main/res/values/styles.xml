@@ -1,13 +1,13 @@
 <resources>
 
-    <attr format="reference" name="cardStyle"/>
-    <attr format="reference" name="ttItemPopupMenuStyle" />
-    <attr format="reference" name="album_default_palette_color" />
-    <attr format="reference" name="default_album_drawable" />
-    <attr format="reference" name="default_singer_drawable" />
-    <attr format="reference" name="divider_color" />
-    <attr format="reference" name="ttPopupMenuStyle" />
-    <attr format="reference" name="selectableItemBackground"/>
+    <attr name="cardStyle" format="reference" />
+    <attr name="ttItemPopupMenuStyle" format="reference" />
+    <attr name="album_default_palette_color" format="reference" />
+    <attr name="default_album_drawable" format="reference" />
+    <attr name="default_singer_drawable" format="reference" />
+    <attr name="divider_color" format="reference" />
+    <attr name="ttPopupMenuStyle" format="reference" />
+    <attr name="selectableItemBackground" format="reference" />
 
     <style name="ThemeBaseLight" parent="Theme.AppCompat.Light.NoActionBar">
         <item name="cardStyle">@style/CardViewStyle.Light</item>
@@ -41,10 +41,12 @@
         <item name="colorAccent">@color/colorAccentDarkTheme</item>
     </style>
 
-    <style name="AppThemeLight" parent="ThemeBaseLight"/>
-    <style name="AppThemeDark" parent="ThemeBaseDark"/>
+    <style name="AppThemeLight" parent="ThemeBaseLight" />
+
+    <style name="AppThemeDark" parent="ThemeBaseDark" />
 
     <style name="AppTheme.PopupOverlay" parent="@style/ThemeOverlay.AppCompat.Light" />
+
     <style name="AppTheme.PopupOverlay.Dark" parent="@style/ThemeOverlay.AppCompat.Dark" />
 
     <style name="TextApperance.Album.Title" parent="@style/TextAppearance.AppCompat.Large">

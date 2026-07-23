@@ -6,8 +6,9 @@ import android.content.Context;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.os.Build;
-import android.support.v4.app.ActivityCompat;
-import android.support.v4.content.ContextCompat;
+
+import androidx.core.app.ActivityCompat;
+import androidx.core.content.ContextCompat;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -22,9 +23,9 @@ public class PermissionManager {
 
     private static final String TAG = PermissionManager.class.getSimpleName();
     private static final String KEY_PREV_PERMISSIONS = "previous_permissions";
+    private static final ArrayList<PermissionRequest> permissionRequests = new ArrayList<PermissionRequest>();
     private static Context context;
     private static SharedPreferences sharedPreferences;
-    private static ArrayList<PermissionRequest> permissionRequests = new ArrayList<PermissionRequest>();
 
     public static void init(Context context) {
         sharedPreferences = context.getSharedPreferences("pl.tajchert.runtimepermissionhelper", Context.MODE_PRIVATE);
@@ -70,6 +71,7 @@ public class PermissionManager {
 
     /**
      * 请求权限,并将PermissionRequest保存
+     *
      * @param activity
      * @param permissions
      * @param permissionCallback
@@ -90,6 +92,7 @@ public class PermissionManager {
 
     /**
      * 根据授权结果回调,并刷新当前的权限列表
+     *
      * @param requestCode
      * @param permissions
      * @param grantResults
@@ -138,19 +141,13 @@ public class PermissionManager {
         //Group Phone
         permissions.add(Manifest.permission.CALL_PHONE);
         permissions.add(Manifest.permission.READ_PHONE_STATE);
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN) {
-            permissions.add(Manifest.permission.READ_CALL_LOG);
-        }
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN) {
-            permissions.add(Manifest.permission.WRITE_CALL_LOG);
-        }
+        permissions.add(Manifest.permission.READ_CALL_LOG);
+        permissions.add(Manifest.permission.WRITE_CALL_LOG);
         permissions.add(Manifest.permission.ADD_VOICEMAIL);
         permissions.add(Manifest.permission.USE_SIP);
         permissions.add(Manifest.permission.PROCESS_OUTGOING_CALLS);
         //Group Body sensors
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT_WATCH) {
-            permissions.add(Manifest.permission.BODY_SENSORS);
-        }
+        permissions.add(Manifest.permission.BODY_SENSORS);
         //Group SMS
         permissions.add(Manifest.permission.SEND_SMS);
         permissions.add(Manifest.permission.READ_SMS);
@@ -158,7 +155,10 @@ public class PermissionManager {
         permissions.add(Manifest.permission.RECEIVE_WAP_PUSH);
         permissions.add(Manifest.permission.RECEIVE_MMS);
         //Group Storage
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN) {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            permissions.add(Manifest.permission.READ_MEDIA_AUDIO);
+            permissions.add(Manifest.permission.POST_NOTIFICATIONS);
+        } else {
             permissions.add(Manifest.permission.READ_EXTERNAL_STORAGE);
         }
         permissions.add(Manifest.permission.WRITE_EXTERNAL_STORAGE);

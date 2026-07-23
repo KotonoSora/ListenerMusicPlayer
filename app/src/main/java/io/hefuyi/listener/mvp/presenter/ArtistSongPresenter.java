@@ -15,9 +15,9 @@ import rx.subscriptions.CompositeSubscription;
  * Created by hefuyi on 2016/11/25.
  */
 
-public class ArtistSongPresenter implements ArtistSongContract.Presenter{
+public class ArtistSongPresenter implements ArtistSongContract.Presenter {
 
-    private GetArtistSongs mUsecase;
+    private final GetArtistSongs mUsecase;
     private ArtistSongContract.View mView;
     private CompositeSubscription mCompositeSubscription;
 
@@ -49,7 +49,7 @@ public class ArtistSongPresenter implements ArtistSongContract.Presenter{
     @Override
     public void loadSongs(long artistID) {
         mCompositeSubscription.clear();
-        Subscription subscription=mUsecase.execute(new GetArtistSongs.RequestValues(artistID))
+        Subscription subscription = mUsecase.execute(new GetArtistSongs.RequestValues(artistID))
                 .getSongList()
                 .subscribeOn(Schedulers.io())
                 .observeOn(AndroidSchedulers.mainThread())

@@ -30,7 +30,7 @@ public class ArtistLoader {
                     if (cursor.moveToFirst())
                         artist = new Artist(cursor.getLong(0), cursor.getString(1), cursor.getInt(2), cursor.getInt(3));
                 }
-                if (cursor != null){
+                if (cursor != null) {
                     cursor.close();
                 }
                 subscriber.onNext(artist);
@@ -50,7 +50,7 @@ public class ArtistLoader {
                         arrayList.add(new Artist(cursor.getLong(0), cursor.getString(1), cursor.getInt(2), cursor.getInt(3)));
                     }
                     while (cursor.moveToNext());
-                if (cursor != null){
+                if (cursor != null) {
                     cursor.close();
                 }
                 subscriber.onNext(arrayList);
@@ -59,8 +59,8 @@ public class ArtistLoader {
         });
     }
 
-    public static Observable<List<Artist>> getFavouriteArtists(final Context context) {
-        return SongLoader.getFavoriteSong(context).flatMap(new Func1<List<Song>, Observable<Song>>() {
+    public static Observable<List<Artist>> getFavoriteArtists(final Context context) {
+        return SongLoader.getFavoriteSongs(context).flatMap(new Func1<List<Song>, Observable<Song>>() {
             @Override
             public Observable<Song> call(List<Song> songList) {
                 return Observable.from(songList);

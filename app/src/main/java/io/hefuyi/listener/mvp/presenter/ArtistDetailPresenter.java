@@ -53,7 +53,7 @@ public class ArtistDetailPresenter implements ArtistDetailContract.Presenter {
 
     @Override
     public void loadArtistArt(long artistID) {
-        String artistArtJson=PreferencesUtility.getInstance(mView.getContext()).getArtistArt(artistID);
+        String artistArtJson = PreferencesUtility.getInstance(mView.getContext()).getArtistArt(artistID);
         if (!TextUtils.isEmpty(artistArtJson)) {
             ArtistArt artistArt = new Gson().fromJson(artistArtJson, ArtistArt.class);
             Glide.with(mView.getContext())

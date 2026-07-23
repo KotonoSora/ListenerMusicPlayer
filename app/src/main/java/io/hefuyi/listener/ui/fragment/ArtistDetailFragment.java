@@ -7,27 +7,25 @@ import android.graphics.Color;
 import android.graphics.drawable.Drawable;
 import android.os.Build;
 import android.os.Bundle;
-import android.support.annotation.Nullable;
-import android.support.design.widget.AppBarLayout;
-import android.support.design.widget.CollapsingToolbarLayout;
-import android.support.design.widget.FloatingActionButton;
-import android.support.v4.app.Fragment;
-import android.support.v7.app.ActionBar;
-import android.support.v7.app.AppCompatActivity;
-import android.support.v7.graphics.Palette;
-import android.support.v7.widget.Toolbar;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageView;
 
+import androidx.annotation.Nullable;
+import androidx.appcompat.app.ActionBar;
+import androidx.appcompat.app.AppCompatActivity;
+import androidx.appcompat.widget.Toolbar;
+import androidx.fragment.app.Fragment;
+import androidx.palette.graphics.Palette;
+
 import com.afollestad.appthemeengine.ATE;
+import com.google.android.material.appbar.AppBarLayout;
+import com.google.android.material.appbar.CollapsingToolbarLayout;
+import com.google.android.material.floatingactionbutton.FloatingActionButton;
 
 import javax.inject.Inject;
 
-import butterknife.BindView;
-import butterknife.ButterKnife;
-import butterknife.OnClick;
 import io.hefuyi.listener.Constants;
 import io.hefuyi.listener.ListenerApp;
 import io.hefuyi.listener.MusicPlayer;
@@ -39,25 +37,19 @@ import io.hefuyi.listener.injector.module.ArtistInfoModule;
 import io.hefuyi.listener.mvp.contract.ArtistDetailContract;
 import io.hefuyi.listener.util.ATEUtil;
 import io.hefuyi.listener.util.ColorUtil;
-import io.hefuyi.listener.util.DensityUtil;
 import io.hefuyi.listener.util.ListenerUtil;
 
 /**
  * A simple {@link Fragment} subclass.
  */
-public class ArtistDetailFragment extends Fragment implements ArtistDetailContract.View{
+public class ArtistDetailFragment extends Fragment implements ArtistDetailContract.View {
 
     @Inject
     ArtistDetailContract.Presenter mPresenter;
-    @BindView(R.id.artist_art)
     ImageView artistArt;
-    @BindView(R.id.toolbar)
     Toolbar toolbar;
-    @BindView(R.id.collapsing_toolbar)
     CollapsingToolbarLayout collapsingToolbarLayout;
-    @BindView(R.id.app_bar)
     AppBarLayout appBarLayout;
-    @BindView(R.id.fab_play)
     FloatingActionButton fabPlay;
 
     private ArtistMusicFragment mArtistMusicFragment;
@@ -101,16 +93,8 @@ public class ArtistDetailFragment extends Fragment implements ArtistDetailContra
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         View root = inflater.inflate(R.layout.fragment_artist_detail, container, false);
-        if (Build.VERSION.SDK_INT >= 19 && Build.VERSION.SDK_INT < 21) {
-            root.findViewById(R.id.app_bar).setFitsSystemWindows(false);
-            root.findViewById(R.id.artist_art).setFitsSystemWindows(false);
-            root.findViewById(R.id.gradient).setFitsSystemWindows(false);
-            Toolbar toolbar = (Toolbar) root.findViewById(R.id.toolbar);
-            CollapsingToolbarLayout.LayoutParams layoutParams = (CollapsingToolbarLayout.LayoutParams) toolbar.getLayoutParams();
-            layoutParams.height += DensityUtil.getStatusBarHeight(getContext());
-            toolbar.setLayoutParams(layoutParams);
-            toolbar.setPadding(0, DensityUtil.getStatusBarHeight(getContext()), 0, 0);
-        }
+        toolbar = root.findViewById(R.id.toolbar);
+        ListenerUtil.applySystemBarPaddingAndHeight(toolbar, true, false);
         return root;
     }
 
@@ -118,13 +102,25 @@ public class ArtistDetailFragment extends Fragment implements ArtistDetailContra
     @Override
     public void onViewCreated(View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
-        ButterKnife.bind(this, view);
+
+        artistArt = view.findViewById(R.id.artist_art);
+        toolbar = view.findViewById(R.id.toolbar);
+        collapsingToolbarLayout = view.findViewById(R.id.collapsing_toolbar);
+        appBarLayout = view.findViewById(R.id.app_bar);
+        fabPlay = view.findViewById(R.id.fab_play);
 
         ATE.apply(this, ATEUtil.getATEKey(getActivity()));
 
         if (getArguments().getBoolean("transition")) {
             artistArt.setTransitionName(getArguments().getString("transition_name"));
         }
+
+        fabPlay.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                onFabPlayClick();
+            }
+        });
 
         setupToolbar();
 
@@ -187,7 +183,6 @@ public class ArtistDetailFragment extends Fragment implements ArtistDetailContra
         collapsingToolbarLayout.setStatusBarScrimColor(ColorUtil.getStatusBarColor(primaryColor));
     }
 
-    @OnClick(R.id.fab_play)
     public void onFabPlayClick() {
         MusicPlayer.playAll(getActivity(), mArtistMusicFragment.mSongAdapter.getSongIds(), 0, artistID, ListenerUtil.IdType.Artist, false);
     }

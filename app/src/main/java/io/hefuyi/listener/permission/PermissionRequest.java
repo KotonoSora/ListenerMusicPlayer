@@ -10,8 +10,8 @@ import java.util.Random;
 public class PermissionRequest {
 
     private static Random random;
+    private final int requestCode;
     private ArrayList<String> permissions;
-    private int requestCode;
     private PermissionCallback permissionCallback;
 
     public PermissionRequest(int requestCode) {

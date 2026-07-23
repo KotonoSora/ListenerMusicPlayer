@@ -16,9 +16,9 @@ import rx.subscriptions.CompositeSubscription;
  * Created by hefuyi on 2016/11/13.
  */
 
-public class ArtistPresenter implements ArtistContract.Presenter{
+public class ArtistPresenter implements ArtistContract.Presenter {
 
-    private GetArtists mUsecase;
+    private final GetArtists mUsecase;
     private ArtistContract.View mView;
     private CompositeSubscription mCompositeSubscription;
 
@@ -53,7 +53,7 @@ public class ArtistPresenter implements ArtistContract.Presenter{
                     public void call(List<Artist> artists) {
                         if (artists == null || artists.size() == 0) {
                             mView.showEmptyView();
-                        }else {
+                        } else {
                             mView.showArtists(artists);
                         }
                     }

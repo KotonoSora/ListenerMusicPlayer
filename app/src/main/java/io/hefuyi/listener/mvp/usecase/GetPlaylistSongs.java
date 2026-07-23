@@ -10,9 +10,9 @@ import rx.Observable;
  * Created by hefuyi on 2016/12/6.
  */
 
-public class GetPlaylistSongs extends UseCase<GetPlaylistSongs.RequestValues,GetPlaylistSongs.ResponseValue>{
+public class GetPlaylistSongs extends UseCase<GetPlaylistSongs.RequestValues, GetPlaylistSongs.ResponseValue> {
 
-    private Repository mRepository;
+    private final Repository mRepository;
 
     public GetPlaylistSongs(Repository repository) {
         mRepository = repository;
@@ -23,9 +23,9 @@ public class GetPlaylistSongs extends UseCase<GetPlaylistSongs.RequestValues,Get
         return new ResponseValue(mRepository.getSongsInPlaylist(requestValues.getPlaylistID()));
     }
 
-    public static final class RequestValues implements UseCase.RequestValues{
+    public static final class RequestValues implements UseCase.RequestValues {
 
-        private long playlistID;
+        private final long playlistID;
 
         public RequestValues(long playlistID) {
             this.playlistID = playlistID;
@@ -44,7 +44,7 @@ public class GetPlaylistSongs extends UseCase<GetPlaylistSongs.RequestValues,Get
             mListObservable = listObservable;
         }
 
-        public Observable<List<Song>> getSongList(){
+        public Observable<List<Song>> getSongList() {
             return mListObservable;
         }
     }

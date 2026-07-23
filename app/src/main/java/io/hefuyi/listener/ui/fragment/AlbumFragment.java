@@ -3,16 +3,17 @@ package io.hefuyi.listener.ui.fragment;
 
 import android.graphics.Rect;
 import android.os.Bundle;
-import android.support.annotation.Nullable;
-import android.support.v4.app.Fragment;
-import android.support.v7.widget.GridLayoutManager;
-import android.support.v7.widget.RecyclerView;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
+
+import androidx.annotation.Nullable;
+import androidx.fragment.app.Fragment;
+import androidx.recyclerview.widget.GridLayoutManager;
+import androidx.recyclerview.widget.RecyclerView;
 
 import com.afollestad.appthemeengine.ATE;
 
@@ -21,13 +22,11 @@ import java.util.concurrent.TimeUnit;
 
 import javax.inject.Inject;
 
-import butterknife.BindView;
-import butterknife.ButterKnife;
 import io.hefuyi.listener.Constants;
 import io.hefuyi.listener.ListenerApp;
 import io.hefuyi.listener.R;
 import io.hefuyi.listener.RxBus;
-import io.hefuyi.listener.event.FavourateSongEvent;
+import io.hefuyi.listener.event.FavoriteSongEvent;
 import io.hefuyi.listener.event.MediaUpdateEvent;
 import io.hefuyi.listener.event.RecentlyPlayEvent;
 import io.hefuyi.listener.injector.component.AlbumsComponent;
@@ -51,13 +50,11 @@ import rx.schedulers.Schedulers;
 /**
  * A simple {@link Fragment} subclass.
  */
-public class AlbumFragment extends Fragment implements AlbumsContract.View{
+public class AlbumFragment extends Fragment implements AlbumsContract.View {
 
     @Inject
     AlbumsContract.Presenter mPresenter;
-    @BindView(R.id.recyclerview)
     FastScrollRecyclerView recyclerView;
-    @BindView(R.id.view_empty)
     View emptyView;
     private AlbumAdapter mAdapter;
     private GridLayoutManager layoutManager;
@@ -79,7 +76,7 @@ public class AlbumFragment extends Fragment implements AlbumsContract.View{
             case Constants.NAVIGATE_PLAYLIST_RECENTPLAY:
                 args.putString(Constants.PLAYLIST_TYPE, action);
                 break;
-            case Constants.NAVIGATE_PLAYLIST_FAVOURATE:
+            case Constants.NAVIGATE_PLAYLIST_FAVORITE:
                 args.putString(Constants.PLAYLIST_TYPE, action);
                 break;
             default:
@@ -106,7 +103,7 @@ public class AlbumFragment extends Fragment implements AlbumsContract.View{
         if (getArguments() != null) {
             action = getArguments().getString(Constants.PLAYLIST_TYPE);
         }
-        mAdapter = new AlbumAdapter(getActivity(),action);
+        mAdapter = new AlbumAdapter(getActivity(), action);
 
     }
 
@@ -128,17 +125,22 @@ public class AlbumFragment extends Fragment implements AlbumsContract.View{
     @Override
     public void onViewCreated(View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
-        ButterKnife.bind(this, view);
+
+        recyclerView = view.findViewById(R.id.recyclerview);
+        emptyView = view.findViewById(R.id.view_empty);
 
         ATE.apply(this, ATEUtil.getATEKey(getActivity()));
 
         recyclerView.setLayoutManager(layoutManager);
         recyclerView.setAdapter(mAdapter);
         setItemDecoration();
+
+        io.hefuyi.listener.util.ListenerUtil.applyBottomInsetWithPlayer(recyclerView);
+
         mPresenter.loadAlbums(action);
         subscribeMediaUpdateEvent();
-        if (Constants.NAVIGATE_PLAYLIST_FAVOURATE.equals(action)) {
-            subscribeFavourateSongEvent();
+        if (Constants.NAVIGATE_PLAYLIST_FAVORITE.equals(action)) {
+            subscribeFavoriteSongEvent();
         } else if (Constants.NAVIGATE_PLAYLIST_RECENTPLAY.equals(action)) {
             subscribeRecentlyPlayEvent();
         } else {
@@ -170,33 +172,33 @@ public class AlbumFragment extends Fragment implements AlbumsContract.View{
 
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
-        switch (item.getItemId()) {
-            case R.id.menu_sort_by_az:
-                mPreferences.setAlbumSortOrder(SortOrder.AlbumSortOrder.ALBUM_A_Z);
-                mPresenter.loadAlbums(action);
-                return true;
-            case R.id.menu_sort_by_za:
-                mPreferences.setAlbumSortOrder(SortOrder.AlbumSortOrder.ALBUM_Z_A);
-                mPresenter.loadAlbums(action);
-                return true;
-            case R.id.menu_sort_by_number_of_songs:
-                mPreferences.setAlbumSortOrder(SortOrder.AlbumSortOrder.ALBUM_NUMBER_OF_SONGS);
-                mPresenter.loadAlbums(action);
-                return true;
-            case R.id.menu_show_as_list:
-                if (isGrid) {
-                    mPreferences.setAlbumsInGrid(false);
-                    isGrid = false;
-                    updateLayoutManager(1);
-                }
-                return true;
-            case R.id.menu_show_as_grid:
-                if (!isGrid) {
-                    mPreferences.setAlbumsInGrid(true);
-                    isGrid = true;
-                    updateLayoutManager(2);
-                }
-                return true;
+        int itemId = item.getItemId();
+        if (itemId == R.id.menu_sort_by_az) {
+            mPreferences.setAlbumSortOrder(SortOrder.AlbumSortOrder.ALBUM_A_Z);
+            mPresenter.loadAlbums(action);
+            return true;
+        } else if (itemId == R.id.menu_sort_by_za) {
+            mPreferences.setAlbumSortOrder(SortOrder.AlbumSortOrder.ALBUM_Z_A);
+            mPresenter.loadAlbums(action);
+            return true;
+        } else if (itemId == R.id.menu_sort_by_number_of_songs) {
+            mPreferences.setAlbumSortOrder(SortOrder.AlbumSortOrder.ALBUM_NUMBER_OF_SONGS);
+            mPresenter.loadAlbums(action);
+            return true;
+        } else if (itemId == R.id.menu_show_as_list) {
+            if (isGrid) {
+                mPreferences.setAlbumsInGrid(false);
+                isGrid = false;
+                updateLayoutManager(1);
+            }
+            return true;
+        } else if (itemId == R.id.menu_show_as_grid) {
+            if (!isGrid) {
+                mPreferences.setAlbumsInGrid(true);
+                isGrid = true;
+                updateLayoutManager(2);
+            }
+            return true;
         }
         return super.onOptionsItemSelected(item);
     }
@@ -255,14 +257,14 @@ public class AlbumFragment extends Fragment implements AlbumsContract.View{
         RxBus.getInstance().addSubscription(this, subscription);
     }
 
-    private void subscribeFavourateSongEvent() {
+    private void subscribeFavoriteSongEvent() {
         Subscription subscription = RxBus.getInstance()
-                .toObservable(FavourateSongEvent.class)
+                .toObservable(FavoriteSongEvent.class)
                 .subscribeOn(Schedulers.io())
                 .observeOn(AndroidSchedulers.mainThread())
-                .subscribe(new Action1<FavourateSongEvent>() {
+                .subscribe(new Action1<FavoriteSongEvent>() {
                     @Override
-                    public void call(FavourateSongEvent event) {
+                    public void call(FavoriteSongEvent event) {
                         mPresenter.loadAlbums(action);
                     }
                 }, new Action1<Throwable>() {
@@ -294,7 +296,7 @@ public class AlbumFragment extends Fragment implements AlbumsContract.View{
     }
 
     public static class SpacesItemDecoration extends RecyclerView.ItemDecoration {
-        private int space;
+        private final int space;
 
         public SpacesItemDecoration(int space) {
             this.space = space;

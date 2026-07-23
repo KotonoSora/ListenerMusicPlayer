@@ -1,5 +1,7 @@
 package io.hefuyi.listener.dataloader;
 
+import static io.hefuyi.listener.util.ListenerUtil.MUSIC_ONLY_SELECTION;
+
 import android.content.Context;
 import android.content.res.Resources;
 import android.database.Cursor;
@@ -14,8 +16,6 @@ import io.hefuyi.listener.mvp.model.Playlist;
 import io.hefuyi.listener.util.ListenerUtil;
 import rx.Observable;
 import rx.Subscriber;
-
-import static io.hefuyi.listener.util.ListenerUtil.MUSIC_ONLY_SELECTION;
 
 /**
  * Created by hefuyi on 2016/11/4.
@@ -63,8 +63,8 @@ public class PlaylistLoader {
     private static void makeDefaultPlaylists(Context context) {
         final Resources resources = context.getResources();
 
-        final Playlist topTracks = new Playlist(ListenerUtil.PlaylistType.Favourate.mId,
-                resources.getString(ListenerUtil.PlaylistType.Favourate.mTitleId), -1);
+        final Playlist topTracks = new Playlist(ListenerUtil.PlaylistType.Favorite.mId,
+                resources.getString(ListenerUtil.PlaylistType.Favorite.mTitleId), -1);
         mPlaylistList.add(topTracks);
     }
 
@@ -96,11 +96,10 @@ public class PlaylistLoader {
 
     public static void deletePlaylists(Context context, long playlistId) {
         Uri localUri = MediaStore.Audio.Playlists.EXTERNAL_CONTENT_URI;
-        StringBuilder localStringBuilder = new StringBuilder();
-        localStringBuilder.append("_id IN (");
-        localStringBuilder.append((playlistId));
-        localStringBuilder.append(")");
-        context.getContentResolver().delete(localUri, localStringBuilder.toString(), null);
+        String localStringBuilder = "_id IN (" +
+                (playlistId) +
+                ")";
+        context.getContentResolver().delete(localUri, localStringBuilder, null);
     }
 
 }

@@ -12,14 +12,14 @@ import io.hefuyi.listener.mvp.view.BaseView;
 
 public interface AlbumsContract {
 
-    interface View extends BaseView{
+    interface View extends BaseView {
 
         void showAlbums(List<Album> albumList);
 
         void showEmptyView();
     }
 
-    interface Presenter extends BasePresenter<View>{
+    interface Presenter extends BasePresenter<View> {
 
         void loadAlbums(String action);
 

@@ -2,8 +2,6 @@ package io.hefuyi.listener.ui.adapter;
 
 import android.app.Activity;
 import android.os.Handler;
-import android.support.annotation.NonNull;
-import android.support.v7.widget.RecyclerView;
 import android.view.LayoutInflater;
 import android.view.MenuItem;
 import android.view.View;
@@ -11,6 +9,9 @@ import android.view.ViewGroup;
 import android.widget.ImageView;
 import android.widget.PopupMenu;
 import android.widget.TextView;
+
+import androidx.annotation.NonNull;
+import androidx.recyclerview.widget.RecyclerView;
 
 import com.afollestad.materialdialogs.DialogAction;
 import com.afollestad.materialdialogs.MaterialDialog;
@@ -32,9 +33,9 @@ import io.hefuyi.listener.util.NavigationUtil;
 
 public class AlbumSongsAdapter extends RecyclerView.Adapter<AlbumSongsAdapter.ItemHolder> {
 
+    private final Activity mContext;
+    private final long albumID;
     private List<Song> arraylist;
-    private Activity mContext;
-    private long albumID;
     private long[] songIDs;
 
     public AlbumSongsAdapter(Activity context, long albumID) {
@@ -56,7 +57,7 @@ public class AlbumSongsAdapter extends RecyclerView.Adapter<AlbumSongsAdapter.It
         itemHolder.album.setText(localItem.albumName);
 
         Glide.with(mContext)
-                .load(ListenerUtil.getAlbumArtUri(localItem.albumId).toString())
+                .load(ListenerUtil.getAlbumArtUri(localItem.albumId))
                 .diskCacheStrategy(DiskCacheStrategy.SOURCE)
                 .error(ATEUtil.getDefaultAlbumDrawable(mContext))
                 .centerCrop()
@@ -81,40 +82,34 @@ public class AlbumSongsAdapter extends RecyclerView.Adapter<AlbumSongsAdapter.It
                 menu.setOnMenuItemClickListener(new PopupMenu.OnMenuItemClickListener() {
                     @Override
                     public boolean onMenuItemClick(MenuItem item) {
-                        switch (item.getItemId()) {
-                            case R.id.popup_song_play_next:
-                                long[] ids = new long[1];
-                                ids[0] = arraylist.get(position).id;
-                                MusicPlayer.playNext(mContext, ids, -1, ListenerUtil.IdType.NA);
-                                break;
-                            case R.id.popup_song_goto_album:
-                                NavigationUtil.goToAlbum(mContext, arraylist.get(position).albumId,
-                                        arraylist.get(position).title);
-                                break;
-                            case R.id.popup_song_goto_artist:
-                                NavigationUtil.goToArtist(mContext, arraylist.get(position).artistId,
-                                        arraylist.get(position).artistName);
-                                break;
-                            case R.id.popup_song_addto_queue:
-                                long[] id = new long[1];
-                                id[0] = arraylist.get(position).id;
-                                MusicPlayer.addToQueue(mContext, id, -1, ListenerUtil.IdType.NA);
-                                break;
-                            case R.id.popup_song_addto_playlist:
-                                ListenerUtil.showAddPlaylistDialog(mContext, new long[]{arraylist.get(itemHolder.getAdapterPosition()).id});
-                                break;
-                            case R.id.popup_song_delete:
-                                long[] deleteIds = {arraylist.get(position).id};
-                                ListenerUtil.showDeleteDialog(mContext, arraylist.get(position).title, deleteIds,
-                                        new MaterialDialog.SingleButtonCallback() {
-                                            @Override
-                                            public void onClick(@NonNull MaterialDialog dialog, @NonNull DialogAction which) {
-                                                arraylist.remove(position);
-                                                songIDs = getSongIds();
-                                                notifyDataSetChanged();
-                                            }
-                                        });
-                                break;
+                        int itemId = item.getItemId();
+                        if (itemId == R.id.popup_song_play_next) {
+                            long[] ids = new long[1];
+                            ids[0] = arraylist.get(position).id;
+                            MusicPlayer.playNext(mContext, ids, -1, ListenerUtil.IdType.NA);
+                        } else if (itemId == R.id.popup_song_goto_album) {
+                            NavigationUtil.goToAlbum(mContext, arraylist.get(position).albumId,
+                                    arraylist.get(position).title);
+                        } else if (itemId == R.id.popup_song_goto_artist) {
+                            NavigationUtil.goToArtist(mContext, arraylist.get(position).artistId,
+                                    arraylist.get(position).artistName);
+                        } else if (itemId == R.id.popup_song_addto_queue) {
+                            long[] id = new long[1];
+                            id[0] = arraylist.get(position).id;
+                            MusicPlayer.addToQueue(mContext, id, -1, ListenerUtil.IdType.NA);
+                        } else if (itemId == R.id.popup_song_addto_playlist) {
+                            ListenerUtil.showAddPlaylistDialog(mContext, new long[]{arraylist.get(itemHolder.getAdapterPosition()).id});
+                        } else if (itemId == R.id.popup_song_delete) {
+                            long[] deleteIds = {arraylist.get(position).id};
+                            ListenerUtil.showDeleteDialog(mContext, arraylist.get(position).title, deleteIds,
+                                    new MaterialDialog.SingleButtonCallback() {
+                                        @Override
+                                        public void onClick(@NonNull MaterialDialog dialog, @NonNull DialogAction which) {
+                                            arraylist.remove(position);
+                                            songIDs = getSongIds();
+                                            notifyDataSetChanged();
+                                        }
+                                    });
                         }
                         return false;
                     }
@@ -147,19 +142,19 @@ public class AlbumSongsAdapter extends RecyclerView.Adapter<AlbumSongsAdapter.It
 
 
     public class ItemHolder extends RecyclerView.ViewHolder implements View.OnClickListener {
-        private TextView title;
-        private TextView artist;
-        private TextView album;
-        private ImageView albumArt;
-        private ImageView popupMenu;
+        private final TextView title;
+        private final TextView artist;
+        private final TextView album;
+        private final ImageView albumArt;
+        private final ImageView popupMenu;
 
         public ItemHolder(View view) {
             super(view);
-            this.title = (TextView) view.findViewById(R.id.text_item_title);
-            this.artist = (TextView) view.findViewById(R.id.text_item_subtitle);
-            this.album = (TextView) view.findViewById(R.id.text_item_subtitle_2);
-            this.albumArt = (ImageView) view.findViewById(R.id.image);
-            this.popupMenu = (ImageView) view.findViewById(R.id.popup_menu);
+            this.title = view.findViewById(R.id.text_item_title);
+            this.artist = view.findViewById(R.id.text_item_subtitle);
+            this.album = view.findViewById(R.id.text_item_subtitle_2);
+            this.albumArt = view.findViewById(R.id.image);
+            this.popupMenu = view.findViewById(R.id.popup_menu);
             view.setOnClickListener(this);
         }
 

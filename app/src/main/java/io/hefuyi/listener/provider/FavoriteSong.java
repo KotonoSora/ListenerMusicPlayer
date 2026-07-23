@@ -50,10 +50,10 @@ public class FavoriteSong {
 
         Cursor cursor = null;
         int insert = 0;
-        try{
+        try {
             for (long aSongId : songId) {
                 cursor = database.query(FavoriteSongColumns.NAME, new String[]{FavoriteSongColumns.SONGID},
-                        FavoriteSongColumns.SONGID + " =? ", new String[]{String.valueOf(songId)}, null, null, null);
+                        FavoriteSongColumns.SONGID + " =? ", new String[]{String.valueOf(aSongId)}, null, null, null);
                 if (cursor != null && cursor.getCount() == 0) { //若无重复则插入
                     ContentValues values = new ContentValues(2);
                     values.put(FavoriteSongColumns.SONGID, aSongId);
@@ -63,7 +63,7 @@ public class FavoriteSong {
                 }
             }
             return insert;
-        }finally {
+        } finally {
             if (cursor != null) {
                 cursor.close();
             }
@@ -82,14 +82,14 @@ public class FavoriteSong {
             for (long aSongId : songId) {
                 cursor = database.query(FavoriteSongColumns.NAME, new String[]{FavoriteSongColumns.SONGID},
                         FavoriteSongColumns.SONGID + " =? ", new String[]{String.valueOf(aSongId)}, null, null, null);
-                if (cursor != null && cursor.getCount() >= 0) {
+                if (cursor != null && cursor.getCount() > 0) {
                     database.delete(FavoriteSongColumns.NAME, FavoriteSongColumns.SONGID + " =? ",
                             new String[]{String.valueOf(aSongId)});
                     deleted++;
                 }
             }
             return deleted;
-        }finally {
+        } finally {
             if (cursor != null) {
                 cursor.close();
             }
@@ -107,19 +107,18 @@ public class FavoriteSong {
     }
 
 
-
     public boolean isFavorite(long songId) {
         final SQLiteDatabase database = mMusicDatabase.getWritableDatabase();
         database.beginTransaction();
 
         Cursor cursor = null;
-        try{
+        try {
             cursor = database.query(FavoriteSongColumns.NAME, new String[]{FavoriteSongColumns.SONGID},
                     FavoriteSongColumns.SONGID + " =? ", new String[]{String.valueOf(songId)}, null, null, null);
             if (cursor != null && cursor.getCount() > 0) {
                 return true;
             }
-        }finally {
+        } finally {
             if (cursor != null) {
                 cursor.close();
             }

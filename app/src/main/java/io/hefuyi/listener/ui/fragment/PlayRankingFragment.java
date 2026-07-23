@@ -1,17 +1,18 @@
 package io.hefuyi.listener.ui.fragment;
 
 
-import android.os.Build;
 import android.os.Bundle;
-import android.support.annotation.Nullable;
-import android.support.v4.app.Fragment;
-import android.support.v7.app.ActionBar;
-import android.support.v7.app.AppCompatActivity;
-import android.support.v7.widget.LinearLayoutManager;
-import android.support.v7.widget.Toolbar;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+
+import androidx.annotation.Nullable;
+import androidx.appcompat.app.ActionBar;
+import androidx.appcompat.app.AppCompatActivity;
+import androidx.appcompat.widget.Toolbar;
+import androidx.fragment.app.Fragment;
+
+import androidx.recyclerview.widget.LinearLayoutManager;
 
 import com.afollestad.appthemeengine.ATE;
 
@@ -19,8 +20,6 @@ import java.util.List;
 
 import javax.inject.Inject;
 
-import butterknife.BindView;
-import butterknife.ButterKnife;
 import io.hefuyi.listener.Constants;
 import io.hefuyi.listener.ListenerApp;
 import io.hefuyi.listener.R;
@@ -34,7 +33,6 @@ import io.hefuyi.listener.mvp.contract.PlayRankingContract;
 import io.hefuyi.listener.mvp.model.Song;
 import io.hefuyi.listener.ui.adapter.SongsListAdapter;
 import io.hefuyi.listener.util.ATEUtil;
-import io.hefuyi.listener.util.DensityUtil;
 import io.hefuyi.listener.widget.fastscroller.FastScrollRecyclerView;
 import rx.Subscription;
 import rx.android.schedulers.AndroidSchedulers;
@@ -44,15 +42,12 @@ import rx.schedulers.Schedulers;
 /**
  * A simple {@link Fragment} subclass.
  */
-public class PlayRankingFragment extends Fragment implements PlayRankingContract.View{
+public class PlayRankingFragment extends Fragment implements PlayRankingContract.View {
 
     @Inject
     PlayRankingContract.Presenter mPresenter;
-    @BindView(R.id.recyclerview)
     FastScrollRecyclerView recyclerView;
-    @BindView(R.id.view_empty)
     View emptyView;
-    @BindView(R.id.toolbar)
     Toolbar toolbar;
     private SongsListAdapter mAdapter;
 
@@ -77,7 +72,6 @@ public class PlayRankingFragment extends Fragment implements PlayRankingContract
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         View rootView = inflater.inflate(R.layout.fragment_list_layout, container, false);
-        ButterKnife.bind(this, rootView);
         return rootView;
     }
 
@@ -85,15 +79,13 @@ public class PlayRankingFragment extends Fragment implements PlayRankingContract
     public void onViewCreated(View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
 
+        recyclerView = view.findViewById(R.id.recyclerview);
+        emptyView = view.findViewById(R.id.view_empty);
+        toolbar = view.findViewById(R.id.toolbar);
+
         ATE.apply(this, ATEUtil.getATEKey(getActivity()));
 
-        if (Build.VERSION.SDK_INT < 21 && view.findViewById(R.id.status_bar) != null) {
-            view.findViewById(R.id.status_bar).setVisibility(View.GONE);
-            if (Build.VERSION.SDK_INT >= 19) {
-                int statusBarHeight = DensityUtil.getStatusBarHeight(getContext());
-                view.findViewById(R.id.toolbar).setPadding(0, statusBarHeight, 0, 0);
-            }
-        }
+        io.hefuyi.listener.util.ListenerUtil.applySystemBarPaddingAndHeight(toolbar, true, false);
 
         ((AppCompatActivity) getActivity()).setSupportActionBar(toolbar);
 
@@ -104,6 +96,9 @@ public class PlayRankingFragment extends Fragment implements PlayRankingContract
 
         recyclerView.setLayoutManager(new LinearLayoutManager(getActivity()));
         recyclerView.setAdapter(mAdapter);
+
+        io.hefuyi.listener.util.ListenerUtil.applyBottomInsetWithPlayer(recyclerView);
+
         mPresenter.subscribe();
         subscribeMetaChangedEvent();
     }

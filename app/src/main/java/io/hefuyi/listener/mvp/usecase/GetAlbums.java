@@ -11,11 +11,11 @@ import rx.Observable;
  * Created by hefuyi on 2016/11/12.
  */
 
-public class GetAlbums extends UseCase<GetAlbums.RequestValues,GetAlbums.ResponseValue>{
+public class GetAlbums extends UseCase<GetAlbums.RequestValues, GetAlbums.ResponseValue> {
 
     private final Repository mRepository;
 
-    public GetAlbums(Repository repository){
+    public GetAlbums(Repository repository) {
         mRepository = repository;
     }
 
@@ -29,14 +29,14 @@ public class GetAlbums extends UseCase<GetAlbums.RequestValues,GetAlbums.Respons
                 return new ResponseValue(mRepository.getRecentlyAddedAlbums());
             case Constants.NAVIGATE_PLAYLIST_RECENTPLAY:
                 return new ResponseValue(mRepository.getRecentlyPlayedAlbums());
-            case Constants.NAVIGATE_PLAYLIST_FAVOURATE:
-                return new ResponseValue(mRepository.getFavourateAlbums());
+            case Constants.NAVIGATE_PLAYLIST_FAVORITE:
+                return new ResponseValue(mRepository.getFavoriteAlbums());
             default:
                 throw new RuntimeException("wrong action type");
         }
     }
 
-    public static final class RequestValues implements UseCase.RequestValues{
+    public static final class RequestValues implements UseCase.RequestValues {
 
         private final String action;
 
@@ -57,7 +57,7 @@ public class GetAlbums extends UseCase<GetAlbums.RequestValues,GetAlbums.Respons
             mListObservable = listObservable;
         }
 
-        public Observable<List<Album>> getSongList(){
+        public Observable<List<Album>> getSongList() {
             return mListObservable;
         }
     }

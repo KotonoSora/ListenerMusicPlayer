@@ -6,8 +6,9 @@ import android.graphics.Color;
 import android.os.Bundle;
 import android.preference.Preference;
 import android.preference.PreferenceFragment;
-import android.support.v4.app.Fragment;
 import android.view.View;
+
+import androidx.fragment.app.Fragment;
 
 import com.afollestad.appthemeengine.ATE;
 import com.afollestad.appthemeengine.Config;
@@ -21,7 +22,7 @@ import io.hefuyi.listener.util.PreferencesUtility;
 /**
  * A simple {@link Fragment} subclass.
  */
-public class SettingFragment extends PreferenceFragment implements SharedPreferences.OnSharedPreferenceChangeListener{
+public class SettingFragment extends PreferenceFragment implements SharedPreferences.OnSharedPreferenceChangeListener {
 
     private String mAteKey;
 

@@ -30,7 +30,7 @@ public class AlbumLoader {
                     if (cursor.moveToFirst())
                         album = new Album(cursor.getLong(0), cursor.getString(1), cursor.getString(2), cursor.getLong(3), cursor.getInt(4), cursor.getInt(5));
                 }
-                if (cursor != null){
+                if (cursor != null) {
                     cursor.close();
                 }
                 subscriber.onNext(album);
@@ -39,8 +39,8 @@ public class AlbumLoader {
         });
     }
 
-    public static Observable<List<Album>> getFavourateAlbums(final Context context) {
-        return SongLoader.getFavoriteSong(context).flatMap(new Func1<List<Song>, Observable<Song>>() {
+    public static Observable<List<Album>> getFavoriteAlbums(final Context context) {
+        return SongLoader.getFavoriteSongs(context).flatMap(new Func1<List<Song>, Observable<Song>>() {
             @Override
             public Observable<Song> call(List<Song> songList) {
                 return Observable.from(songList);
