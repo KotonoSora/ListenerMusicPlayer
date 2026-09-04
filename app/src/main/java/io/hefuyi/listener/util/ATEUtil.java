@@ -22,26 +22,32 @@ public class ATEUtil {
                 "dark_theme" : "light_theme";
     }
 
+    public static boolean isDarkTheme(Context context) {
+        return "dark_theme".equals(getATEKey(context));
+    }
+
     public static int getThemePrimaryColor(Context context) {
         return Config.primaryColor(context, getATEKey(context));
     }
 
+    public static int getThemePrimaryColorDark(Context context) {
+        return Config.primaryColorDark(context, getATEKey(context));
+    }
 
     public static int getThemeAccentColor(Context context) {
         return Config.accentColor(context, getATEKey(context));
     }
 
-
     public static int getThemeTextColorPrimary(Context context) {
         TypedValue textColorPrimary = new TypedValue();
         context.getTheme().resolveAttribute(android.R.attr.textColorPrimary, textColorPrimary, true);
-        return context.getResources().getColor(textColorPrimary.resourceId);
+        return ContextCompat.getColor(context, textColorPrimary.resourceId);
     }
 
     public static int getThemeTextColorSecondly(Context context) {
         TypedValue textColorSecondly = new TypedValue();
         context.getTheme().resolveAttribute(android.R.attr.textColorSecondary, textColorSecondly, true);
-        return context.getResources().getColor(textColorSecondly.resourceId);
+        return ContextCompat.getColor(context, textColorSecondly.resourceId);
     }
 
     public static Drawable getDefaultAlbumDrawable(Context context) {
@@ -59,7 +65,7 @@ public class ATEUtil {
     public static int getThemeAlbumDefaultPaletteColor(Context context) {
         TypedValue paletteColor = new TypedValue();
         context.getTheme().resolveAttribute(R.attr.album_default_palette_color, paletteColor, true);
-        return context.getResources().getColor(paletteColor.resourceId);
+        return ContextCompat.getColor(context, paletteColor.resourceId);
     }
 
 }

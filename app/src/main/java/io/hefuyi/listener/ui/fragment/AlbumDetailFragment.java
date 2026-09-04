@@ -232,7 +232,7 @@ public class AlbumDetailFragment extends Fragment implements AlbumDetailContract
     @Override
     public void showAlbumArt(Bitmap bitmap) {
         albumArt.setImageBitmap(bitmap);
-        if (ATEUtil.getATEKey(getActivity()).equals("dark_theme")) {
+        if (ATEUtil.isDarkTheme(getActivity())) {
             return;
         }
         new Palette.Builder(bitmap).generate(new Palette.PaletteAsyncListener() {

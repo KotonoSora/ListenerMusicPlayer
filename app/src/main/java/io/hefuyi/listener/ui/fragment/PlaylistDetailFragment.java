@@ -282,7 +282,7 @@ public class PlaylistDetailFragment extends Fragment implements PlaylistDetailCo
     @Override
     public void showPlaylistArt(Bitmap bitmap) {
         playlistArt.setImageBitmap(bitmap);
-        if (ATEUtil.getATEKey(mContext).equals("dark_theme")) {
+        if (ATEUtil.isDarkTheme(mContext)) {
             return;
         }
         new Palette.Builder(bitmap).generate(new Palette.PaletteAsyncListener() {

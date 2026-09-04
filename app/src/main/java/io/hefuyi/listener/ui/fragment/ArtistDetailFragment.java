@@ -155,7 +155,7 @@ public class ArtistDetailFragment extends Fragment implements ArtistDetailContra
     @Override
     public void showArtistArt(Bitmap bitmap) {
         artistArt.setImageBitmap(bitmap);
-        if (ATEUtil.getATEKey(getActivity()).equals("dark_theme")) {
+        if (ATEUtil.isDarkTheme(getActivity())) {
             primaryColor = ATEUtil.getThemePrimaryColor(getContext());
             collapsingToolbarLayout.setContentScrimColor(primaryColor);
             collapsingToolbarLayout.setStatusBarScrimColor(ColorUtil.getStatusBarColor(primaryColor));

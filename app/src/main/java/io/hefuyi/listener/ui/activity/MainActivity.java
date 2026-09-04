@@ -182,7 +182,7 @@ public class MainActivity extends BaseActivity implements ATEActivityThemeCustom
 
         action = getIntent().getAction();
 
-        isDarkTheme = ATEUtil.getATEKey(this).equals("dark_theme");
+        isDarkTheme = ATEUtil.isDarkTheme(this);
 
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
