@@ -1,14 +1,12 @@
 package io.hefuyi.listener.ui.fragment;
 
-
-import android.annotation.TargetApi;
 import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.Color;
 import android.graphics.drawable.Drawable;
-import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
+import android.os.Looper;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuInflater;
@@ -17,10 +15,12 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageView;
 
+import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.ActionBar;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
+import androidx.core.view.MenuProvider;
 import androidx.fragment.app.Fragment;
 import androidx.palette.graphics.Palette;
 import androidx.recyclerview.widget.LinearLayoutManager;
@@ -56,7 +56,6 @@ import io.hefuyi.listener.util.SortOrder;
 import io.hefuyi.listener.widget.DividerItemDecoration;
 import rx.Subscription;
 import rx.android.schedulers.AndroidSchedulers;
-import rx.functions.Action1;
 import rx.schedulers.Schedulers;
 
 /**
@@ -93,22 +92,23 @@ public class AlbumDetailFragment extends Fragment implements AlbumDetailContract
     }
 
     @Override
-    public void onCreate(Bundle savedInstanceState) {
+    public void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        injectDependences();
+        injectDependencies();
         mPresenter.attachView(this);
 
-        if (getArguments() != null) {
-            albumID = getArguments().getLong(Constants.ALBUM_ID);
-            albumName = getArguments().getString(Constants.ALBUM_NAME);
+        Bundle args = getArguments();
+        if (args != null) {
+            albumID = args.getLong(Constants.ALBUM_ID);
+            albumName = args.getString(Constants.ALBUM_NAME);
         }
-        context = getActivity();
+        context = requireActivity();
         mPreferences = PreferencesUtility.getInstance(context);
-        mAdapter = new AlbumSongsAdapter(getActivity(), albumID);
+        mAdapter = new AlbumSongsAdapter(requireActivity(), albumID);
     }
 
-    private void injectDependences() {
-        ApplicationComponent applicationComponent = ((ListenerApp) getActivity().getApplication()).getApplicationComponent();
+    private void injectDependencies() {
+        ApplicationComponent applicationComponent = ((ListenerApp) requireActivity().getApplication()).getApplicationComponent();
         AlbumSongsComponent albumSongsComponent = DaggerAlbumSongsComponent.builder()
                 .applicationComponent(applicationComponent)
                 .albumSongsModel(new AlbumSongsModel())
@@ -116,17 +116,17 @@ public class AlbumDetailFragment extends Fragment implements AlbumDetailContract
         albumSongsComponent.inject(this);
     }
 
+    @Nullable
     @Override
-    public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
+    public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
         View root = inflater.inflate(R.layout.fragment_album_detail, container, false);
         toolbar = root.findViewById(R.id.toolbar);
         ListenerUtil.applySystemBarPaddingAndHeight(toolbar, true, false);
         return root;
     }
 
-    @TargetApi(Build.VERSION_CODES.LOLLIPOP)
     @Override
-    public void onViewCreated(View view, @Nullable Bundle savedInstanceState) {
+    public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
 
         albumArt = view.findViewById(R.id.album_art);
@@ -138,27 +138,60 @@ public class AlbumDetailFragment extends Fragment implements AlbumDetailContract
 
         ATE.apply(this, ATEUtil.getATEKey(context));
 
-        if (getArguments().getBoolean("transition")) {
-            albumArt.setTransitionName(getArguments().getString("transition_name"));
+        Bundle args = getArguments();
+        if (args != null && args.getBoolean("transition")) {
+            albumArt.setTransitionName(args.getString("transition_name"));
         }
 
-        fabPlay.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                onFabPlayClick();
-            }
-        });
+        fabPlay.setOnClickListener(v -> onFabPlayClick());
 
         recyclerView.setAdapter(mAdapter);
-        recyclerView.setLayoutManager(new LinearLayoutManager(getActivity()));
-        recyclerView.addItemDecoration(new DividerItemDecoration(getActivity(), DividerItemDecoration.VERTICAL_LIST, false));
+        recyclerView.setLayoutManager(new LinearLayoutManager(requireActivity()));
+        recyclerView.addItemDecoration(new DividerItemDecoration(requireActivity(), DividerItemDecoration.VERTICAL_LIST, false));
 
         ListenerUtil.applyBottomInsetWithPlayer(recyclerView);
 
         setupToolbar();
+        setupMenu();
 
         mPresenter.subscribe(albumID);
         subscribeMetaChangedEvent();
+    }
+
+    private void setupMenu() {
+        requireActivity().addMenuProvider(new MenuProvider() {
+            @Override
+            public void onCreateMenu(@NonNull Menu menu, @NonNull MenuInflater menuInflater) {
+                menuInflater.inflate(R.menu.album_song_sort_by, menu);
+            }
+
+            @Override
+            public boolean onMenuItemSelected(@NonNull MenuItem menuItem) {
+                int itemId = menuItem.getItemId();
+                if (itemId == R.id.menu_sort_by_az) {
+                    mPreferences.setAlbumSongSortOrder(SortOrder.AlbumSongSortOrder.SONG_A_Z);
+                    mPresenter.loadAlbumSongs(albumID);
+                    return true;
+                } else if (itemId == R.id.menu_sort_by_za) {
+                    mPreferences.setAlbumSongSortOrder(SortOrder.AlbumSongSortOrder.SONG_Z_A);
+                    mPresenter.loadAlbumSongs(albumID);
+                    return true;
+                } else if (itemId == R.id.menu_sort_by_year) {
+                    mPreferences.setAlbumSongSortOrder(SortOrder.AlbumSongSortOrder.SONG_YEAR);
+                    mPresenter.loadAlbumSongs(albumID);
+                    return true;
+                } else if (itemId == R.id.menu_sort_by_duration) {
+                    mPreferences.setAlbumSongSortOrder(SortOrder.AlbumSongSortOrder.SONG_DURATION);
+                    mPresenter.loadAlbumSongs(albumID);
+                    return true;
+                } else if (itemId == R.id.menu_sort_by_track_number) {
+                    mPreferences.setAlbumSongSortOrder(SortOrder.AlbumSongSortOrder.SONG_TRACK_LIST);
+                    mPresenter.loadAlbumSongs(albumID);
+                    return true;
+                }
+                return false;
+            }
+        }, getViewLifecycleOwner());
     }
 
     @Override
@@ -166,18 +199,6 @@ public class AlbumDetailFragment extends Fragment implements AlbumDetailContract
         super.onDestroyView();
         mPresenter.unsubscribe();
         RxBus.getInstance().unSubscribe(this);
-    }
-
-    @Override
-    public void onActivityCreated(final Bundle savedInstanceState) {
-        super.onActivityCreated(savedInstanceState);
-        setHasOptionsMenu(true);
-    }
-
-    @Override
-    public void onCreateOptionsMenu(Menu menu, MenuInflater inflater) {
-        super.onCreateOptionsMenu(menu, inflater);
-        inflater.inflate(R.menu.album_song_sort_by, menu);
     }
 
     @Override
@@ -190,37 +211,13 @@ public class AlbumDetailFragment extends Fragment implements AlbumDetailContract
         }
     }
 
-    @Override
-    public boolean onOptionsItemSelected(MenuItem item) {
-        int itemId = item.getItemId();
-        if (itemId == R.id.menu_sort_by_az) {
-            mPreferences.setAlbumSongSortOrder(SortOrder.AlbumSongSortOrder.SONG_A_Z);
-            mPresenter.loadAlbumSongs(albumID);
-            return true;
-        } else if (itemId == R.id.menu_sort_by_za) {
-            mPreferences.setAlbumSongSortOrder(SortOrder.AlbumSongSortOrder.SONG_Z_A);
-            mPresenter.loadAlbumSongs(albumID);
-            return true;
-        } else if (itemId == R.id.menu_sort_by_year) {
-            mPreferences.setAlbumSongSortOrder(SortOrder.AlbumSongSortOrder.SONG_YEAR);
-            mPresenter.loadAlbumSongs(albumID);
-            return true;
-        } else if (itemId == R.id.menu_sort_by_duration) {
-            mPreferences.setAlbumSongSortOrder(SortOrder.AlbumSongSortOrder.SONG_DURATION);
-            mPresenter.loadAlbumSongs(albumID);
-            return true;
-        } else if (itemId == R.id.menu_sort_by_track_number) {
-            mPreferences.setAlbumSongSortOrder(SortOrder.AlbumSongSortOrder.SONG_TRACK_LIST);
-            mPresenter.loadAlbumSongs(albumID);
-            return true;
-        }
-        return super.onOptionsItemSelected(item);
-    }
-
     private void setupToolbar() {
-        ((AppCompatActivity) getActivity()).setSupportActionBar(toolbar);
-        final ActionBar ab = ((AppCompatActivity) getActivity()).getSupportActionBar();
-        ab.setDisplayHomeAsUpEnabled(true);
+        AppCompatActivity activity = (AppCompatActivity) requireActivity();
+        activity.setSupportActionBar(toolbar);
+        ActionBar ab = activity.getSupportActionBar();
+        if (ab != null) {
+            ab.setDisplayHomeAsUpEnabled(true);
+        }
         collapsingToolbarLayout.setTitle(albumName);
     }
 
@@ -235,9 +232,8 @@ public class AlbumDetailFragment extends Fragment implements AlbumDetailContract
         if (ATEUtil.isDarkTheme(getActivity())) {
             return;
         }
-        new Palette.Builder(bitmap).generate(new Palette.PaletteAsyncListener() {
-            @Override
-            public void onGenerated(Palette palette) {
+        new Palette.Builder(bitmap).generate(palette -> {
+            if (palette != null) {
                 Palette.Swatch swatch = ColorUtil.getMostPopulousSwatch(palette);
                 if (swatch != null) {
                     int color = swatch.getRgb();
@@ -258,32 +254,23 @@ public class AlbumDetailFragment extends Fragment implements AlbumDetailContract
     }
 
     public void onFabPlayClick() {
-        Handler handler = new Handler();
-        handler.postDelayed(new Runnable() {
-            @Override
-            public void run() {
-                AlbumSongsAdapter adapter = (AlbumSongsAdapter) recyclerView.getAdapter();
-                MusicPlayer.playAll(getActivity(), adapter.getSongIds(), 0, albumID, ListenerUtil.IdType.Album, false);
+        Handler handler = new Handler(Looper.getMainLooper());
+        handler.postDelayed(() -> {
+            AlbumSongsAdapter adapter = (AlbumSongsAdapter) recyclerView.getAdapter();
+            if (adapter != null) {
+                MusicPlayer.playAll(requireActivity(), adapter.getSongIds(), 0, albumID, ListenerUtil.IdType.Album, false);
             }
         }, 150);
     }
 
+    @SuppressWarnings("notifyDataSetChanged")
     private void subscribeMetaChangedEvent() {
         Subscription subscription = RxBus.getInstance()
                 .toObservable(MetaChangedEvent.class)
                 .subscribeOn(Schedulers.io())
                 .observeOn(AndroidSchedulers.mainThread())
                 .distinctUntilChanged()
-                .subscribe(new Action1<MetaChangedEvent>() {
-                    @Override
-                    public void call(MetaChangedEvent event) {
-                        mAdapter.notifyDataSetChanged();
-                    }
-                }, new Action1<Throwable>() {
-                    @Override
-                    public void call(Throwable throwable) {
-
-                    }
+                .subscribe(event -> mAdapter.notifyDataSetChanged(), throwable -> {
                 });
         RxBus.getInstance().addSubscription(this, subscription);
     }

@@ -8,6 +8,7 @@ import android.view.ViewGroup;
 import android.widget.ImageView;
 import android.widget.TextView;
 
+import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.bumptech.glide.Glide;
@@ -35,19 +36,20 @@ public class ArtistAlbumAdapter extends RecyclerView.Adapter<ArtistAlbumAdapter.
         this.mContext = context;
     }
 
+    @NonNull
     @Override
-    public ItemHolder onCreateViewHolder(ViewGroup viewGroup, int i) {
+    public ItemHolder onCreateViewHolder(@NonNull ViewGroup viewGroup, int viewType) {
         View v = LayoutInflater.from(viewGroup.getContext()).inflate(R.layout.item_artist_album, viewGroup, false);
         return new ItemHolder(v);
     }
 
     @Override
-    public void onBindViewHolder(ItemHolder itemHolder, int i) {
+    public void onBindViewHolder(@NonNull ItemHolder itemHolder, int position) {
 
-        Album localItem = arraylist.get(i);
+        Album localItem = arraylist.get(position);
 
         itemHolder.title.setText(localItem.title);
-        String songCount = ListenerUtil.makeLabel(mContext, R.plurals.Nsongs, localItem.songCount);
+        String songCount = ListenerUtil.makeLabel(mContext, R.plurals.n_songs, localItem.songCount);
         itemHolder.details.setText(songCount);
 
         Glide.with(mContext).load(ListenerUtil.getAlbumArtUri(localItem.id))
@@ -56,7 +58,7 @@ public class ArtistAlbumAdapter extends RecyclerView.Adapter<ArtistAlbumAdapter.
                 .centerCrop()
                 .into(itemHolder.albumArt);
 
-        itemHolder.albumArt.setTransitionName("transition_album_art" + i);
+        itemHolder.albumArt.setTransitionName("transition_album_art" + itemHolder.getLayoutPosition());
     }
 
     @Override
@@ -79,9 +81,12 @@ public class ArtistAlbumAdapter extends RecyclerView.Adapter<ArtistAlbumAdapter.
 
         @Override
         public void onClick(View v) {
-            NavigationUtil.navigateToAlbum(mContext, arraylist.get(getAdapterPosition()).id,
-                    arraylist.get(getAdapterPosition()).title,
-                    new Pair<View, String>(albumArt, "transition_album_art" + getAdapterPosition()));
+            int pos = getBindingAdapterPosition();
+            if (pos == RecyclerView.NO_POSITION) return;
+            Album album = arraylist.get(pos);
+            NavigationUtil.navigateToAlbum(mContext, album.id,
+                    album.title,
+                    new Pair<>(albumArt, "transition_album_art" + pos));
         }
 
     }

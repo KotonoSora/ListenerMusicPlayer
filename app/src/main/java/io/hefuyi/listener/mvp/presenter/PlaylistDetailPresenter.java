@@ -8,16 +8,14 @@ import com.bumptech.glide.Priority;
 import com.bumptech.glide.request.animation.GlideAnimation;
 import com.bumptech.glide.request.target.SimpleTarget;
 
-import java.util.List;
+import androidx.annotation.NonNull;
 
 import io.hefuyi.listener.mvp.contract.PlaylistDetailContract;
-import io.hefuyi.listener.mvp.model.Song;
 import io.hefuyi.listener.mvp.usecase.GetPlaylistSongs;
 import io.hefuyi.listener.util.ATEUtil;
 import io.hefuyi.listener.util.ListenerUtil;
 import rx.Subscription;
 import rx.android.schedulers.AndroidSchedulers;
-import rx.functions.Action1;
 import rx.schedulers.Schedulers;
 import rx.subscriptions.CompositeSubscription;
 
@@ -27,27 +25,22 @@ import rx.subscriptions.CompositeSubscription;
 
 public class PlaylistDetailPresenter implements PlaylistDetailContract.Presenter {
 
-    private final GetPlaylistSongs mUsecase;
+    private final GetPlaylistSongs mUseCase;
     private PlaylistDetailContract.View mView;
     private CompositeSubscription mCompositeSubscription;
 
     public PlaylistDetailPresenter(GetPlaylistSongs getPlaylistSongs) {
-        mUsecase = getPlaylistSongs;
+        mUseCase = getPlaylistSongs;
     }
 
     @Override
     public void loadPlaylistSongs(long playlistID) {
         mCompositeSubscription.clear();
-        Subscription subscription = mUsecase.execute(new GetPlaylistSongs.RequestValues(playlistID))
+        Subscription subscription = mUseCase.execute(new GetPlaylistSongs.RequestValues(playlistID))
                 .getSongList()
                 .subscribeOn(Schedulers.io())
                 .observeOn(AndroidSchedulers.mainThread())
-                .subscribe(new Action1<List<Song>>() {
-                    @Override
-                    public void call(List<Song> songList) {
-                        mView.showPlaylistSongs(songList);
-                    }
-                });
+                .subscribe(mView::showPlaylistSongs);
         mCompositeSubscription.add(subscription);
     }
 
@@ -73,7 +66,7 @@ public class PlaylistDetailPresenter implements PlaylistDetailContract.Presenter
     }
 
     @Override
-    public void attachView(PlaylistDetailContract.View view) {
+    public void attachView(@NonNull PlaylistDetailContract.View view) {
         mView = view;
         mCompositeSubscription = new CompositeSubscription();
     }

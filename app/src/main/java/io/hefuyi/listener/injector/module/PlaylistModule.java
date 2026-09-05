@@ -14,7 +14,7 @@ import io.hefuyi.listener.respository.interfaces.Repository;
 public class PlaylistModule {
 
     @Provides
-    GetPlaylists getPlaylistUsecase(Repository repository) {
+    GetPlaylists getPlaylistUseCase(Repository repository) {
         return new GetPlaylists(repository);
     }
 

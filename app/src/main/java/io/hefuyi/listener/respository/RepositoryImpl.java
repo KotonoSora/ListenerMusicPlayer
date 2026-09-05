@@ -172,28 +172,13 @@ public class RepositoryImpl implements Repository {
     @Override
     public Observable<List<Object>> getSearchResult(String queryString) {
         Observable<Song> songList = SongLoader.searchSongs(mContext, queryString)
-                .flatMap(new Func1<List<Song>, Observable<Song>>() {
-                    @Override
-                    public Observable<Song> call(List<Song> songs) {
-                        return Observable.from(songs);
-                    }
-                });
+                .flatMap(Observable::from);
 
         Observable<Album> albumList = AlbumLoader.getAlbums(mContext, queryString)
-                .flatMap(new Func1<List<Album>, Observable<Album>>() {
-                    @Override
-                    public Observable<Album> call(List<Album> albums) {
-                        return Observable.from(albums);
-                    }
-                });
+                .flatMap(Observable::from);
 
         Observable<Artist> artistList = ArtistLoader.getArtists(mContext, queryString)
-                .flatMap(new Func1<List<Artist>, Observable<Artist>>() {
-                    @Override
-                    public Observable<Artist> call(List<Artist> artistList) {
-                        return Observable.from(artistList);
-                    }
-                });
+                .flatMap(Observable::from);
 
         Observable<String> songHeader = Observable.just(mContext.getString(R.string.songs));
         Observable<String> albumHeader = Observable.just(mContext.getString(R.string.albums));

@@ -103,10 +103,10 @@
     <string name="delete_folder">删除文件夹</string>
     <string name="delete_folder_confirmation">删除文件夹下 %d 首歌曲？</string>
     <string name="delete_song_favorite">确认从我喜欢删除歌曲吗？</string>
-    <string name="delete_song_recentlyplay">确认从最近播放中删除歌曲吗？</string>
+    <string name="delete_song_recently_play">确认从最近播放中删除歌曲吗？</string>
     <string name="clear_song_queue">确认清空播放队列吗？</string>
     <string name="delete_song_confirmation">删除 %s ？</string>
-    <string name="remove_recentlyplay_success">删除最近播放歌曲成功</string>
+    <string name="remove_recently_play_success">删除最近播放歌曲成功</string>
     <string name="color">色彩</string>
     <string name="sure">确定</string>
     <string name="playlistArt">playlist_art</string>

@@ -32,6 +32,8 @@ import android.view.MotionEvent;
 import android.view.ViewConfiguration;
 
 import androidx.annotation.ColorInt;
+import androidx.annotation.Keep;
+import androidx.annotation.NonNull;
 import androidx.interpolator.view.animation.FastOutLinearInInterpolator;
 import androidx.interpolator.view.animation.LinearOutSlowInInterpolator;
 import androidx.recyclerview.widget.RecyclerView;
@@ -64,8 +66,8 @@ class FastScroller {
     private boolean mIsDragging;
     private Animator mAutoHideAnimator;
     private boolean mAnimatingShow;
-    private int mAutoHideDelay = DEFAULT_AUTO_HIDE_DELAY;
-    private boolean mAutoHideEnabled = true;
+    private int mAutoHideDelay;
+    private boolean mAutoHideEnabled;
 
     public FastScroller(Context context, FastScrollRecyclerView recyclerView, AttributeSet attrs) {
 
@@ -82,9 +84,8 @@ class FastScroller {
         mThumb = new Paint(Paint.ANTI_ALIAS_FLAG);
         mTrack = new Paint(Paint.ANTI_ALIAS_FLAG);
 
-        TypedArray typedArray = context.getTheme().obtainStyledAttributes(
-                attrs, R.styleable.FastScrollRecyclerView, 0, 0);
-        try {
+        try (TypedArray typedArray = context.getTheme().obtainStyledAttributes(
+                attrs, R.styleable.FastScrollRecyclerView, 0, 0)) {
             mAutoHideEnabled = typedArray.getBoolean(R.styleable.FastScrollRecyclerView_fastScrollAutoHide, true);
             mAutoHideDelay = typedArray.getInteger(R.styleable.FastScrollRecyclerView_fastScrollAutoHideDelay, DEFAULT_AUTO_HIDE_DELAY);
 
@@ -101,28 +102,23 @@ class FastScroller {
             mPopup.setTextColor(popupTextColor);
             mPopup.setTextSize(popupTextSize);
             mPopup.setBackgroundSize(popupBackgroundSize);
-        } finally {
-            typedArray.recycle();
         }
 
-        mHideRunnable = new Runnable() {
-            @Override
-            public void run() {
-                if (!mIsDragging) {
-                    if (mAutoHideAnimator != null) {
-                        mAutoHideAnimator.cancel();
-                    }
-                    mAutoHideAnimator = ObjectAnimator.ofInt(FastScroller.this, "offsetX", (ListenerUtil.isRtl(mRecyclerView.getResources()) ? -1 : 1) * mWidth);
-                    mAutoHideAnimator.setInterpolator(new FastOutLinearInInterpolator());
-                    mAutoHideAnimator.setDuration(200);
-                    mAutoHideAnimator.start();
+        mHideRunnable = () -> {
+            if (!mIsDragging) {
+                if (mAutoHideAnimator != null) {
+                    mAutoHideAnimator.cancel();
                 }
+                mAutoHideAnimator = ObjectAnimator.ofInt(FastScroller.this, "offsetX", (ListenerUtil.isRtl(mRecyclerView.getResources()) ? -1 : 1) * mWidth);
+                mAutoHideAnimator.setInterpolator(new FastOutLinearInInterpolator());
+                mAutoHideAnimator.setDuration(200);
+                mAutoHideAnimator.start();
             }
         };
 
         mRecyclerView.addOnScrollListener(new RecyclerView.OnScrollListener() {
             @Override
-            public void onScrolled(RecyclerView recyclerView, int dx, int dy) {
+            public void onScrolled(@NonNull RecyclerView recyclerView, int dx, int dy) {
                 super.onScrolled(recyclerView, dx, dy);
                 show();
             }
@@ -181,7 +177,8 @@ class FastScroller {
                     String sectionName = mRecyclerView.scrollToPositionAtProgress((boundedY - top) / (bottom - top));
                     mPopup.setSectionName(sectionName);
                     mPopup.animateVisibility(!sectionName.isEmpty());
-                    mRecyclerView.invalidate(mPopup.updateFastScrollerBounds(mRecyclerView, mThumbPosition.y));
+                    mPopup.updateFastScrollerBounds(mRecyclerView, mThumbPosition.y);
+                    mRecyclerView.invalidate();
                 }
                 break;
             case MotionEvent.ACTION_UP:
@@ -205,7 +202,7 @@ class FastScroller {
         }
 
         //Background
-        canvas.drawRect(mThumbPosition.x + mOffset.x, mThumbHeight / 2 + mOffset.y, mThumbPosition.x + mOffset.x + mWidth, mRecyclerView.getHeight() + mOffset.y - mThumbHeight / 2, mTrack);
+        canvas.drawRect(mThumbPosition.x + mOffset.x, mThumbHeight / 2.0f + mOffset.y, mThumbPosition.x + mOffset.x + mWidth, mRecyclerView.getHeight() + mOffset.y - mThumbHeight / 2.0f, mTrack);
 
         //Handle
         canvas.drawRect(mThumbPosition.x + mOffset.x, mThumbPosition.y + mOffset.y, mThumbPosition.x + mOffset.x + mWidth, mThumbPosition.y + mOffset.y + mThumbHeight, mThumb);
@@ -233,7 +230,7 @@ class FastScroller {
         mThumbPosition.set(x, y);
         mInvalidateTmpRect.set(mThumbPosition.x + mOffset.x, mOffset.y, mThumbPosition.x + mOffset.x + mWidth, mRecyclerView.getHeight() + mOffset.y);
         mInvalidateRect.union(mInvalidateTmpRect);
-        mRecyclerView.invalidate(mInvalidateRect);
+        mRecyclerView.invalidate();
     }
 
 
@@ -246,14 +243,18 @@ class FastScroller {
         mOffset.set(x, y);
         mInvalidateTmpRect.set(mThumbPosition.x + mOffset.x, mOffset.y, mThumbPosition.x + mOffset.x + mWidth, mRecyclerView.getHeight() + mOffset.y);
         mInvalidateRect.union(mInvalidateTmpRect);
-        mRecyclerView.invalidate(mInvalidateRect);
+        mRecyclerView.invalidate();
     }
 
+    @Keep
+    @SuppressWarnings("unused")
     public int getOffsetX() {
         return mOffset.x;
     }
 
     // Setter/getter for the popup alpha for animations
+    @Keep
+    @SuppressWarnings("unused")
     public void setOffsetX(int x) {
         setOffset(x, mOffset.y);
     }
@@ -304,12 +305,12 @@ class FastScroller {
 
     public void setThumbColor(@ColorInt int color) {
         mThumb.setColor(color);
-        mRecyclerView.invalidate(mInvalidateRect);
+        mRecyclerView.invalidate();
     }
 
     public void setTrackColor(@ColorInt int color) {
         mTrack.setColor(color);
-        mRecyclerView.invalidate(mInvalidateRect);
+        mRecyclerView.invalidate();
     }
 
     public void setPopupBgColor(@ColorInt int color) {

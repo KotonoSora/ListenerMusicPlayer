@@ -1,13 +1,11 @@
 package io.hefuyi.listener.mvp.presenter;
 
-import java.util.List;
+import androidx.annotation.NonNull;
 
 import io.hefuyi.listener.mvp.contract.SongsContract;
-import io.hefuyi.listener.mvp.model.Song;
 import io.hefuyi.listener.mvp.usecase.GetSongs;
 import rx.Subscription;
 import rx.android.schedulers.AndroidSchedulers;
-import rx.functions.Action1;
 import rx.schedulers.Schedulers;
 import rx.subscriptions.CompositeSubscription;
 
@@ -17,16 +15,16 @@ import rx.subscriptions.CompositeSubscription;
 
 public class SongsPresenter implements SongsContract.Presenter {
 
-    private final GetSongs mUsecase;
+    private final GetSongs mUseCase;
     private SongsContract.View mView;
     private CompositeSubscription mCompositeSubscription;
 
     public SongsPresenter(GetSongs getSongs) {
-        mUsecase = getSongs;
+        mUseCase = getSongs;
     }
 
     @Override
-    public void attachView(SongsContract.View view) {
+    public void attachView(@NonNull SongsContract.View view) {
         mView = view;
         mCompositeSubscription = new CompositeSubscription();
     }
@@ -43,18 +41,15 @@ public class SongsPresenter implements SongsContract.Presenter {
     @Override
     public void loadSongs(String action) {
         mCompositeSubscription.clear();
-        Subscription subscription = mUsecase.execute(new GetSongs.RequestValues(action))
+        Subscription subscription = mUseCase.execute(new GetSongs.RequestValues(action))
                 .getSongList()
                 .subscribeOn(Schedulers.io())
                 .observeOn(AndroidSchedulers.mainThread())
-                .subscribe(new Action1<List<Song>>() {
-                    @Override
-                    public void call(List<Song> songList) {
-                        if (songList == null || songList.size() == 0) {
-                            mView.showEmptyView();
-                        } else {
-                            mView.showSongs(songList);
-                        }
+                .subscribe(songList -> {
+                    if (songList == null || songList.isEmpty()) {
+                        mView.showEmptyView();
+                    } else {
+                        mView.showSongs(songList);
                     }
                 });
         mCompositeSubscription.add(subscription);

@@ -29,6 +29,7 @@ import android.util.Property;
 import android.view.View;
 
 import androidx.annotation.ColorInt;
+import androidx.annotation.NonNull;
 
 import io.hefuyi.listener.R;
 import io.hefuyi.listener.widget.timely.animation.TimelyEvaluator;
@@ -37,7 +38,7 @@ import io.hefuyi.listener.widget.timely.model.NumberUtils;
 
 public class TimelyView extends View {
     private static final float RATIO = 1f;
-    private static final Property<TimelyView, float[][]> CONTROL_POINTS_PROPERTY = new Property<TimelyView, float[][]>(float[][].class, "controlPoints") {
+    private static final Property<TimelyView, float[][]> CONTROL_POINTS_PROPERTY = new Property<>(float[][].class, "controlPoints") {
         @Override
         public float[][] get(TimelyView object) {
             return object.getControlPoints();
@@ -48,9 +49,9 @@ public class TimelyView extends View {
             object.setControlPoints(value);
         }
     };
-    private Paint mPaint = null;
-    private Path mPath = null;
-    private float[][] controlPoints = null;
+    private Paint mPaint;
+    private Path mPath;
+    private float[][] controlPoints;
 
     private int textColor;
 
@@ -61,9 +62,9 @@ public class TimelyView extends View {
 
     public TimelyView(Context context, AttributeSet attrs) {
         super(context, attrs);
-        TypedArray typedArray = context.obtainStyledAttributes(attrs, R.styleable.TimelyView);
-        textColor = typedArray.getColor(R.styleable.TimelyView_text_color, Color.BLACK);
-        typedArray.recycle();
+        try (TypedArray typedArray = context.obtainStyledAttributes(attrs, R.styleable.TimelyView)) {
+            textColor = typedArray.getColor(R.styleable.TimelyView_text_color, Color.BLACK);
+        }
         init();
     }
 
@@ -102,7 +103,7 @@ public class TimelyView extends View {
     }
 
     @Override
-    protected void onDraw(Canvas canvas) {
+    protected void onDraw(@NonNull Canvas canvas) {
         super.onDraw(canvas);
         if (controlPoints == null) return;
 
@@ -111,7 +112,7 @@ public class TimelyView extends View {
         int height = getMeasuredHeight();
         int width = getMeasuredWidth();
 
-        float minDimen = height > width ? width : height;
+        float minDimen = Math.min(width, height);
 
         mPath.reset();
         mPath.moveTo(minDimen * controlPoints[0][0], minDimen * controlPoints[0][1]);
@@ -130,9 +131,9 @@ public class TimelyView extends View {
         int width = getMeasuredWidth();
         int height = getMeasuredHeight();
         int widthWithoutPadding = width - getPaddingLeft() - getPaddingRight();
-        int heigthWithoutPadding = height - getPaddingTop() - getPaddingBottom();
+        int heightWithoutPadding = height - getPaddingTop() - getPaddingBottom();
 
-        int maxWidth = (int) (heigthWithoutPadding * RATIO);
+        int maxWidth = (int) (heightWithoutPadding * RATIO);
         int maxHeight = (int) (widthWithoutPadding / RATIO);
 
         if (widthWithoutPadding > maxWidth) {

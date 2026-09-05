@@ -3,9 +3,9 @@ package io.hefuyi.listener.util;
 import android.provider.MediaStore;
 
 /**
- * Holds all of the sort orders for each list type.
+ * Holds all the sort orders for each list type.
  */
-
+@SuppressWarnings("unused")
 public class SortOrder {
 
     /**

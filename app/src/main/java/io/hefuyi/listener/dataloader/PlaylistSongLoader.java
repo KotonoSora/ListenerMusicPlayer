@@ -107,7 +107,7 @@ public class PlaylistSongLoader {
         final int idCol = cursor.getColumnIndexOrThrow(MediaStore.Audio.Playlists.Members.AUDIO_ID);
         final Uri uri = MediaStore.Audio.Playlists.Members.getContentUri("external", playlistId);
 
-        ArrayList<ContentProviderOperation> ops = new ArrayList<ContentProviderOperation>();
+        ArrayList<ContentProviderOperation> ops = new ArrayList<>();
 
         ops.add(ContentProviderOperation.newDelete(uri).build());
 

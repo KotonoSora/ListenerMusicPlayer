@@ -1,8 +1,6 @@
 package io.hefuyi.listener.util;
 
-import android.app.Activity;
 import android.content.Context;
-import android.util.DisplayMetrics;
 import android.util.TypedValue;
 
 /**
@@ -11,15 +9,11 @@ import android.util.TypedValue;
 public class DensityUtil {
 
     public static int getScreenHeight(Context context) {
-        DisplayMetrics displayMetrics = new DisplayMetrics();
-        ((Activity) context).getWindowManager().getDefaultDisplay().getMetrics(displayMetrics);
-        return displayMetrics.heightPixels;
+        return context.getResources().getDisplayMetrics().heightPixels;
     }
 
     public static int getScreenWidth(Context context) {
-        DisplayMetrics displayMetrics = new DisplayMetrics();
-        ((Activity) context).getWindowManager().getDefaultDisplay().getMetrics(displayMetrics);
-        return displayMetrics.widthPixels;
+        return context.getResources().getDisplayMetrics().widthPixels;
     }
 
     public static int dip2px(Context context, float dpVale) {

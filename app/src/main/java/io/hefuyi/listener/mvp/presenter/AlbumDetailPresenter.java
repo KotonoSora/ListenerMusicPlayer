@@ -3,6 +3,7 @@ package io.hefuyi.listener.mvp.presenter;
 import android.graphics.Bitmap;
 import android.graphics.drawable.Drawable;
 
+import androidx.annotation.NonNull;
 import com.bumptech.glide.Glide;
 import com.bumptech.glide.Priority;
 import com.bumptech.glide.request.animation.GlideAnimation;
@@ -27,12 +28,12 @@ import rx.subscriptions.CompositeSubscription;
 
 public class AlbumDetailPresenter implements AlbumDetailContract.Presenter {
 
-    private final GetAlbumSongs mUsecase;
+    private final GetAlbumSongs mUseCase;
     private AlbumDetailContract.View mView;
     private CompositeSubscription mCompositeSubscription;
 
     public AlbumDetailPresenter(GetAlbumSongs getAlbumSongs) {
-        mUsecase = getAlbumSongs;
+        mUseCase = getAlbumSongs;
     }
 
     @Override
@@ -42,7 +43,7 @@ public class AlbumDetailPresenter implements AlbumDetailContract.Presenter {
     }
 
     @Override
-    public void attachView(AlbumDetailContract.View view) {
+    public void attachView(@NonNull AlbumDetailContract.View view) {
         mView = view;
         mCompositeSubscription = new CompositeSubscription();
     }
@@ -60,11 +61,11 @@ public class AlbumDetailPresenter implements AlbumDetailContract.Presenter {
     @Override
     public void loadAlbumSongs(long albumID) {
         mCompositeSubscription.clear();
-        Subscription subscription = mUsecase.execute(new GetAlbumSongs.RequestValues(albumID))
+        Subscription subscription = mUseCase.execute(new GetAlbumSongs.RequestValues(albumID))
                 .getSongList()
                 .subscribeOn(Schedulers.io())
                 .observeOn(AndroidSchedulers.mainThread())
-                .subscribe(new Subscriber<List<Song>>() {
+                .subscribe(new Subscriber<>() {
                     @Override
                     public void onCompleted() {
 

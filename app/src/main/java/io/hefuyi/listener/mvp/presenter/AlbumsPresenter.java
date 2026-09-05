@@ -1,13 +1,11 @@
 package io.hefuyi.listener.mvp.presenter;
 
-import java.util.List;
+import androidx.annotation.NonNull;
 
 import io.hefuyi.listener.mvp.contract.AlbumsContract;
-import io.hefuyi.listener.mvp.model.Album;
 import io.hefuyi.listener.mvp.usecase.GetAlbums;
 import rx.Subscription;
 import rx.android.schedulers.AndroidSchedulers;
-import rx.functions.Action1;
 import rx.schedulers.Schedulers;
 import rx.subscriptions.CompositeSubscription;
 
@@ -17,16 +15,16 @@ import rx.subscriptions.CompositeSubscription;
 
 public class AlbumsPresenter implements AlbumsContract.Presenter {
 
-    private final GetAlbums mUsecase;
+    private final GetAlbums mUseCase;
     private AlbumsContract.View mView;
     private CompositeSubscription mCompositeSubscription;
 
     public AlbumsPresenter(GetAlbums getAlbums) {
-        mUsecase = getAlbums;
+        mUseCase = getAlbums;
     }
 
     @Override
-    public void attachView(AlbumsContract.View view) {
+    public void attachView(@NonNull AlbumsContract.View view) {
         mView = view;
         mCompositeSubscription = new CompositeSubscription();
     }
@@ -43,18 +41,15 @@ public class AlbumsPresenter implements AlbumsContract.Presenter {
     @Override
     public void loadAlbums(String action) {
         mCompositeSubscription.clear();
-        Subscription subscription = mUsecase.execute(new GetAlbums.RequestValues(action))
+        Subscription subscription = mUseCase.execute(new GetAlbums.RequestValues(action))
                 .getSongList()
                 .subscribeOn(Schedulers.io())
                 .observeOn(AndroidSchedulers.mainThread())
-                .subscribe(new Action1<List<Album>>() {
-                    @Override
-                    public void call(List<Album> albumList) {
-                        if (albumList == null || albumList.size() == 0) {
-                            mView.showEmptyView();
-                        } else {
-                            mView.showAlbums(albumList);
-                        }
+                .subscribe(albumList -> {
+                    if (albumList == null || albumList.isEmpty()) {
+                        mView.showEmptyView();
+                    } else {
+                        mView.showAlbums(albumList);
                     }
                 });
         mCompositeSubscription.add(subscription);

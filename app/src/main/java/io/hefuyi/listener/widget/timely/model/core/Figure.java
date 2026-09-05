@@ -19,13 +19,14 @@ package io.hefuyi.listener.widget.timely.model.core;
 /**
  * Model class for cubic bezier figure
  */
+@SuppressWarnings("unused")
 public abstract class Figure {
     public static final int NO_VALUE = -1;
 
-    protected int pointsCount = NO_VALUE;
+    protected int pointsCount;
 
     //A chained sequence of points P0,P1,P2,P3/0,P1,P2,P3/0,...
-    protected float[][] controlPoints = null;
+    protected float[][] controlPoints;
 
     protected Figure(float[][] controlPoints) {
         this.controlPoints = controlPoints;

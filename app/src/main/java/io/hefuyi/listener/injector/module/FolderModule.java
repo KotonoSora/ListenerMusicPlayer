@@ -14,7 +14,7 @@ import io.hefuyi.listener.respository.interfaces.Repository;
 public class FolderModule {
 
     @Provides
-    GetFolders getFoldersUsecase(Repository repository) {
+    GetFolders getFoldersUseCase(Repository repository) {
         return new GetFolders(repository);
     }
 

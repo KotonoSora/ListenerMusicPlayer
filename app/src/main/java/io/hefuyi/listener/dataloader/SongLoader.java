@@ -23,31 +23,28 @@ import rx.Subscriber;
 public class SongLoader {
 
     public static Observable<List<Song>> getSongsForCursor(final Cursor cursor) {
-        return Observable.create(new Observable.OnSubscribe<List<Song>>() {
-            @Override
-            public void call(Subscriber<? super List<Song>> subscriber) {
-                List<Song> arrayList = new ArrayList<Song>();
-                if ((cursor != null) && (cursor.moveToFirst()))
-                    do {
-                        long id = cursor.getLong(0);
-                        String title = cursor.getString(1);
-                        String artist = cursor.getString(2);
-                        String album = cursor.getString(3);
-                        int duration = cursor.getInt(4);
-                        int trackNumber = cursor.getInt(5);
-                        long artistId = cursor.getInt(6);
-                        long albumId = cursor.getLong(7);
-                        String path = cursor.getString(8);
+        return Observable.create(subscriber -> {
+            List<Song> arrayList = new ArrayList<>();
+            if ((cursor != null) && (cursor.moveToFirst()))
+                do {
+                    long id = cursor.getLong(0);
+                    String title = cursor.getString(1);
+                    String artist = cursor.getString(2);
+                    String album = cursor.getString(3);
+                    int duration = cursor.getInt(4);
+                    int trackNumber = cursor.getInt(5);
+                    long artistId = cursor.getInt(6);
+                    long albumId = cursor.getLong(7);
+                    String path = cursor.getString(8);
 
-                        arrayList.add(new Song(id, albumId, artistId, title, artist, album, duration, trackNumber, path));
-                    }
-                    while (cursor.moveToNext());
-                if (cursor != null) {
-                    cursor.close();
+                    arrayList.add(new Song(id, albumId, artistId, title, artist, album, duration, trackNumber, path));
                 }
-                subscriber.onNext(arrayList);
-                subscriber.onCompleted();
+                while (cursor.moveToNext());
+            if (cursor != null) {
+                cursor.close();
             }
+            subscriber.onNext(arrayList);
+            subscriber.onCompleted();
         });
     }
 
@@ -58,36 +55,33 @@ public class SongLoader {
     }
 
     public static Observable<List<Song>> getSongsWithScoreForCursor(final Cursor cursor, final Cursor scoreCursor) {
-        return Observable.create(new Observable.OnSubscribe<List<Song>>() {
-            @Override
-            public void call(Subscriber<? super List<Song>> subscriber) {
-                List<Song> arrayList = new ArrayList<Song>();
-                if ((cursor != null && scoreCursor != null) && (cursor.moveToFirst() && scoreCursor.moveToFirst()))
-                    do {
-                        long id = cursor.getLong(0);
-                        String title = cursor.getString(1);
-                        String artist = cursor.getString(2);
-                        String album = cursor.getString(3);
-                        int duration = cursor.getInt(4);
-                        int trackNumber = cursor.getInt(5);
-                        long artistId = cursor.getInt(6);
-                        long albumId = cursor.getLong(7);
-                        String path = cursor.getString(8);
+        return Observable.create(subscriber -> {
+            List<Song> arrayList = new ArrayList<>();
+            if ((cursor != null && scoreCursor != null) && (cursor.moveToFirst() && scoreCursor.moveToFirst()))
+                do {
+                    long id = cursor.getLong(0);
+                    String title = cursor.getString(1);
+                    String artist = cursor.getString(2);
+                    String album = cursor.getString(3);
+                    int duration = cursor.getInt(4);
+                    int trackNumber = cursor.getInt(5);
+                    long artistId = cursor.getInt(6);
+                    long albumId = cursor.getLong(7);
+                    String path = cursor.getString(8);
 
-                        Song song = new Song(id, albumId, artistId, title, artist, album, duration, trackNumber, path);
-                        song.setPlayCountScore(scoreCursor.getFloat(scoreCursor.getColumnIndex(SongPlayCount.SongPlayCountColumns.PLAYCOUNTSCORE)));
-                        arrayList.add(song);
-                    }
-                    while (cursor.moveToNext() && scoreCursor.moveToNext());
-                if (cursor != null) {
-                    cursor.close();
+                    Song song = new Song(id, albumId, artistId, title, artist, album, duration, trackNumber, path);
+                    song.setPlayCountScore(scoreCursor.getFloat(scoreCursor.getColumnIndexOrThrow(SongPlayCount.SongPlayCountColumns.PLAY_COUNT_SCORE)));
+                    arrayList.add(song);
                 }
-                if (scoreCursor != null) {
-                    scoreCursor.close();
-                }
-                subscriber.onNext(arrayList);
-                subscriber.onCompleted();
+                while (cursor.moveToNext() && scoreCursor.moveToNext());
+            if (cursor != null) {
+                cursor.close();
             }
+            if (scoreCursor != null) {
+                scoreCursor.close();
+            }
+            subscriber.onNext(arrayList);
+            subscriber.onCompleted();
         });
     }
 

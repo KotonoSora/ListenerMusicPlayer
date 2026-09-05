@@ -1,5 +1,6 @@
 package io.hefuyi.listener.mvp.presenter;
 
+import androidx.annotation.NonNull;
 import java.util.List;
 
 import io.hefuyi.listener.mvp.contract.ArtistSongContract;
@@ -17,16 +18,16 @@ import rx.subscriptions.CompositeSubscription;
 
 public class ArtistSongPresenter implements ArtistSongContract.Presenter {
 
-    private final GetArtistSongs mUsecase;
+    private final GetArtistSongs mUseCase;
     private ArtistSongContract.View mView;
     private CompositeSubscription mCompositeSubscription;
 
     public ArtistSongPresenter(GetArtistSongs getArtistSongs) {
-        mUsecase = getArtistSongs;
+        mUseCase = getArtistSongs;
     }
 
     @Override
-    public void attachView(ArtistSongContract.View view) {
+    public void attachView(@NonNull ArtistSongContract.View view) {
         mView = view;
         mCompositeSubscription = new CompositeSubscription();
     }
@@ -49,7 +50,7 @@ public class ArtistSongPresenter implements ArtistSongContract.Presenter {
     @Override
     public void loadSongs(long artistID) {
         mCompositeSubscription.clear();
-        Subscription subscription = mUsecase.execute(new GetArtistSongs.RequestValues(artistID))
+        Subscription subscription = mUseCase.execute(new GetArtistSongs.RequestValues(artistID))
                 .getSongList()
                 .subscribeOn(Schedulers.io())
                 .observeOn(AndroidSchedulers.mainThread())

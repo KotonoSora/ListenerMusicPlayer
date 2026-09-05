@@ -1,30 +1,23 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources xmlns:xliff="urn:oasis:names:tc:xliff:document:1.2">
 
-    <!--Nothing to be translated here-->
     <plurals name="n_albums">
-        <item quantity="one">@string/count_album</item>
         <item quantity="other">@string/count_albums</item>
     </plurals>
 
     <plurals name="n_songs">
-        <item quantity="zero">@string/count_songs</item>
-        <item quantity="one">@string/count_song</item>
         <item quantity="other">@string/count_songs</item>
     </plurals>
 
     <plurals name="n_tracks_to_queue">
-        <item quantity="one">@string/number_song_add_queue</item>
         <item quantity="other">@string/number_songs_add_queue</item>
     </plurals>
 
     <plurals name="n_tracks_to_playlist">
-        <item quantity="one">@string/number_song_add_playlist</item>
         <item quantity="other">@string/number_songs_add_playlist</item>
     </plurals>
 
     <plurals name="n_tracks_deleted">
-        <item quantity="one">@string/number_song_delete</item>
         <item quantity="other">@string/number_songs_delete</item>
     </plurals>
 

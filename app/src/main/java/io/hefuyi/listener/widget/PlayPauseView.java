@@ -9,31 +9,20 @@ import android.graphics.Outline;
 import android.graphics.Paint;
 import android.graphics.drawable.Drawable;
 import android.util.AttributeSet;
-import android.util.Property;
 import android.view.View;
 import android.view.ViewOutlineProvider;
 import android.view.animation.DecelerateInterpolator;
 import android.widget.FrameLayout;
 
 import androidx.annotation.ColorInt;
+import androidx.annotation.NonNull;
 
 import io.hefuyi.listener.R;
 import io.hefuyi.listener.util.ATEUtil;
 
 
+@SuppressWarnings("unused")
 public class PlayPauseView extends FrameLayout {
-
-    private static final Property<PlayPauseView, Integer> COLOR = new Property<PlayPauseView, Integer>(Integer.class, "color") {
-        @Override
-        public Integer get(PlayPauseView v) {
-            return v.getCircleColor();
-        }
-
-        @Override
-        public void set(PlayPauseView v, Integer value) {
-            v.setCircleColor(value);
-        }
-    };
 
     private static final long PLAY_PAUSE_ANIMATION_DURATION = 200;
 
@@ -52,12 +41,12 @@ public class PlayPauseView extends FrameLayout {
         super(context, attrs);
         setWillNotDraw(false);
 
-        TypedArray typedArray = context.obtainStyledAttributes(attrs, R.styleable.PlayPause);
-        isDrawCircle = typedArray.getBoolean(R.styleable.PlayPause_isCircleDraw, true);
-        circleAlpha = typedArray.getInt(R.styleable.PlayPause_circleAlpha, 255);
+        try (TypedArray typedArray = context.obtainStyledAttributes(attrs, R.styleable.PlayPauseView)) {
+            isDrawCircle = typedArray.getBoolean(R.styleable.PlayPauseView_isCircleDraw, true);
+            circleAlpha = typedArray.getInt(R.styleable.PlayPauseView_circleAlpha, 255);
+        }
         mBackgroundColor = ATEUtil.getThemeAccentColor(context);
         mDrawableColor = ATEUtil.getThemeAccentColor(context);
-        typedArray.recycle();
 
         mPaint.setAntiAlias(true);
         mPaint.setStyle(Paint.Style.FILL);
@@ -69,15 +58,8 @@ public class PlayPauseView extends FrameLayout {
     }
 
     @Override
-    protected void onMeasure(int widthMeasureSpec, int heightMeasureSpec) {
-        super.onMeasure(widthMeasureSpec, heightMeasureSpec);
-        // final int size = Math.min(getMeasuredWidth(), getMeasuredHeight());
-        // setMeasuredDimension(size, size);
-    }
-
-    @Override
-    protected void onSizeChanged(final int w, final int h, int oldw, int oldh) {
-        super.onSizeChanged(w, h, oldw, oldh);
+    protected void onSizeChanged(final int w, final int h, int oldWidth, int oldHeight) {
+        super.onSizeChanged(w, h, oldWidth, oldHeight);
         mDrawable.setBounds(0, 0, w, h);
         mWidth = w;
         mHeight = h;
@@ -91,9 +73,14 @@ public class PlayPauseView extends FrameLayout {
         setClipToOutline(true);
     }
 
-    public void setCircleAlpah(int alpah) {
-        circleAlpha = alpah;
+    public void setCircleAlpha(int alpha) {
+        circleAlpha = alpha;
         invalidate();
+    }
+
+    @SuppressWarnings("SpellCheckingInspection")
+    public void setCircleAlpah(int alpah) {
+        setCircleAlpha(alpah);
     }
 
     private int getCircleColor() {
@@ -116,7 +103,7 @@ public class PlayPauseView extends FrameLayout {
     }
 
     @Override
-    protected boolean verifyDrawable(Drawable who) {
+    protected boolean verifyDrawable(@NonNull Drawable who) {
         return who == mDrawable || super.verifyDrawable(who);
     }
 
@@ -126,7 +113,7 @@ public class PlayPauseView extends FrameLayout {
     }
 
     @Override
-    protected void onDraw(Canvas canvas) {
+    protected void onDraw(@NonNull Canvas canvas) {
         super.onDraw(canvas);
         mPaint.setColor(mBackgroundColor);
         final float radius = Math.min(mWidth, mHeight) / 2f;
@@ -152,7 +139,7 @@ public class PlayPauseView extends FrameLayout {
         }
         mAnimatorSet = new AnimatorSet();
         mIsPlay = true;
-        mDrawable.setmIsPlay(mIsPlay);
+        mDrawable.setIsPlay(true);
         final Animator pausePlayAnim = mDrawable.getPausePlayAnimator();
         mAnimatorSet.setInterpolator(new DecelerateInterpolator());
         mAnimatorSet.setDuration(PLAY_PAUSE_ANIMATION_DURATION);
@@ -170,7 +157,7 @@ public class PlayPauseView extends FrameLayout {
 
         mAnimatorSet = new AnimatorSet();
         mIsPlay = false;
-        mDrawable.setmIsPlay(mIsPlay);
+        mDrawable.setIsPlay(false);
         final Animator pausePlayAnim = mDrawable.getPausePlayAnimator();
         mAnimatorSet.setInterpolator(new DecelerateInterpolator());
         mAnimatorSet.setDuration(PLAY_PAUSE_ANIMATION_DURATION);

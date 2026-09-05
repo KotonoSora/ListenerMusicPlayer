@@ -3,12 +3,15 @@ package io.hefuyi.listener.receiver;
 import android.content.Context;
 import android.content.Intent;
 import android.media.AudioManager;
+import android.os.Build;
 import android.os.Handler;
+import android.os.Looper;
 import android.os.Message;
 import android.os.PowerManager;
 import android.os.PowerManager.WakeLock;
 import android.util.Log;
 import android.view.KeyEvent;
+import androidx.annotation.NonNull;
 
 import androidx.legacy.content.WakefulBroadcastReceiver;
 
@@ -25,11 +28,12 @@ import io.hefuyi.listener.ui.activity.MainActivity;
  */
 //在WakefulBroadcastReceiver中调用startWakefulService来启动MusicService在后台播放音乐,
 // 这样service具有wake_lock权限,并且wake_lock由WakefulBroadcastReceiver自动管理
+@SuppressWarnings("deprecation")
 public class MediaButtonIntentReceiver extends WakefulBroadcastReceiver {
     private static final boolean DEBUG = false;
     private static final String TAG = "ButtonIntentReceiver";
 
-    private static final int MSG_LONGPRESS_TIMEOUT = 1;
+    private static final int MSG_LONG_PRESS_TIMEOUT = 1;
     private static final int MSG_HEADSET_DOUBLE_CLICK_TIMEOUT = 2;
 
     private static final int LONG_PRESS_DELAY = 1000;
@@ -42,10 +46,10 @@ public class MediaButtonIntentReceiver extends WakefulBroadcastReceiver {
     private static boolean mLaunched = false;
 
     /**
-     * 启动musicservice,并拥有wake_lock权限
+     * 启动MusicService,并拥有wake_lock权限
      *
-     * @param context
-     * @param command
+     * @param context Context
+     * @param command Command string
      */
     private static void startService(Context context, String command) {
         final Intent i = new Intent(context, MusicService.class);
@@ -59,21 +63,21 @@ public class MediaButtonIntentReceiver extends WakefulBroadcastReceiver {
         if (mWakeLock == null) {
             Context appContext = context.getApplicationContext();
             PowerManager pm = (PowerManager) appContext.getSystemService(Context.POWER_SERVICE);
-            mWakeLock = pm.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, "Listener headset button");
-            mWakeLock.setReferenceCounted(false); //设置无论请求多少次vakelock,都只需一次释放
+            mWakeLock = pm.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, "listener:headset_button");
+            mWakeLock.setReferenceCounted(false); //设置无论请求多少次wake lock,都只需一次释放
         }
         if (DEBUG) Log.v(TAG, "Acquiring wake lock and sending " + msg.what);
         // Make sure we don't indefinitely hold the wake lock under any circumstances
-        mWakeLock.acquire(10000); //防止无期限hold住wakelock
+        mWakeLock.acquire(10000); //防止无期限hold住wake lock
 
         mHandler.sendMessageDelayed(msg, delay);
     }
 
     /**
-     * 如果handler的消息队列中没有待处理消息,就释放receiver hold住的wakelog
+     * 如果handler的消息队列中没有待处理消息,就释放receiver hold住的wake lock
      */
     private static void releaseWakeLockIfHandlerIdle() {
-        if (mHandler.hasMessages(MSG_LONGPRESS_TIMEOUT)
+        if (mHandler.hasMessages(MSG_LONG_PRESS_TIMEOUT)
                 || mHandler.hasMessages(MSG_HEADSET_DOUBLE_CLICK_TIMEOUT)) {
             if (DEBUG) Log.v(TAG, "Handler still has messages pending, not releasing wake lock");
             return;
@@ -92,14 +96,19 @@ public class MediaButtonIntentReceiver extends WakefulBroadcastReceiver {
         if (AudioManager.ACTION_AUDIO_BECOMING_NOISY.equals(intentAction)) { //当耳机拔出时暂停播放
             startService(context, MusicService.CMDPAUSE);
         } else if (Intent.ACTION_MEDIA_BUTTON.equals(intentAction)) { //耳机按钮事件
-            final KeyEvent event = intent.getParcelableExtra(Intent.EXTRA_KEY_EVENT);
+            final KeyEvent event;
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                event = intent.getParcelableExtra(Intent.EXTRA_KEY_EVENT, KeyEvent.class);
+            } else {
+                event = intent.getParcelableExtra(Intent.EXTRA_KEY_EVENT);
+            }
             if (event == null) {
                 return;
             }
 
             final int keycode = event.getKeyCode();
             final int action = event.getAction();
-            final long eventtime = event.getEventTime();
+            final long eventTime = event.getEventTime();
 
             String command = null;
             switch (keycode) {
@@ -129,15 +138,15 @@ public class MediaButtonIntentReceiver extends WakefulBroadcastReceiver {
                         if (MusicService.CMDTOGGLEPAUSE.equals(command)
                                 || MusicService.CMDPLAY.equals(command)) {
                             if (mLastClickTime != 0
-                                    && eventtime - mLastClickTime > LONG_PRESS_DELAY) {
+                                    && eventTime - mLastClickTime > LONG_PRESS_DELAY) {
                                 acquireWakeLockAndSendMessage(context,
-                                        mHandler.obtainMessage(MSG_LONGPRESS_TIMEOUT, context), 0);
+                                        mHandler.obtainMessage(MSG_LONG_PRESS_TIMEOUT, context), 0);
                             }
                         }
                     } else if (event.getRepeatCount() == 0) {
 
                         if (keycode == KeyEvent.KEYCODE_HEADSETHOOK) {
-                            if (eventtime - mLastClickTime >= DOUBLE_CLICK) {
+                            if (eventTime - mLastClickTime >= DOUBLE_CLICK) {
                                 mClickCounter = 0;
                             }
 
@@ -152,7 +161,7 @@ public class MediaButtonIntentReceiver extends WakefulBroadcastReceiver {
                             if (mClickCounter >= 3) {
                                 mClickCounter = 0;
                             }
-                            mLastClickTime = eventtime;
+                            mLastClickTime = eventTime;
                             acquireWakeLockAndSendMessage(context, msg, delay);
                         } else {
                             startService(context, command);
@@ -161,7 +170,7 @@ public class MediaButtonIntentReceiver extends WakefulBroadcastReceiver {
                         mDown = true;
                     }
                 } else {
-                    mHandler.removeMessages(MSG_LONGPRESS_TIMEOUT);
+                    mHandler.removeMessages(MSG_LONG_PRESS_TIMEOUT);
                     mDown = false;
                 }
                 if (isOrderedBroadcast()) {
@@ -172,16 +181,16 @@ public class MediaButtonIntentReceiver extends WakefulBroadcastReceiver {
         }
     }
 
-    private static final Handler mHandler = new Handler() {
+    private static final Handler mHandler = new Handler(Looper.getMainLooper()) {
 
         /**
          * {@inheritDoc}
          */
         @Override
-        public void handleMessage(final Message msg) {
+        public void handleMessage(@NonNull final Message msg) {
             switch (msg.what) {
-                case MSG_LONGPRESS_TIMEOUT:
-                    if (DEBUG) Log.v(TAG, "Handling longpress timeout, launched " + mLaunched);
+                case MSG_LONG_PRESS_TIMEOUT:
+                    if (DEBUG) Log.v(TAG, "Handling long press timeout, launched " + mLaunched);
                     if (!mLaunched) {
                         final Context context = (Context) msg.obj;
                         final Intent i = new Intent();

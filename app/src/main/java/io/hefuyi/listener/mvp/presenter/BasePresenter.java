@@ -1,5 +1,7 @@
 package io.hefuyi.listener.mvp.presenter;
 
+import androidx.annotation.NonNull;
+
 import io.hefuyi.listener.mvp.view.BaseView;
 
 /**
@@ -8,7 +10,7 @@ import io.hefuyi.listener.mvp.view.BaseView;
 
 public interface BasePresenter<T extends BaseView> {
 
-    void attachView(T view);
+    void attachView(@NonNull T view);
 
     void subscribe();
 

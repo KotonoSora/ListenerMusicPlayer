@@ -14,7 +14,7 @@ import io.hefuyi.listener.R;
 /**
  * Created by hefuyi on 2017/1/23.
  */
-
+@SuppressWarnings({"deprecation", "unused"})
 public class ATEUtil {
 
     public static String getATEKey(Context context) {
@@ -39,15 +39,19 @@ public class ATEUtil {
     }
 
     public static int getThemeTextColorPrimary(Context context) {
-        TypedValue textColorPrimary = new TypedValue();
-        context.getTheme().resolveAttribute(android.R.attr.textColorPrimary, textColorPrimary, true);
-        return ContextCompat.getColor(context, textColorPrimary.resourceId);
+        if (isDarkTheme(context)) {
+            return ContextCompat.getColor(context, R.color.colorPrimaryTextWhite);
+        } else {
+            return ContextCompat.getColor(context, R.color.colorPrimaryTextBlack);
+        }
     }
 
     public static int getThemeTextColorSecondly(Context context) {
-        TypedValue textColorSecondly = new TypedValue();
-        context.getTheme().resolveAttribute(android.R.attr.textColorSecondary, textColorSecondly, true);
-        return ContextCompat.getColor(context, textColorSecondly.resourceId);
+        if (isDarkTheme(context)) {
+            return ContextCompat.getColor(context, R.color.colorSubTextWhite);
+        } else {
+            return ContextCompat.getColor(context, R.color.colorSubTextBlack);
+        }
     }
 
     public static Drawable getDefaultAlbumDrawable(Context context) {
@@ -65,7 +69,7 @@ public class ATEUtil {
     public static int getThemeAlbumDefaultPaletteColor(Context context) {
         TypedValue paletteColor = new TypedValue();
         context.getTheme().resolveAttribute(R.attr.album_default_palette_color, paletteColor, true);
-        return ContextCompat.getColor(context, paletteColor.resourceId);
+        return paletteColor.resourceId != 0 ? ContextCompat.getColor(context, paletteColor.resourceId) : paletteColor.data;
     }
 
 }

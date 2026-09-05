@@ -13,9 +13,9 @@ public class SearchHistory {
 
     private static final int MAX_ITEMS_IN_DB = 25;
 
-    private static volatile SearchHistory sInstance = null;
+    private static volatile SearchHistory sInstance;
 
-    private MusicDB mMusicDatabase = null;
+    private final MusicDB mMusicDatabase;
 
     private SearchHistory(final Context context) {
         mMusicDatabase = MusicDB.getInstance(context);
@@ -34,13 +34,15 @@ public class SearchHistory {
 
     public void onCreate(final SQLiteDatabase db) {
         db.execSQL("CREATE TABLE IF NOT EXISTS " + SearchHistoryColumns.NAME + " ("
-                + SearchHistoryColumns.SEARCHSTRING + " STRING NOT NULL,"
-                + SearchHistoryColumns.TIMESEARCHED + " LONG NOT NULL);");
+                + SearchHistoryColumns.SEARCH_STRING + " TEXT NOT NULL,"
+                + SearchHistoryColumns.TIME_SEARCHED + " LONG NOT NULL);");
     }
 
+    @SuppressWarnings("unused")
     public void onUpgrade(final SQLiteDatabase db, final int oldVersion, final int newVersion) {
     }
 
+    @SuppressWarnings("unused")
     public void onDowngrade(SQLiteDatabase db, int oldVersion, int newVersion) {
         db.execSQL("DROP TABLE IF EXISTS " + SearchHistoryColumns.NAME);
         onCreate(db);
@@ -49,7 +51,7 @@ public class SearchHistory {
     /**
      * 添加搜索记录,并删除溢出记录
      *
-     * @param searchString
+     * @param searchString The search query string to add to history.
      */
     public void addSearchString(final String searchString) {
         if (searchString == null) {
@@ -68,37 +70,30 @@ public class SearchHistory {
         try {
 
             database.delete(SearchHistoryColumns.NAME,
-                    SearchHistoryColumns.SEARCHSTRING + " = ? COLLATE NOCASE",
+                    SearchHistoryColumns.SEARCH_STRING + " = ? COLLATE NOCASE",
                     new String[]{trimmedString});
 
             final ContentValues values = new ContentValues(2);
-            values.put(SearchHistoryColumns.SEARCHSTRING, trimmedString);
-            values.put(SearchHistoryColumns.TIMESEARCHED, System.currentTimeMillis());
+            values.put(SearchHistoryColumns.SEARCH_STRING, trimmedString);
+            values.put(SearchHistoryColumns.TIME_SEARCHED, System.currentTimeMillis());
             database.insert(SearchHistoryColumns.NAME, null, values);
 
-            Cursor oldest = null;
-            try {
-                oldest = database.query(SearchHistoryColumns.NAME,
-                        new String[]{SearchHistoryColumns.TIMESEARCHED}, null, null, null, null,
-                        SearchHistoryColumns.TIMESEARCHED + " ASC");
+            try (Cursor oldest = database.query(SearchHistoryColumns.NAME,
+                    new String[]{SearchHistoryColumns.TIME_SEARCHED}, null, null, null, null,
+                    SearchHistoryColumns.TIME_SEARCHED + " ASC")) {
 
-                if (oldest != null && oldest.getCount() > MAX_ITEMS_IN_DB) {
+                if (oldest.getCount() > MAX_ITEMS_IN_DB) {
                     oldest.moveToPosition(oldest.getCount() - MAX_ITEMS_IN_DB);
                     long timeOfRecordToKeep = oldest.getLong(0);
 
                     database.delete(SearchHistoryColumns.NAME,
-                            SearchHistoryColumns.TIMESEARCHED + " < ?",
+                            SearchHistoryColumns.TIME_SEARCHED + " < ?",
                             new String[]{String.valueOf(timeOfRecordToKeep)});
 
                 }
-            } finally {
-                if (oldest != null) {
-                    oldest.close();
-                    oldest = null;
-                }
             }
-        } finally {
             database.setTransactionSuccessful();
+        } finally {
             database.endTransaction();
         }
     }
@@ -106,14 +101,15 @@ public class SearchHistory {
     /**
      * 获取最近搜索的n条记录
      *
-     * @param limit
-     * @return
+     * @param limit The maximum number of search history entries to return.
+     * @return A cursor containing the recent search queries.
      */
+    @SuppressWarnings("unused")
     public Cursor queryRecentSearches(final String limit) {
         final SQLiteDatabase database = mMusicDatabase.getReadableDatabase();
         return database.query(SearchHistoryColumns.NAME,
-                new String[]{SearchHistoryColumns.SEARCHSTRING}, null, null, null, null,
-                SearchHistoryColumns.TIMESEARCHED + " DESC", limit);
+                new String[]{SearchHistoryColumns.SEARCH_STRING}, null, null, null, null,
+                SearchHistoryColumns.TIME_SEARCHED + " DESC", limit);
     }
 
     interface SearchHistoryColumns {
@@ -121,10 +117,10 @@ public class SearchHistory {
         String NAME = "searchhistory";
 
         /* What was searched */
-        String SEARCHSTRING = "searchstring";
+        String SEARCH_STRING = "searchstring";
 
         /* Time of search */
-        String TIMESEARCHED = "timesearched";
+        String TIME_SEARCHED = "timesearched";
     }
 
 }

@@ -7,7 +7,7 @@ import android.preference.PreferenceManager;
 /**
  * Created by hefuyi on 2016/11/3.
  */
-
+@SuppressWarnings({"deprecation", "unused"})
 public class PreferencesUtility {
 
     private static final String ARTIST_SORT_ORDER = "artist_sort_order";
@@ -20,9 +20,9 @@ public class PreferencesUtility {
     private static final String TOGGLE_ALBUM_GRID = "toggle_album_grid";
     private static final String TOGGLE_PLAYLIST_VIEW = "toggle_playlist_view";
     private static final String START_PAGE_INDEX = "start_page_index";
-    private static PreferencesUtility sInstance;
+    private static volatile PreferencesUtility sInstance;
 
-    private static volatile SharedPreferences mPreferences;
+    private final SharedPreferences mPreferences;
 
     public PreferencesUtility(final Context context) {
         mPreferences = PreferenceManager.getDefaultSharedPreferences(context);

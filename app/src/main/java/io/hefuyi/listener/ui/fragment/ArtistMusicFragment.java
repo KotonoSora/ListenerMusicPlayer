@@ -6,6 +6,7 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 
+import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
 import androidx.recyclerview.widget.LinearLayoutManager;
@@ -34,7 +35,6 @@ import io.hefuyi.listener.util.ListenerUtil;
 import io.hefuyi.listener.widget.DividerItemDecoration;
 import rx.Subscription;
 import rx.android.schedulers.AndroidSchedulers;
-import rx.functions.Action1;
 import rx.schedulers.Schedulers;
 
 /**
@@ -57,17 +57,17 @@ public class ArtistMusicFragment extends Fragment implements ArtistSongContract.
     }
 
     @Override
-    public void onCreate(Bundle savedInstanceState) {
+    public void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        injectDependences();
+        injectDependencies();
         mPresenter.attachView(this);
         if (getArguments() != null) {
             artistID = getArguments().getLong(Constants.ARTIST_ID);
         }
     }
 
-    private void injectDependences() {
-        ApplicationComponent applicationComponent = ((ListenerApp) getActivity().getApplication()).getApplicationComponent();
+    private void injectDependencies() {
+        ApplicationComponent applicationComponent = ((ListenerApp) requireActivity().getApplication()).getApplicationComponent();
         ArtistSongsComponent artistSongsComponent = DaggerArtistSongsComponent.builder()
                 .applicationComponent(applicationComponent)
                 .artistSongModule(new ArtistSongModule())
@@ -75,25 +75,26 @@ public class ArtistMusicFragment extends Fragment implements ArtistSongContract.
         artistSongsComponent.inject(this);
     }
 
+    @Nullable
     @Override
-    public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
+    public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
         return inflater.inflate(R.layout.fragment_artist_music, container, false);
     }
 
     @Override
-    public void onViewCreated(View view, @Nullable Bundle savedInstanceState) {
+    public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
 
         songsRecyclerview = view.findViewById(R.id.recycler_view_songs);
 
-        ATE.apply(this, ATEUtil.getATEKey(getActivity()));
+        ATE.apply(this, ATEUtil.getATEKey(requireActivity()));
 
-        songsRecyclerview.setLayoutManager(new LinearLayoutManager(getActivity()));
-        songsRecyclerview.addItemDecoration(new DividerItemDecoration(getActivity(), DividerItemDecoration.VERTICAL_LIST, true));
+        songsRecyclerview.setLayoutManager(new LinearLayoutManager(requireActivity()));
+        songsRecyclerview.addItemDecoration(new DividerItemDecoration(requireActivity(), DividerItemDecoration.VERTICAL_LIST, true));
 
         ListenerUtil.applyBottomInsetWithPlayer(songsRecyclerview);
 
-        mSongAdapter = new ArtistSongAdapter(getActivity(), null, artistID);
+        mSongAdapter = new ArtistSongAdapter(requireActivity(), null, artistID);
         songsRecyclerview.setAdapter(mSongAdapter);
 
         mPresenter.subscribe(artistID);
@@ -116,22 +117,14 @@ public class ArtistMusicFragment extends Fragment implements ArtistSongContract.
         mSongAdapter.setSongList(songList);
     }
 
+    @SuppressWarnings("notifyDataSetChanged")
     private void subscribeMetaChangedEvent() {
         Subscription subscription = RxBus.getInstance()
                 .toObservable(MetaChangedEvent.class)
                 .subscribeOn(Schedulers.io())
                 .observeOn(AndroidSchedulers.mainThread())
                 .distinctUntilChanged()
-                .subscribe(new Action1<MetaChangedEvent>() {
-                    @Override
-                    public void call(MetaChangedEvent event) {
-                        mSongAdapter.notifyDataSetChanged();
-                    }
-                }, new Action1<Throwable>() {
-                    @Override
-                    public void call(Throwable throwable) {
-
-                    }
+                .subscribe(event -> mSongAdapter.notifyDataSetChanged(), throwable -> {
                 });
         RxBus.getInstance().addSubscription(this, subscription);
     }

@@ -1,7 +1,7 @@
 package io.hefuyi.listener.ui.fragment;
 
 
-import android.app.Activity;
+import android.annotation.SuppressLint;
 import android.content.Context;
 import android.media.AudioManager;
 import android.os.Bundle;
@@ -15,14 +15,14 @@ import android.view.ViewGroup;
 import android.view.ViewStub;
 import android.view.inputmethod.InputMethodManager;
 
+import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.ActionBar;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.SearchView;
 import androidx.appcompat.widget.Toolbar;
-import androidx.core.view.MenuItemCompat;
+import androidx.core.view.MenuProvider;
 import androidx.fragment.app.Fragment;
-
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
@@ -49,7 +49,6 @@ import io.hefuyi.listener.util.ATEUtil;
 import io.hefuyi.listener.util.ListenerUtil;
 import rx.Subscription;
 import rx.android.schedulers.AndroidSchedulers;
-import rx.functions.Action1;
 import rx.schedulers.Schedulers;
 
 /**
@@ -68,17 +67,17 @@ public class SearchFragment extends Fragment implements SearchView.OnQueryTextLi
     private SearchAdapter adapter;
 
     @Override
-    public void onCreate(final Bundle savedInstanceState) {
+    public void onCreate(@Nullable final Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        injectDependences();
+        injectDependencies();
         mPresenter.attachView(this);
 
-        mImm = (InputMethodManager) getActivity().getSystemService(Context.INPUT_METHOD_SERVICE);
-        adapter = new SearchAdapter(getActivity());
+        mImm = (InputMethodManager) requireActivity().getSystemService(Context.INPUT_METHOD_SERVICE);
+        adapter = new SearchAdapter(requireActivity());
     }
 
-    private void injectDependences() {
-        ApplicationComponent applicationComponent = ((ListenerApp) getActivity().getApplication()).getApplicationComponent();
+    private void injectDependencies() {
+        ApplicationComponent applicationComponent = ((ListenerApp) requireActivity().getApplication()).getApplicationComponent();
         SearchComponent searchComponent = DaggerSearchComponent.builder()
                 .applicationComponent(applicationComponent)
                 .searchModule(new SearchModule())
@@ -86,43 +85,82 @@ public class SearchFragment extends Fragment implements SearchView.OnQueryTextLi
         searchComponent.inject(this);
     }
 
+    @Nullable
     @Override
-    public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
-        View rootView = inflater.inflate(R.layout.fragment_list_layout, container, false);
-
-        return rootView;
+    public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
+        return inflater.inflate(R.layout.fragment_list_layout, container, false);
     }
 
+    @SuppressLint("ClickableViewAccessibility")
     @Override
-    public void onViewCreated(View view, @Nullable Bundle savedInstanceState) {
+    public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
 
         toolbar = view.findViewById(R.id.toolbar);
         recyclerView = view.findViewById(R.id.recyclerview);
         emptyView = view.findViewById(R.id.view_empty);
 
-        ATE.apply(this, ATEUtil.getATEKey(getActivity()));
+        ATE.apply(this, ATEUtil.getATEKey(requireActivity()));
 
         ListenerUtil.applySystemBarPaddingAndHeight(toolbar, true, false);
 
         ListenerUtil.applyBottomInsetWithPlayerAndIme(recyclerView);
 
-        ((AppCompatActivity) getActivity()).setSupportActionBar(toolbar);
-        final ActionBar ab = ((AppCompatActivity) getActivity()).getSupportActionBar();
-        ab.setDisplayHomeAsUpEnabled(true);
+        AppCompatActivity activity = (AppCompatActivity) requireActivity();
+        activity.setSupportActionBar(toolbar);
+        final ActionBar ab = activity.getSupportActionBar();
+        if (ab != null) {
+            ab.setDisplayHomeAsUpEnabled(true);
+        }
 
-        getActivity().setVolumeControlStream(AudioManager.STREAM_MUSIC);
+        requireActivity().setVolumeControlStream(AudioManager.STREAM_MUSIC);
         recyclerView.setOnTouchListener(this);
-        recyclerView.setLayoutManager(new LinearLayoutManager(getContext()));
+        recyclerView.setLayoutManager(new LinearLayoutManager(requireContext()));
         recyclerView.setAdapter(adapter);
 
+        setupMenu();
         subscribeMediaUpdateEvent();
     }
 
-    @Override
-    public void onActivityCreated(final Bundle savedInstanceState) {
-        super.onActivityCreated(savedInstanceState);
-        setHasOptionsMenu(true);
+    private void setupMenu() {
+        requireActivity().addMenuProvider(new MenuProvider() {
+            @Override
+            public void onCreateMenu(@NonNull Menu menu, @NonNull MenuInflater menuInflater) {
+                menu.clear();
+                menuInflater.inflate(R.menu.menu_search, menu);
+                MenuItem searchItem = menu.findItem(R.id.menu_search);
+                if (searchItem != null) {
+                    mSearchView = (SearchView) searchItem.getActionView();
+
+                    if (mSearchView != null) {
+                        mSearchView.setOnQueryTextListener(SearchFragment.this);
+                        mSearchView.setQueryHint(getString(R.string.search_library));
+                        mSearchView.setIconifiedByDefault(false);
+                        mSearchView.setIconified(false);
+                    }
+
+                    searchItem.setOnActionExpandListener(new MenuItem.OnActionExpandListener() {
+                        @Override
+                        public boolean onMenuItemActionExpand(@NonNull MenuItem item) {
+                            return true;
+                        }
+
+                        @Override
+                        public boolean onMenuItemActionCollapse(@NonNull MenuItem item) {
+                            requireActivity().getOnBackPressedDispatcher().onBackPressed();
+                            return true;
+                        }
+                    });
+
+                    searchItem.expandActionView();
+                }
+            }
+
+            @Override
+            public boolean onMenuItemSelected(@NonNull MenuItem menuItem) {
+                return false;
+            }
+        }, getViewLifecycleOwner());
     }
 
     @Override
@@ -134,36 +172,6 @@ public class SearchFragment extends Fragment implements SearchView.OnQueryTextLi
     }
 
     @Override
-    public void onCreateOptionsMenu(Menu menu, MenuInflater inflater) {
-        super.onCreateOptionsMenu(menu, inflater);
-        menu.clear();
-        inflater.inflate(R.menu.menu_search, menu);
-        mSearchView = (SearchView) MenuItemCompat.getActionView(menu.findItem(R.id.menu_search));
-
-        mSearchView.setOnQueryTextListener(this);
-        mSearchView.setQueryHint(getString(R.string.search_library));
-
-        mSearchView.setIconifiedByDefault(false);
-        mSearchView.setIconified(false);
-
-        MenuItemCompat.setOnActionExpandListener(menu.findItem(R.id.menu_search), new MenuItemCompat.OnActionExpandListener() {
-            @Override
-            public boolean onMenuItemActionExpand(MenuItem item) {
-                return true;
-            }
-
-            @Override
-            public boolean onMenuItemActionCollapse(MenuItem item) {
-                Activity activity = getActivity();
-                activity.onBackPressed();
-                return true;
-            }
-        });
-
-        menu.findItem(R.id.menu_search).expandActionView();
-    }
-
-    @Override
     public boolean onQueryTextSubmit(String query) {
         onQueryTextChange(query);
         hideInputManager();
@@ -171,6 +179,7 @@ public class SearchFragment extends Fragment implements SearchView.OnQueryTextLi
         return true;
     }
 
+    @SuppressWarnings("notifyDataSetChanged")
     @Override
     public boolean onQueryTextChange(final String newText) {
 
@@ -180,7 +189,7 @@ public class SearchFragment extends Fragment implements SearchView.OnQueryTextLi
 
         queryString = newText;
 
-        if (queryString.trim().equals("")) {
+        if (queryString.trim().isEmpty()) {
             searchResults.clear();
             adapter.updateSearchResults(searchResults);
             adapter.notifyDataSetChanged();
@@ -195,7 +204,8 @@ public class SearchFragment extends Fragment implements SearchView.OnQueryTextLi
     @Override
     public boolean onTouch(View v, MotionEvent event) {
         if (event.getActionMasked() == MotionEvent.ACTION_DOWN) {
-            if (mImm != null) {
+            v.performClick();
+            if (mImm != null && mSearchView != null) {
                 mImm.hideSoftInputFromWindow(mSearchView.getWindowToken(), 0);
                 mSearchView.clearFocus();
             }
@@ -233,16 +243,7 @@ public class SearchFragment extends Fragment implements SearchView.OnQueryTextLi
                 .subscribeOn(Schedulers.io())
                 .observeOn(AndroidSchedulers.mainThread())
                 .debounce(1, TimeUnit.SECONDS)
-                .subscribe(new Action1<MediaUpdateEvent>() {
-                    @Override
-                    public void call(MediaUpdateEvent event) {
-                        mPresenter.search(queryString);
-                    }
-                }, new Action1<Throwable>() {
-                    @Override
-                    public void call(Throwable throwable) {
-
-                    }
+                .subscribe(event -> mPresenter.search(queryString), throwable -> {
                 });
 
         RxBus.getInstance().addSubscription(this, subscription);

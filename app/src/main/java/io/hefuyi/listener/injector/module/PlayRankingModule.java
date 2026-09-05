@@ -14,7 +14,7 @@ import io.hefuyi.listener.respository.interfaces.Repository;
 public class PlayRankingModule {
 
     @Provides
-    GetSongs getSongsUsecase(Repository repository) {
+    GetSongs getSongsUseCase(Repository repository) {
         return new GetSongs(repository);
     }
 

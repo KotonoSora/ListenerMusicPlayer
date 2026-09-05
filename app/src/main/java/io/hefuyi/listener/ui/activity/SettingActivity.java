@@ -10,6 +10,7 @@ import android.view.View;
 
 import androidx.annotation.ColorInt;
 import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 import androidx.appcompat.widget.Toolbar;
 
 import com.afollestad.appthemeengine.ATE;
@@ -25,7 +26,7 @@ import io.hefuyi.listener.util.ListenerUtil;
 public class SettingActivity extends BaseActivity implements ColorChooserDialog.ColorCallback, ATEActivityThemeCustomizer {
 
     @Override
-    public void onCreate(Bundle savedInstanceState) {
+    public void onCreate(@Nullable Bundle savedInstanceState) {
 
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_settings);
@@ -54,7 +55,7 @@ public class SettingActivity extends BaseActivity implements ColorChooserDialog.
     }
 
     @Override
-    public boolean onOptionsItemSelected(final MenuItem item) {
+    public boolean onOptionsItemSelected(@NonNull final MenuItem item) {
         switch (item.getItemId()) {
             case android.R.id.home:
                 finish();
@@ -73,12 +74,20 @@ public class SettingActivity extends BaseActivity implements ColorChooserDialog.
 
     @Override
     public void onColorSelection(@NonNull ColorChooserDialog dialog, @ColorInt int selectedColor) {
-        final Config config = ATE.config(this, getATEKey());
-        config.primaryColor(selectedColor);
-        config.primaryColorDark(ColorUtil.getStatusBarColor(selectedColor));
-        config.accentColor(selectedColor);
-        config.commit();
+        final Config configLight = ATE.config(this, "light_theme");
+        configLight.primaryColor(selectedColor);
+        configLight.primaryColorDark(ColorUtil.getStatusBarColor(selectedColor));
+        configLight.accentColor(selectedColor);
+        configLight.commit();
+
+        final Config configDark = ATE.config(this, "dark_theme");
+        configDark.primaryColor(selectedColor);
+        configDark.primaryColorDark(ColorUtil.getStatusBarColor(selectedColor));
+        configDark.accentColor(selectedColor);
+        configDark.commit();
+
         Config.markChanged(this, "light_theme");
+        Config.markChanged(this, "dark_theme");
         recreate(); // recreation needed to reach the checkboxes in the preferences layout
     }
 }

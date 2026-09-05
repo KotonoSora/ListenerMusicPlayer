@@ -1,5 +1,7 @@
 package io.hefuyi.listener.util;
 
+import android.os.Environment;
+
 import java.io.File;
 
 import rx.Observable;
@@ -10,11 +12,12 @@ import rx.Observable;
 
 public class LyricUtil {
 
-    private static final String lrcRootPath = android.os.Environment
+    private static final String lrcRootPath = Environment
             .getExternalStorageDirectory().toString()
             + "/Listener/lyric/";
 
 
+    @SuppressWarnings("unused")
     public static boolean isLrcFileExist(String title, String artist) {
         File file = new File(getLrcPath(title, artist));
         return file.exists();

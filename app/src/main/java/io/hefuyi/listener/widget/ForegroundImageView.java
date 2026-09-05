@@ -5,8 +5,9 @@ import android.content.res.TypedArray;
 import android.graphics.Canvas;
 import android.graphics.drawable.Drawable;
 import android.util.AttributeSet;
-import android.widget.ImageView;
 
+import androidx.annotation.NonNull;
+import androidx.appcompat.widget.AppCompatImageView;
 import androidx.core.content.ContextCompat;
 
 import io.hefuyi.listener.R;
@@ -15,7 +16,7 @@ import io.hefuyi.listener.R;
  * Created by hefuyi on 2016/10/24.
  */
 
-public class ForegroundImageView extends ImageView {
+public class ForegroundImageView extends AppCompatImageView {
     private Drawable foreground;
 
     public ForegroundImageView(Context context) {
@@ -25,30 +26,32 @@ public class ForegroundImageView extends ImageView {
     public ForegroundImageView(Context context, AttributeSet attrs) {
         super(context, attrs);
 
-        TypedArray a = context.obtainStyledAttributes(attrs, R.styleable.ForegroundImageView);
-        Drawable foreground = a.getDrawable(R.styleable.ForegroundImageView_android_foreground);
-        if (foreground != null) {
-            setForeground(foreground);
+        try (TypedArray a = context.obtainStyledAttributes(attrs, R.styleable.ForegroundImageView)) {
+            Drawable fg = a.getDrawable(R.styleable.ForegroundImageView_android_foreground);
+            if (fg != null) {
+                setForeground(fg);
+            }
         }
-        a.recycle();
     }
 
     /**
-     * Supply a drawable resource that is to be rendered on top of all of the child
+     * Supply a drawable resource that is to be rendered on top of all the child
      * views in the frame layout.
      *
      * @param drawableResId The drawable resource to be drawn on top of the children.
      */
+    @SuppressWarnings("unused")
     public void setForegroundResource(int drawableResId) {
         setForeground(ContextCompat.getDrawable(getContext(), drawableResId));
     }
 
     /**
-     * Supply a Drawable that is to be rendered on top of all of the child
+     * Supply a Drawable that is to be rendered on top of all the child
      * views in the frame layout.
      *
      * @param drawable The Drawable to be drawn on top of the children.
      */
+    @Override
     public void setForeground(Drawable drawable) {
         if (foreground == drawable) {
             return;
@@ -71,7 +74,7 @@ public class ForegroundImageView extends ImageView {
     }
 
     @Override
-    protected boolean verifyDrawable(Drawable who) {
+    protected boolean verifyDrawable(@NonNull Drawable who) {
         return super.verifyDrawable(who) || who == foreground;
     }
 
@@ -99,8 +102,8 @@ public class ForegroundImageView extends ImageView {
     }
 
     @Override
-    protected void onSizeChanged(int w, int h, int oldw, int oldh) {
-        super.onSizeChanged(w, h, oldw, oldh);
+    protected void onSizeChanged(int w, int h, int oldWidth, int oldHeight) {
+        super.onSizeChanged(w, h, oldWidth, oldHeight);
         if (foreground != null) {
             foreground.setBounds(0, 0, w, h);
             invalidate();
@@ -108,7 +111,7 @@ public class ForegroundImageView extends ImageView {
     }
 
     @Override
-    public void draw(Canvas canvas) {
+    public void draw(@NonNull Canvas canvas) {
         super.draw(canvas);
 
         if (foreground != null) {

@@ -14,7 +14,7 @@ import io.hefuyi.listener.respository.interfaces.Repository;
 public class ArtistSongModule {
 
     @Provides
-    GetArtistSongs getArtistSongsUsecase(Repository repository) {
+    GetArtistSongs getArtistSongsUseCase(Repository repository) {
         return new GetArtistSongs(repository);
     }
 

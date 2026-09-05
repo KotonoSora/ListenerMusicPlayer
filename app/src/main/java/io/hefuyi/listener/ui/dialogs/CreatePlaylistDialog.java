@@ -5,6 +5,7 @@ import android.os.Bundle;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 import androidx.fragment.app.DialogFragment;
 
 import com.afollestad.materialdialogs.MaterialDialog;
@@ -18,6 +19,7 @@ import io.hefuyi.listener.mvp.model.Song;
 /**
  * Created by naman on 20/12/15.
  */
+@SuppressWarnings("SpellCheckingInspection")
 public class CreatePlaylistDialog extends DialogFragment {
 
     public static CreatePlaylistDialog newInstance() {
@@ -45,28 +47,25 @@ public class CreatePlaylistDialog extends DialogFragment {
 
     @NonNull
     @Override
-    public Dialog onCreateDialog(Bundle savedInstanceState) {
-        return new MaterialDialog.Builder(getActivity())
+    public Dialog onCreateDialog(@Nullable Bundle savedInstanceState) {
+        return new MaterialDialog.Builder(requireActivity())
                 .title(R.string.create_new_playlist)
                 .positiveText(R.string.create)
                 .negativeText(R.string.cancel)
-                .input(getString(R.string.playlist_name), "", false, new MaterialDialog.InputCallback() {
-                    @Override
-                    public void onInput(@NonNull MaterialDialog dialog, CharSequence input) {
+                .input(getString(R.string.playlist_name), "", false, (dialog, input) -> {
+                    Bundle args = getArguments();
+                    long[] songs = args != null ? args.getLongArray("songs") : null;
+                    long playlistId = MusicPlayer.createPlaylist(requireActivity(), input.toString());
 
-                        long[] songs = getArguments().getLongArray("songs");
-                        long playistId = MusicPlayer.createPlaylist(getActivity(), input.toString());
-
-                        if (playistId != -1) {
-                            if (songs != null && songs.length != 0) {
-                                MusicPlayer.addToPlaylist(getActivity(), songs, playistId);
-                            } else {
-                                Toast.makeText(getActivity(), R.string.create_playlist_success, Toast.LENGTH_SHORT).show();
-                            }
-                            RxBus.getInstance().post(new PlaylistUpdateEvent());
+                    if (playlistId != -1) {
+                        if (songs != null && songs.length != 0) {
+                            MusicPlayer.addToPlaylist(requireActivity(), songs, playlistId);
                         } else {
-                            Toast.makeText(getActivity(), R.string.create_playlist_fail, Toast.LENGTH_SHORT).show();
+                            Toast.makeText(requireActivity(), R.string.create_playlist_success, Toast.LENGTH_SHORT).show();
                         }
+                        RxBus.getInstance().post(new PlaylistUpdateEvent());
+                    } else {
+                        Toast.makeText(requireActivity(), R.string.create_playlist_fail, Toast.LENGTH_SHORT).show();
                     }
                 }).build();
     }

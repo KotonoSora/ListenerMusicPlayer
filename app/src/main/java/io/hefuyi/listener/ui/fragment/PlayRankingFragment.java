@@ -6,12 +6,12 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 
+import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.ActionBar;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
 import androidx.fragment.app.Fragment;
-
 import androidx.recyclerview.widget.LinearLayoutManager;
 
 import com.afollestad.appthemeengine.ATE;
@@ -33,10 +33,10 @@ import io.hefuyi.listener.mvp.contract.PlayRankingContract;
 import io.hefuyi.listener.mvp.model.Song;
 import io.hefuyi.listener.ui.adapter.SongsListAdapter;
 import io.hefuyi.listener.util.ATEUtil;
+import io.hefuyi.listener.util.ListenerUtil;
 import io.hefuyi.listener.widget.fastscroller.FastScrollRecyclerView;
 import rx.Subscription;
 import rx.android.schedulers.AndroidSchedulers;
-import rx.functions.Action1;
 import rx.schedulers.Schedulers;
 
 /**
@@ -52,16 +52,16 @@ public class PlayRankingFragment extends Fragment implements PlayRankingContract
     private SongsListAdapter mAdapter;
 
     @Override
-    public void onCreate(final Bundle savedInstanceState) {
+    public void onCreate(@Nullable final Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        injectDependences();
+        injectDependencies();
         mPresenter.attachView(this);
 
-        mAdapter = new SongsListAdapter((AppCompatActivity) getActivity(), null, Constants.NAVIGATE_ALLSONG, true);
+        mAdapter = new SongsListAdapter((AppCompatActivity) requireActivity(), null, Constants.NAVIGATE_ALLSONG, true);
     }
 
-    private void injectDependences() {
-        ApplicationComponent applicationComponent = ((ListenerApp) getActivity().getApplication()).getApplicationComponent();
+    private void injectDependencies() {
+        ApplicationComponent applicationComponent = ((ListenerApp) requireActivity().getApplication()).getApplicationComponent();
         PlayRankingComponent playRankingComponent = DaggerPlayRankingComponent.builder()
                 .applicationComponent(applicationComponent)
                 .playRankingModule(new PlayRankingModule())
@@ -69,44 +69,41 @@ public class PlayRankingFragment extends Fragment implements PlayRankingContract
         playRankingComponent.inject(this);
     }
 
+    @Nullable
     @Override
-    public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
-        View rootView = inflater.inflate(R.layout.fragment_list_layout, container, false);
-        return rootView;
+    public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
+        return inflater.inflate(R.layout.fragment_list_layout, container, false);
     }
 
     @Override
-    public void onViewCreated(View view, @Nullable Bundle savedInstanceState) {
+    public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
 
         recyclerView = view.findViewById(R.id.recyclerview);
         emptyView = view.findViewById(R.id.view_empty);
         toolbar = view.findViewById(R.id.toolbar);
 
-        ATE.apply(this, ATEUtil.getATEKey(getActivity()));
+        ATE.apply(this, ATEUtil.getATEKey(requireActivity()));
 
-        io.hefuyi.listener.util.ListenerUtil.applySystemBarPaddingAndHeight(toolbar, true, false);
+        ListenerUtil.applySystemBarPaddingAndHeight(toolbar, true, false);
 
-        ((AppCompatActivity) getActivity()).setSupportActionBar(toolbar);
+        AppCompatActivity activity = (AppCompatActivity) requireActivity();
+        activity.setSupportActionBar(toolbar);
 
-        final ActionBar ab = ((AppCompatActivity) getActivity()).getSupportActionBar();
-        ab.setHomeAsUpIndicator(R.drawable.ic_menu);
-        ab.setDisplayHomeAsUpEnabled(true);
-        ab.setTitle(R.string.play_ranking);
+        final ActionBar ab = activity.getSupportActionBar();
+        if (ab != null) {
+            ab.setHomeAsUpIndicator(R.drawable.ic_menu);
+            ab.setDisplayHomeAsUpEnabled(true);
+            ab.setTitle(R.string.play_ranking);
+        }
 
-        recyclerView.setLayoutManager(new LinearLayoutManager(getActivity()));
+        recyclerView.setLayoutManager(new LinearLayoutManager(requireActivity()));
         recyclerView.setAdapter(mAdapter);
 
-        io.hefuyi.listener.util.ListenerUtil.applyBottomInsetWithPlayer(recyclerView);
+        ListenerUtil.applyBottomInsetWithPlayer(recyclerView);
 
         mPresenter.subscribe();
         subscribeMetaChangedEvent();
-    }
-
-    @Override
-    public void onActivityCreated(final Bundle savedInstanceState) {
-        super.onActivityCreated(savedInstanceState);
-        setHasOptionsMenu(true);
     }
 
     @Override
@@ -129,22 +126,14 @@ public class PlayRankingFragment extends Fragment implements PlayRankingContract
         emptyView.setVisibility(View.VISIBLE);
     }
 
+    @SuppressWarnings("notifyDataSetChanged")
     private void subscribeMetaChangedEvent() {
         Subscription subscription = RxBus.getInstance()
                 .toObservable(MetaChangedEvent.class)
                 .subscribeOn(Schedulers.io())
                 .observeOn(AndroidSchedulers.mainThread())
                 .distinctUntilChanged()
-                .subscribe(new Action1<MetaChangedEvent>() {
-                    @Override
-                    public void call(MetaChangedEvent event) {
-                        mAdapter.notifyDataSetChanged();
-                    }
-                }, new Action1<Throwable>() {
-                    @Override
-                    public void call(Throwable throwable) {
-
-                    }
+                .subscribe(event -> mAdapter.notifyDataSetChanged(), throwable -> {
                 });
         RxBus.getInstance().addSubscription(this, subscription);
     }

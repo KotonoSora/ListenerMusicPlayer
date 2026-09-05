@@ -22,79 +22,50 @@ import rx.functions.Func1;
 public class ArtistLoader {
 
     private static Observable<Artist> getArtist(final Cursor cursor) {
-        return Observable.create(new Observable.OnSubscribe<Artist>() {
-            @Override
-            public void call(Subscriber<? super Artist> subscriber) {
-                Artist artist = new Artist();
-                if (cursor != null) {
-                    if (cursor.moveToFirst())
-                        artist = new Artist(cursor.getLong(0), cursor.getString(1), cursor.getInt(2), cursor.getInt(3));
-                }
-                if (cursor != null) {
-                    cursor.close();
-                }
-                subscriber.onNext(artist);
-                subscriber.onCompleted();
+        return Observable.create(subscriber -> {
+            Artist artist = new Artist();
+            if (cursor != null) {
+                if (cursor.moveToFirst())
+                    artist = new Artist(cursor.getLong(0), cursor.getString(1), cursor.getInt(2), cursor.getInt(3));
             }
+            if (cursor != null) {
+                cursor.close();
+            }
+            subscriber.onNext(artist);
+            subscriber.onCompleted();
         });
-
     }
 
     private static Observable<List<Artist>> getArtistsForCursor(final Cursor cursor) {
-        return Observable.create(new Observable.OnSubscribe<List<Artist>>() {
-            @Override
-            public void call(Subscriber<? super List<Artist>> subscriber) {
-                List<Artist> arrayList = new ArrayList<Artist>();
-                if ((cursor != null) && (cursor.moveToFirst()))
-                    do {
-                        arrayList.add(new Artist(cursor.getLong(0), cursor.getString(1), cursor.getInt(2), cursor.getInt(3)));
-                    }
-                    while (cursor.moveToNext());
-                if (cursor != null) {
-                    cursor.close();
+        return Observable.create(subscriber -> {
+            List<Artist> arrayList = new ArrayList<>();
+            if ((cursor != null) && (cursor.moveToFirst()))
+                do {
+                    arrayList.add(new Artist(cursor.getLong(0), cursor.getString(1), cursor.getInt(2), cursor.getInt(3)));
                 }
-                subscriber.onNext(arrayList);
-                subscriber.onCompleted();
+                while (cursor.moveToNext());
+            if (cursor != null) {
+                cursor.close();
             }
+            subscriber.onNext(arrayList);
+            subscriber.onCompleted();
         });
     }
 
     public static Observable<List<Artist>> getFavoriteArtists(final Context context) {
-        return SongLoader.getFavoriteSongs(context).flatMap(new Func1<List<Song>, Observable<Song>>() {
-            @Override
-            public Observable<Song> call(List<Song> songList) {
-                return Observable.from(songList);
-            }
-        }).distinct(new Func1<Song, Long>() {
-            @Override
-            public Long call(Song song) {
-                return song.artistId;
-            }
-        }).flatMap(new Func1<Song, Observable<Artist>>() {
-            @Override
-            public Observable<Artist> call(Song song) {
-                return ArtistLoader.getArtist(context, song.artistId);
-            }
-        }).toList();
+        return SongLoader.getFavoriteSongs(context)
+                .flatMap(Observable::from)
+                .distinct(song -> song.artistId)
+                .flatMap(song -> ArtistLoader.getArtist(context, song.artistId))
+                .toList();
     }
 
     public static Observable<List<Artist>> getRecentlyPlayedArtist(final Context context) {
-        return TopTracksLoader.getTopRecentSongs(context).flatMap(new Func1<List<Song>, Observable<Song>>() {
-            @Override
-            public Observable<Song> call(List<Song> songList) {
-                return Observable.from(songList);
-            }
-        }).distinct(new Func1<Song, Long>() {
-            @Override
-            public Long call(Song song) {
-                return song.artistId;
-            }
-        }).flatMap(new Func1<Song, Observable<Artist>>() {
-            @Override
-            public Observable<Artist> call(Song song) {
-                return ArtistLoader.getArtist(context, song.artistId);
-            }
-        }).toList();
+        return TopTracksLoader.getTopRecentSongs(context)
+                .flatMap(Observable::from)
+                .distinct(song -> song.artistId)
+                .flatMap(song -> ArtistLoader.getArtist(context, song.artistId))
+                .toList();
     }
 
     public static Observable<List<Artist>> getAllArtists(Context context) {
@@ -102,7 +73,7 @@ public class ArtistLoader {
     }
 
     public static Observable<Artist> getArtist(Context context, long id) {
-        return getArtist(makeArtistCursor(context, "_id=?", new String[]{String.valueOf(id)}));
+        return getArtist(makeArtistCursor(context, "_id=?", new String[]{id + ""}));
     }
 
     public static Observable<List<Artist>> getArtists(Context context, String paramString) {

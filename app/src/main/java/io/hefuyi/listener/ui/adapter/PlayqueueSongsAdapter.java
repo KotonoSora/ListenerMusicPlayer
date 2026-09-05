@@ -1,12 +1,15 @@
 package io.hefuyi.listener.ui.adapter;
 
+import android.annotation.SuppressLint;
 import android.os.Handler;
+import android.os.Looper;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageView;
 import android.widget.TextView;
 
+import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.content.ContextCompat;
 import androidx.palette.graphics.Palette;
@@ -16,6 +19,7 @@ import com.bumptech.glide.Glide;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
 import io.hefuyi.listener.MusicPlayer;
 import io.hefuyi.listener.R;
@@ -37,23 +41,20 @@ public class PlayqueueSongsAdapter extends RecyclerView.Adapter<RecyclerView.Vie
     private Palette.Swatch mSwatch;
 
     public PlayqueueSongsAdapter(AppCompatActivity context, List<Song> arraylist) {
-        if (arraylist == null) {
-            this.arraylist = new ArrayList<>();
-        } else {
-            this.arraylist = arraylist;
-        }
+        this.arraylist = Objects.requireNonNullElseGet(arraylist, ArrayList::new);
         this.mContext = context;
         this.songIDs = getSongIds();
     }
 
+    @NonNull
     @Override
-    public RecyclerView.ViewHolder onCreateViewHolder(ViewGroup viewGroup, int viewType) {
+    public RecyclerView.ViewHolder onCreateViewHolder(@NonNull ViewGroup viewGroup, int viewType) {
         View song = LayoutInflater.from(viewGroup.getContext()).inflate(R.layout.item_list_linear_layout_item, viewGroup, false);
         return new ItemHolder(song);
     }
 
     @Override
-    public void onBindViewHolder(RecyclerView.ViewHolder holder, int position) {
+    public void onBindViewHolder(@NonNull RecyclerView.ViewHolder holder, int position) {
         ItemHolder itemHolder = (ItemHolder) holder;
         Song localItem;
         localItem = arraylist.get(position);
@@ -70,6 +71,17 @@ public class PlayqueueSongsAdapter extends RecyclerView.Adapter<RecyclerView.Vie
             if (MusicPlayer.getQueuePosition() == position) {
                 itemHolder.playIndicator.setVisibility(View.VISIBLE);
                 itemHolder.playIndicator.setBackgroundColor(ColorUtil.getBlackWhiteColor(mSwatch.getRgb()));
+            } else {
+                itemHolder.playIndicator.setVisibility(View.GONE);
+            }
+        } else {
+            itemHolder.title.setTextColor(ATEUtil.getThemeTextColorPrimary(mContext));
+            itemHolder.artist.setTextColor(ATEUtil.getThemeTextColorSecondly(mContext));
+            itemHolder.album.setTextColor(ATEUtil.getThemeTextColorSecondly(mContext));
+
+            if (MusicPlayer.getQueuePosition() == position) {
+                itemHolder.playIndicator.setVisibility(View.VISIBLE);
+                itemHolder.playIndicator.setBackgroundColor(ATEUtil.getThemePrimaryColor(mContext));
             } else {
                 itemHolder.playIndicator.setVisibility(View.GONE);
             }
@@ -96,12 +108,14 @@ public class PlayqueueSongsAdapter extends RecyclerView.Adapter<RecyclerView.Vie
         return ret;
     }
 
+    @SuppressLint("NotifyDataSetChanged")
     public void setSongList(List<Song> arraylist) {
         this.arraylist = arraylist;
         this.songIDs = getSongIds();
         notifyDataSetChanged();
     }
 
+    @SuppressLint("NotifyDataSetChanged")
     public void setPaletteSwatch(Palette.Swatch swatch) {
         mSwatch = swatch;
         notifyDataSetChanged();
@@ -125,35 +139,29 @@ public class PlayqueueSongsAdapter extends RecyclerView.Adapter<RecyclerView.Vie
             this.playIndicator = view.findViewById(R.id.now_playing_indicator);
 
             popupMenu.setImageDrawable(ContextCompat.getDrawable(mContext, R.drawable.ic_clear_white_36dp));
-            popupMenu.setOnClickListener(new View.OnClickListener() {
-                @Override
-                public void onClick(View v) {
-                    MusicPlayer.removeFromQueue(getAdapterPosition());
-                    arraylist.remove(getAdapterPosition());
-                    songIDs = getSongIds();
-                    notifyItemRemoved(getAdapterPosition());
-                }
+            popupMenu.setOnClickListener(v -> {
+                int pos = getBindingAdapterPosition();
+                if (pos == RecyclerView.NO_POSITION) return;
+                MusicPlayer.removeFromQueue(pos);
+                arraylist.remove(pos);
+                songIDs = getSongIds();
+                notifyItemRemoved(pos);
             });
             view.setOnClickListener(this);
         }
 
         @Override
         public void onClick(View v) {
-            final Handler handler = new Handler();
-            handler.postDelayed(new Runnable() {
-                @Override
-                public void run() {
-                    MusicPlayer.playAll(mContext, songIDs, getAdapterPosition(), -1, ListenerUtil.IdType.NA, false);
-                    Handler handler1 = new Handler();
-                    handler1.postDelayed(new Runnable() {
-                        @Override
-                        public void run() {
-                            notifyItemChanged(currentlyPlayingPosition);
-                            notifyItemChanged(getAdapterPosition());
-                            currentlyPlayingPosition = getAdapterPosition();
-                        }
-                    }, 50);
-                }
+            final Handler handler = new Handler(Looper.getMainLooper());
+            int pos = getBindingAdapterPosition();
+            if (pos == RecyclerView.NO_POSITION) return;
+            handler.postDelayed(() -> {
+                MusicPlayer.playAll(mContext, songIDs, pos, -1, ListenerUtil.IdType.NA, false);
+                handler.postDelayed(() -> {
+                    notifyItemChanged(currentlyPlayingPosition);
+                    notifyItemChanged(pos);
+                    currentlyPlayingPosition = pos;
+                }, 50);
             }, 100);
         }
     }

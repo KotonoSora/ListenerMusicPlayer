@@ -1,30 +1,27 @@
-/**
- * This code was modified by me, Paul Woitaschek. All these changes are licensed under GPLv3. The
- * original source can be found here: {@link https://github.com/alexjlockwood/material-pause-play-
- * animation/blob/master/app/src/main/java/com/alexjlockwood/example/playpauseanimation/
- * PlayPauseView.java}
- * <p/>
- * The original licensing is as follows:
- * <p/>
- * <p/>
+/*
+ * Modified by Paul Woitaschek under GPLv3.
+ * Original source: https://github.com/alexjlockwood/material-pause-play-animation
+ *
  * The MIT License (MIT)
- * <p/>
  * Copyright (c) 2015 Alex Lockwood
- * <p/>
- * Permission is hereby granted, free of charge, to any person obtaining a copy of this software and
- * associated documentation files (the "Software"), to deal in the Software without restriction,
- * including without limitation the rights to use, copy, modify, merge, publish, distribute,
- * sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to deal
+ * in the Software without restriction, including without limitation the rights
+ * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ * copies of the Software, and to permit persons to whom the Software is
  * furnished to do so, subject to the following conditions:
- * <p/>
- * The above copyright notice and this permission notice shall be included in all copies or
- * substantial portions of the Software.
- * <p/>
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING
- * BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
- * NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM,
- * DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
- * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+ *
+ * The above copyright notice and this permission notice shall be included in all
+ * copies or substantial portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+ * SOFTWARE.
  */
 
 package io.hefuyi.listener.widget;
@@ -33,7 +30,6 @@ import android.animation.Animator;
 import android.animation.AnimatorListenerAdapter;
 import android.animation.ObjectAnimator;
 import android.content.Context;
-import android.content.res.Resources;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.ColorFilter;
@@ -46,12 +42,14 @@ import android.graphics.drawable.Drawable;
 import android.util.Property;
 
 import androidx.annotation.ColorInt;
+import androidx.annotation.NonNull;
 
 
+@SuppressWarnings({"SpellCheckingInspection", "unused"})
 public class PlayPauseDrawable extends Drawable {
 
 
-    private static final Property<PlayPauseDrawable, Float> PROGRESS = new Property<PlayPauseDrawable, Float>(Float.class, "progress") {
+    private static final Property<PlayPauseDrawable, Float> PROGRESS = new Property<>(Float.class, "progress") {
         @Override
         public Float get(PlayPauseDrawable d) {
             return d.getProgress();
@@ -78,14 +76,12 @@ public class PlayPauseDrawable extends Drawable {
     private boolean mIsPlay;
 
     public PlayPauseDrawable(Context context) {
-        final Resources res = context.getResources();
         mPaint.setAntiAlias(true);
         mPaint.setStyle(Paint.Style.FILL);
         mPaint.setColor(Color.BLACK);
     }
 
     public PlayPauseDrawable(Context context, @ColorInt int color) {
-        final Resources res = context.getResources();
         mPaint.setAntiAlias(true);
         mPaint.setStyle(Paint.Style.FILL);
         mPaint.setColor(color);
@@ -98,12 +94,12 @@ public class PlayPauseDrawable extends Drawable {
         return a + (b - a) * t;
     }
 
-    public void setmIsPlay(boolean mIsPlay) {
-        this.mIsPlay = mIsPlay;
+    public void setIsPlay(boolean isPlay) {
+        this.mIsPlay = isPlay;
     }
 
     @Override
-    protected void onBoundsChange(Rect bounds) {
+    protected void onBoundsChange(@NonNull Rect bounds) {
         super.onBoundsChange(bounds);
         mBounds.set(bounds);
         mWidth = mBounds.width();
@@ -116,7 +112,7 @@ public class PlayPauseDrawable extends Drawable {
     }
 
     @Override
-    public void draw(Canvas canvas) {
+    public void draw(@NonNull Canvas canvas) {
         mLeftPauseBar.rewind();
         mRightPauseBar.rewind();
 

@@ -21,35 +21,32 @@ import rx.Subscriber;
 public class AlbumSongLoader {
 
     public static Observable<List<Song>> getSongsForAlbum(final Context context, final long albumID) {
-        return Observable.create(new Observable.OnSubscribe<List<Song>>() {
-            @Override
-            public void call(Subscriber<? super List<Song>> subscriber) {
-                Cursor cursor = makeAlbumSongCursor(context, albumID);
-                List<Song> arrayList = new ArrayList<Song>();
-                if ((cursor != null) && (cursor.moveToFirst()))
-                    do {
-                        long id = cursor.getLong(0);
-                        String title = cursor.getString(1);
-                        String artist = cursor.getString(2);
-                        String album = cursor.getString(3);
-                        int duration = cursor.getInt(4);
-                        int trackNumber = cursor.getInt(5);
-                        /*This fixes bug where some track numbers displayed as 100 or 200*/
-                        while (trackNumber >= 1000) {
-                            trackNumber -= 1000; //When error occurs the track numbers have an extra 1000 or 2000 added, so decrease till normal.
-                        }
-                        long artistId = cursor.getInt(6);
-                        long albumId = albumID;
-
-                        arrayList.add(new Song(id, albumId, artistId, title, artist, album, duration, trackNumber));
+        return Observable.create(subscriber -> {
+            Cursor cursor = makeAlbumSongCursor(context, albumID);
+            List<Song> arrayList = new ArrayList<>();
+            if ((cursor != null) && (cursor.moveToFirst()))
+                do {
+                    long id = cursor.getLong(0);
+                    String title = cursor.getString(1);
+                    String artist = cursor.getString(2);
+                    String album = cursor.getString(3);
+                    int duration = cursor.getInt(4);
+                    int trackNumber = cursor.getInt(5);
+                    /*This fixes bug where some track numbers displayed as 100 or 200*/
+                    while (trackNumber >= 1000) {
+                        trackNumber -= 1000; //When error occurs the track numbers have an extra 1000 or 2000 added, so decrease till normal.
                     }
-                    while (cursor.moveToNext());
-                if (cursor != null) {
-                    cursor.close();
+                    long artistId = cursor.getInt(6);
+                    long albumId = albumID;
+
+                    arrayList.add(new Song(id, albumId, artistId, title, artist, album, duration, trackNumber));
                 }
-                subscriber.onNext(arrayList);
-                subscriber.onCompleted();
+                while (cursor.moveToNext());
+            if (cursor != null) {
+                cursor.close();
             }
+            subscriber.onNext(arrayList);
+            subscriber.onCompleted();
         });
     }
 

@@ -20,6 +20,7 @@
             android:id="@+id/album_art"
             android:layout_width="@dimen/sliding_up_header"
             android:layout_height="@dimen/sliding_up_header"
+            android:importantForAccessibility="no"
             android:scaleType="centerCrop"
             android:src="?default_album_drawable" />
 
@@ -27,8 +28,8 @@
             android:id="@+id/custom_toolbar"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:minHeight="?attr/actionBarSize"
             android:layout_gravity="top"
+            android:minHeight="?attr/actionBarSize"
             android:orientation="horizontal"
             android:visibility="invisible">
 
@@ -36,28 +37,29 @@
                 android:id="@+id/upIndicator"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_alignParentLeft="true"
+                android:layout_alignParentStart="true"
                 android:layout_centerVertical="true"
-                android:layout_marginLeft="16dp"
+                android:layout_marginStart="16dp"
+                android:contentDescription="@string/app_name"
                 android:src="@drawable/ic_panel_back" />
 
             <LinearLayout
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_alignParentRight="true"
+                android:layout_alignParentEnd="true"
                 android:layout_centerVertical="true"
                 android:orientation="horizontal">
-
 
                 <ImageView
                     android:id="@+id/popup_menu"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:layout_marginRight="16dp"
+                    android:layout_marginEnd="16dp"
                     android:background="?attr/selectableItemBackgroundBorderless"
+                    android:contentDescription="@string/app_name"
                     android:padding="0dp"
-                    android:src="@drawable/abc_ic_menu_moreoverflow_mtrl_alpha"
-                    android:tint="#ffffff" />
+                    android:src="@drawable/abc_ic_menu_more_overflow_mtrl_alpha"
+                    app:tint="#ffffff" />
             </LinearLayout>
 
         </RelativeLayout>
@@ -73,7 +75,7 @@
             android:layout_width="match_parent"
             android:layout_height="@dimen/sliding_up_header"
             android:layout_gravity="top"
-            android:layout_marginLeft="@dimen/sliding_up_header"
+            android:layout_marginStart="@dimen/sliding_up_header"
             android:orientation="vertical">
 
             <ProgressBar
@@ -92,9 +94,9 @@
                 style="@style/TextAppearance.AppCompat.Body1"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_marginLeft="12dp"
+                android:layout_marginStart="12dp"
                 android:layout_marginTop="4dp"
-                android:layout_marginRight="42dp"
+                android:layout_marginEnd="42dp"
                 android:ellipsize="end"
                 android:maxLines="1"
                 android:text="@{vm.songTitle}"
@@ -105,7 +107,7 @@
                 style="@style/TextAppearance.AppCompat.Widget.ActionMode.Subtitle"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_marginLeft="12dp"
+                android:layout_marginStart="12dp"
                 android:ellipsize="end"
                 android:maxLength="20"
                 android:maxLines="1"
@@ -118,13 +120,15 @@
         <SeekBar
             android:id="@+id/seek_song_touch"
             android:layout_width="match_parent"
-            android:layout_height="wrap_content"
+            android:layout_height="48dp"
             android:layout_gravity="bottom"
-            android:layout_marginBottom="12dp"
+            android:layout_marginBottom="6dp"
             android:background="@color/transparent"
             android:clickable="true"
-            android:minHeight="6dp"
-            android:paddingTop="24dp"
+            android:focusable="true"
+            android:minHeight="48dp"
+            android:paddingTop="12dp"
+            android:paddingBottom="12dp"
             android:progress="30"
             android:progressDrawable="@drawable/progressbar_color"
             android:thumb="@null"
@@ -135,16 +139,16 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_gravity="top"
-            android:layout_marginTop="10dp">
+            android:layout_marginTop="6dp">
 
             <net.steamcrafted.materialiconlib.MaterialIconView
                 android:id="@+id/next"
-                android:layout_width="36dp"
-                android:layout_height="36dp"
-                android:layout_alignParentRight="true"
-                android:layout_marginEnd="16dp"
-                android:layout_marginRight="16dp"
+                android:layout_width="48dp"
+                android:layout_height="48dp"
+                android:layout_alignParentEnd="true"
+                android:layout_marginEnd="10dp"
                 android:background="?attr/selectableItemBackgroundBorderless"
+                android:contentDescription="@string/play_next"
                 android:scaleType="center"
                 app:materialIcon="skip_next"
                 app:materialIconColor="?attr/colorAccent"
@@ -152,26 +156,27 @@
 
             <io.hefuyi.listener.widget.PlayPauseView
                 android:id="@+id/play_pause"
-                android:layout_width="36dp"
-                android:layout_height="36dp"
-                android:layout_marginRight="16dp"
-                android:layout_toLeftOf="@id/next"
+                android:layout_width="48dp"
+                android:layout_height="48dp"
+                android:layout_marginEnd="10dp"
+                android:layout_toStartOf="@id/next"
                 android:clickable="true"
+                android:contentDescription="@string/app_name"
+                android:focusable="true"
                 android:foreground="?android:selectableItemBackground"
                 playpauseview:circleAlpha="0"
                 playpauseview:isCircleDraw="true" />
 
             <net.steamcrafted.materialiconlib.MaterialIconView
                 android:id="@+id/previous"
-                android:layout_width="36dp"
-                android:layout_height="36dp"
+                android:layout_width="48dp"
+                android:layout_height="48dp"
                 android:layout_alignParentTop="true"
-                android:layout_marginEnd="16dp"
-                android:layout_marginRight="16dp"
+                android:layout_marginEnd="10dp"
                 android:layout_toStartOf="@+id/play_pause"
-                android:layout_toLeftOf="@+id/play_pause"
                 android:alpha="0"
                 android:background="?attr/selectableItemBackgroundBorderless"
+                android:contentDescription="@string/app_name"
                 android:scaleType="center"
                 app:materialIcon="skip_previous"
                 app:materialIconColor="?attr/colorPrimary"
@@ -179,12 +184,13 @@
 
             <net.steamcrafted.materialiconlib.MaterialIconView
                 android:id="@+id/heart"
-                android:layout_width="36dp"
-                android:layout_height="36dp"
-                android:layout_marginRight="16dp"
-                android:layout_toLeftOf="@id/previous"
+                android:layout_width="48dp"
+                android:layout_height="48dp"
+                android:layout_marginEnd="10dp"
+                android:layout_toStartOf="@id/previous"
                 android:alpha="0"
                 android:background="?attr/selectableItemBackgroundBorderless"
+                android:contentDescription="@string/favorite"
                 android:scaleType="center"
                 app:materialIcon="heart"
                 app:materialIconColor="@android:color/black"
@@ -192,11 +198,12 @@
 
             <net.steamcrafted.materialiconlib.MaterialIconView
                 android:id="@+id/ic_play_queue"
-                android:layout_width="36dp"
-                android:layout_height="36dp"
-                android:layout_marginLeft="16dp"
-                android:layout_toRightOf="@id/next"
+                android:layout_width="48dp"
+                android:layout_height="48dp"
+                android:layout_marginStart="10dp"
+                android:layout_toEndOf="@id/next"
                 android:background="?attr/selectableItemBackgroundBorderless"
+                android:contentDescription="@string/playlists"
                 android:scaleType="center"
                 app:materialIcon="playlist_play"
                 app:materialIconColor="?attr/colorPrimary"
@@ -205,8 +212,8 @@
         </RelativeLayout>
 
         <include
-            android:id="@+id/song_elapsedtime"
-            layout="@layout/song_elapsedtime"
+            android:id="@+id/song_elapsed_time"
+            layout="@layout/song_elapsed_time"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_gravity="top|center_horizontal"

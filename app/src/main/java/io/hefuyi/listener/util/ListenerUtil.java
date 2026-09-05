@@ -19,16 +19,13 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Toast;
 
-import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
 
-import com.afollestad.materialdialogs.DialogAction;
 import com.afollestad.materialdialogs.MaterialDialog;
 
 import java.io.File;
-import java.util.List;
 
 import io.hefuyi.listener.MusicPlayer;
 import io.hefuyi.listener.R;
@@ -38,14 +35,11 @@ import io.hefuyi.listener.event.FavoriteSongEvent;
 import io.hefuyi.listener.event.MediaUpdateEvent;
 import io.hefuyi.listener.event.PlaylistUpdateEvent;
 import io.hefuyi.listener.event.RecentlyPlayEvent;
-import io.hefuyi.listener.mvp.model.Playlist;
 import io.hefuyi.listener.provider.FavoriteSong;
 import io.hefuyi.listener.provider.RecentStore;
 import io.hefuyi.listener.provider.SongPlayCount;
 import io.hefuyi.listener.ui.dialogs.CreatePlaylistDialog;
 import rx.android.schedulers.AndroidSchedulers;
-import rx.functions.Action1;
-import rx.functions.Func1;
 
 /**
  * Created by hefuyi on 2016/11/4.
@@ -86,22 +80,21 @@ public class ListenerUtil {
         return ContentUris.withAppendedId(Uri.parse("content://media/external/audio/albumart"), paramInt);
     }
 
-    public static final String makeLabel(final Context context, final int pluralInt,
-                                         final int number) {
+    @SuppressWarnings("unused")
+    public static String makeLabel(final Context context, final int pluralInt,
+                                   final int number) {
         return context.getResources().getQuantityString(pluralInt, number, number);
     }
 
-    public static final String makeShortTimeString(final Context context, long secs) {
-        long hours, mins;
-
-        hours = secs / 3600;
-        secs %= 3600;
-        mins = secs / 60;
-        secs %= 60;
+    @SuppressWarnings("unused")
+    public static String makeShortTimeString(final Context context, long secs) {
+        long hours = secs / 3600;
+        long mins = (secs % 3600) / 60;
+        long remainingSecs = secs % 60;
 
         final String durationFormat = context.getResources().getString(
-                hours == 0 ? R.string.durationformatshort : R.string.durationformatlong);
-        return String.format(durationFormat, hours, mins, secs);
+                hours == 0 ? R.string.duration_format_short : R.string.duration_format_long);
+        return String.format(durationFormat, hours, mins, remainingSecs);
     }
 
     public static boolean hasEffectsPanel(final Activity activity) {
@@ -123,68 +116,49 @@ public class ListenerUtil {
                 .content(context.getString(R.string.delete_song_confirmation, name))
                 .positiveText(R.string.delete)
                 .negativeText(R.string.cancel)
-                .onPositive(new MaterialDialog.SingleButtonCallback() {
-                    @Override
-                    public void onClick(@NonNull MaterialDialog dialog, @NonNull DialogAction which) {
-                        ListenerUtil.deleteTracks(context, list);
-                        deleteCallback.onClick(dialog, which);
-                        RxBus.getInstance().post(new MediaUpdateEvent());
-                    }
+                .onPositive((dialog, which) -> {
+                    ListenerUtil.deleteTracks(context, list);
+                    deleteCallback.onClick(dialog, which);
+                    RxBus.getInstance().post(new MediaUpdateEvent());
                 })
-                .onNegative(new MaterialDialog.SingleButtonCallback() {
-                    @Override
-                    public void onClick(@NonNull MaterialDialog dialog, @NonNull DialogAction which) {
-                        dialog.dismiss();
-                    }
-                })
+                .onNegative((dialog, which) -> dialog.dismiss())
                 .show();
     }
 
     public static void showAddPlaylistDialog(final Context context, final long[] songIds) {
         PlaylistLoader.getPlaylists(context, true)
-                .map(new Func1<List<Playlist>, Dialog>() {
-                    @Override
-                    public Dialog call(final List<Playlist> playlists) {
-                        final CharSequence[] chars = new CharSequence[playlists.size() + 1];
-                        chars[0] = context.getResources().getString(R.string.create_new_playlist);
-                        for (int i = 0; i < playlists.size(); i++) {
-                            chars[i + 1] = playlists.get(i).name;
-                        }
-                        return new MaterialDialog.Builder(context)
-                                .title(R.string.add_to_playlist)
-                                .items(chars)
-                                .itemsCallback(new MaterialDialog.ListCallback() {
-                                    @Override
-                                    public void onSelection(MaterialDialog dialog, View itemView, int which, CharSequence text) {
-                                        if (which == 0) {
-                                            CreatePlaylistDialog.newInstance(songIds)
-                                                    .show(((AppCompatActivity) context)
-                                                            .getSupportFragmentManager(), context.getString(R.string.create_new_playlist));
-                                            return;
-                                        } else if (which == 1) {
-                                            //我喜欢
-                                            int num = FavoriteSong.getInstance(context).addFavoriteSong(songIds);
-                                            Toast.makeText(context, R.string.add_favorite_success, Toast.LENGTH_SHORT).show();
-                                            RxBus.getInstance().post(new FavoriteSongEvent());
-                                            dialog.dismiss();
-                                            return;
-                                        }
-
-                                        MusicPlayer.addToPlaylist(context, songIds, playlists.get(which - 1).id);
-                                        RxBus.getInstance().post(new PlaylistUpdateEvent());
-                                        dialog.dismiss();
-
-                                    }
-                                }).build();
+                .map(playlists -> {
+                    final CharSequence[] chars = new CharSequence[playlists.size() + 1];
+                    chars[0] = context.getResources().getString(R.string.create_new_playlist);
+                    for (int i = 0; i < playlists.size(); i++) {
+                        chars[i + 1] = playlists.get(i).name;
                     }
+                    return new MaterialDialog.Builder(context)
+                            .title(R.string.add_to_playlist)
+                            .items(chars)
+                            .itemsCallback((dialog, itemView, which, text) -> {
+                                if (which == 0) {
+                                    CreatePlaylistDialog.newInstance(songIds)
+                                            .show(((AppCompatActivity) context)
+                                                    .getSupportFragmentManager(), context.getString(R.string.create_new_playlist));
+                                    return;
+                                } else if (which == 1) {
+                                    //我喜欢
+                                    FavoriteSong.getInstance(context).addFavoriteSong(songIds);
+                                    Toast.makeText(context, R.string.add_favorite_success, Toast.LENGTH_SHORT).show();
+                                    RxBus.getInstance().post(new FavoriteSongEvent());
+                                    dialog.dismiss();
+                                    return;
+                                }
+
+                                MusicPlayer.addToPlaylist(context, songIds, playlists.get(which - 1).id);
+                                RxBus.getInstance().post(new PlaylistUpdateEvent());
+                                dialog.dismiss();
+
+                            }).build();
                 })
                 .observeOn(AndroidSchedulers.mainThread())
-                .subscribe(new Action1<Dialog>() {
-                    @Override
-                    public void call(Dialog dialog) {
-                        dialog.show();
-                    }
-                });
+                .subscribe(Dialog::show);
     }
 
     public static void showDeleteFromFavorite(final Context context, final long[] ids) {
@@ -192,42 +166,26 @@ public class ListenerUtil {
                 .title(R.string.delete_song_favorite)
                 .positiveText(R.string.delete)
                 .negativeText(R.string.cancel)
-                .onPositive(new MaterialDialog.SingleButtonCallback() {
-                    @Override
-                    public void onClick(@NonNull MaterialDialog dialog, @NonNull DialogAction which) {
-                        FavoriteSong.getInstance(context).removeFavoriteSong(ids);
-                        RxBus.getInstance().post(new FavoriteSongEvent());
-                        Toast.makeText(context, R.string.remove_favorite_success, Toast.LENGTH_SHORT).show();
-                    }
+                .onPositive((dialog, which) -> {
+                    FavoriteSong.getInstance(context).removeFavoriteSong(ids);
+                    RxBus.getInstance().post(new FavoriteSongEvent());
+                    Toast.makeText(context, R.string.remove_favorite_success, Toast.LENGTH_SHORT).show();
                 })
-                .onNegative(new MaterialDialog.SingleButtonCallback() {
-                    @Override
-                    public void onClick(@NonNull MaterialDialog dialog, @NonNull DialogAction which) {
-                        dialog.dismiss();
-                    }
-                })
+                .onNegative((dialog, which) -> dialog.dismiss())
                 .show();
     }
 
     public static void showDeleteFromRecentlyPlay(final Context context, final long[] ids) {
         new MaterialDialog.Builder(context)
-                .title(R.string.delete_song_recentlyplay)
+                .title(R.string.delete_song_recently_play)
                 .positiveText(R.string.delete)
                 .negativeText(R.string.cancel)
-                .onPositive(new MaterialDialog.SingleButtonCallback() {
-                    @Override
-                    public void onClick(@NonNull MaterialDialog dialog, @NonNull DialogAction which) {
-                        RecentStore.getInstance(context).removeItem(ids);
-                        RxBus.getInstance().post(new RecentlyPlayEvent());
-                        Toast.makeText(context, R.string.remove_recentlyplay_success, Toast.LENGTH_SHORT).show();
-                    }
+                .onPositive((dialog, which) -> {
+                    RecentStore.getInstance(context).removeItem(ids);
+                    RxBus.getInstance().post(new RecentlyPlayEvent());
+                    Toast.makeText(context, R.string.remove_recently_play_success, Toast.LENGTH_SHORT).show();
                 })
-                .onNegative(new MaterialDialog.SingleButtonCallback() {
-                    @Override
-                    public void onClick(@NonNull MaterialDialog dialog, @NonNull DialogAction which) {
-                        dialog.dismiss();
-                    }
-                })
+                .onNegative((dialog, which) -> dialog.dismiss())
                 .show();
     }
 
@@ -285,7 +243,7 @@ public class ListenerUtil {
             c.close();
         }
 
-        final String message = makeLabel(context, R.plurals.NNNtracksdeleted, list.length);
+        final String message = makeLabel(context, R.plurals.n_tracks_deleted, list.length);
 
         Toast.makeText(context, message, Toast.LENGTH_SHORT).show();
         context.getContentResolver().notifyChange(Uri.parse("content://media"), null);
@@ -370,6 +328,7 @@ public class ListenerUtil {
         ViewCompat.requestApplyInsets(view);
     }
 
+    @SuppressWarnings("unused")
     public static void applyMarginForSystemBars(View view, boolean top, boolean bottom) {
         ViewGroup.MarginLayoutParams lp = (ViewGroup.MarginLayoutParams) view.getLayoutParams();
         final int initialMarginTop = lp.topMargin;
@@ -400,6 +359,7 @@ public class ListenerUtil {
             mId = id;
         }
 
+        @SuppressWarnings("unused")
         public static IdType getTypeById(int id) {
             for (IdType type : values()) {
                 if (type.mId == id) {
@@ -416,14 +376,17 @@ public class ListenerUtil {
         RecentlyPlayed(-2, R.string.playlist_recently_played),
         Favorite(-3, R.string.playlist_top_tracks);
 
-        public long mId;
-        public int mTitleId;
+        @SuppressWarnings("unused")
+        public final long mId;
+        @SuppressWarnings("unused")
+        public final int mTitleId;
 
         PlaylistType(long id, int titleId) {
             mId = id;
             mTitleId = titleId;
         }
 
+        @SuppressWarnings("unused")
         public static PlaylistType getTypeById(long id) {
             for (PlaylistType type : PlaylistType.values()) {
                 if (type.mId == id) {

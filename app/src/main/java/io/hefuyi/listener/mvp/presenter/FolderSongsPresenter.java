@@ -1,13 +1,11 @@
 package io.hefuyi.listener.mvp.presenter;
 
-import java.util.List;
+import androidx.annotation.NonNull;
 
 import io.hefuyi.listener.mvp.contract.FolderSongsContract;
-import io.hefuyi.listener.mvp.model.Song;
 import io.hefuyi.listener.mvp.usecase.GetFolderSongs;
 import rx.Subscription;
 import rx.android.schedulers.AndroidSchedulers;
-import rx.functions.Action1;
 import rx.schedulers.Schedulers;
 import rx.subscriptions.CompositeSubscription;
 
@@ -17,16 +15,16 @@ import rx.subscriptions.CompositeSubscription;
 
 public class FolderSongsPresenter implements FolderSongsContract.Presenter {
 
-    private final GetFolderSongs mUsecase;
+    private final GetFolderSongs mUseCase;
     private FolderSongsContract.View mView;
     private CompositeSubscription mCompositeSubscription;
 
     public FolderSongsPresenter(GetFolderSongs getFolderSongs) {
-        mUsecase = getFolderSongs;
+        mUseCase = getFolderSongs;
     }
 
     @Override
-    public void attachView(FolderSongsContract.View view) {
+    public void attachView(@NonNull FolderSongsContract.View view) {
         mView = view;
         mCompositeSubscription = new CompositeSubscription();
     }
@@ -43,16 +41,11 @@ public class FolderSongsPresenter implements FolderSongsContract.Presenter {
     @Override
     public void loadSongs(String path) {
         mCompositeSubscription.clear();
-        Subscription subscription = mUsecase.execute(new GetFolderSongs.RequestValues(path))
+        Subscription subscription = mUseCase.execute(new GetFolderSongs.RequestValues(path))
                 .getSongList()
                 .subscribeOn(Schedulers.io())
                 .observeOn(AndroidSchedulers.mainThread())
-                .subscribe(new Action1<List<Song>>() {
-                    @Override
-                    public void call(List<Song> songList) {
-                        mView.showSongs(songList);
-                    }
-                });
+                .subscribe(mView::showSongs);
         mCompositeSubscription.add(subscription);
     }
 

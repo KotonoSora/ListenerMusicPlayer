@@ -19,6 +19,7 @@
         <item name="album_default_palette_color">@color/album_default_palette_color_light</item>
         <item name="default_album_drawable">@drawable/icon_album_default</item>
         <item name="default_singer_drawable">@drawable/icon_singer_default</item>
+        <item name="divider_color">@color/colorDividerBlack</item>
         <item name="ttPopupMenuStyle">@style/AppTheme.PopupOverlay</item>
         <item name="colorPrimary">@color/colorPrimary</item>
         <item name="colorPrimaryDark">@color/colorPrimaryDark</item>
@@ -35,10 +36,11 @@
         <item name="album_default_palette_color">@color/album_default_palette_color_dark</item>
         <item name="default_album_drawable">@drawable/icon_album_dark</item>
         <item name="default_singer_drawable">@drawable/icon_singer_dark</item>
+        <item name="divider_color">@color/md_divider_white</item>
         <item name="ttPopupMenuStyle">@style/AppTheme.PopupOverlay.Dark</item>
-        <item name="colorPrimary">@color/colorPrimaryDarkTheme</item>
-        <item name="colorPrimaryDark">@color/colorPrimaryDarkDarkTheme</item>
-        <item name="colorAccent">@color/colorAccentDarkTheme</item>
+        <item name="colorPrimary">@color/colorPrimary</item>
+        <item name="colorPrimaryDark">@color/colorPrimaryDark</item>
+        <item name="colorAccent">@color/colorAccent</item>
     </style>
 
     <style name="AppThemeLight" parent="ThemeBaseLight" />
@@ -49,11 +51,11 @@
 
     <style name="AppTheme.PopupOverlay.Dark" parent="@style/ThemeOverlay.AppCompat.Dark" />
 
-    <style name="TextApperance.Album.Title" parent="@style/TextAppearance.AppCompat.Large">
+    <style name="TextAppearance.Album.Title" parent="@style/TextAppearance.AppCompat.Large">
         <item name="android:textSize">29sp</item>
     </style>
 
-    <style name="TextApperance.Artist.Title" parent="@style/TextAppearance.AppCompat.Large">
+    <style name="TextAppearance.Artist.Title" parent="@style/TextAppearance.AppCompat.Large">
         <item name="android:textSize">29sp</item>
     </style>
 
@@ -72,7 +74,7 @@
     </style>
 
     <style name="CardViewStyle.Dark" parent="CardView">
-        <item name="cardBackgroundColor">@color/window_background_dark</item>
+        <item name="cardBackgroundColor">@color/album_default_palette_color_dark</item>
     </style>
 
     <style name="DialogAnimation">
@@ -87,6 +89,7 @@
     </style>
 
     <style name="ListItemSubTitleStyle" parent="@style/TextAppearance.AppCompat.Caption">
+        <item name="android:textColor">?android:textColorSecondary</item>
         <item name="android:ellipsize">end</item>
         <item name="android:singleLine">true</item>
         <item name="android:includeFontPadding">false</item>

@@ -1,17 +1,18 @@
 package io.hefuyi.listener.permission;
 
 import android.Manifest;
+import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.content.Context;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.os.Build;
 
+import androidx.annotation.NonNull;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -21,15 +22,17 @@ import java.util.Set;
 
 public class PermissionManager {
 
+    @SuppressWarnings("unused")
     private static final String TAG = PermissionManager.class.getSimpleName();
     private static final String KEY_PREV_PERMISSIONS = "previous_permissions";
-    private static final ArrayList<PermissionRequest> permissionRequests = new ArrayList<PermissionRequest>();
+    private static final ArrayList<PermissionRequest> permissionRequests = new ArrayList<>();
+    @SuppressLint("StaticFieldLeak")
     private static Context context;
     private static SharedPreferences sharedPreferences;
 
     public static void init(Context context) {
         sharedPreferences = context.getSharedPreferences("pl.tajchert.runtimepermissionhelper", Context.MODE_PRIVATE);
-        PermissionManager.context = context;
+        PermissionManager.context = context.getApplicationContext();
     }
 
     /**
@@ -46,7 +49,7 @@ public class PermissionManager {
     }
 
     /**
-     * Returns true if the Activity has access to a all given permission.
+     * Returns true if the Activity has access to all given permissions.
      */
     public static boolean hasPermission(Activity activity, String[] permissions) {
         for (String permission : permissions) {
@@ -65,6 +68,7 @@ public class PermissionManager {
         return ActivityCompat.shouldShowRequestPermissionRationale(activity, permissions);
     }
 
+    @SuppressWarnings("unused")
     public static void askForPermission(Activity activity, String permission, PermissionCallback permissionCallback) {
         askForPermission(activity, new String[]{permission}, permissionCallback);
     }
@@ -72,9 +76,9 @@ public class PermissionManager {
     /**
      * 请求权限,并将PermissionRequest保存
      *
-     * @param activity
-     * @param permissions
-     * @param permissionCallback
+     * @param activity Target activity
+     * @param permissions Array of permissions
+     * @param permissionCallback Callback for permission result
      */
     public static void askForPermission(Activity activity, String[] permissions, PermissionCallback permissionCallback) {
         if (permissionCallback == null) {
@@ -84,7 +88,7 @@ public class PermissionManager {
             permissionCallback.permissionGranted();
             return;
         }
-        PermissionRequest permissionRequest = new PermissionRequest(new ArrayList<String>(Arrays.asList(permissions)), permissionCallback);
+        PermissionRequest permissionRequest = new PermissionRequest(permissionCallback);
         permissionRequests.add(permissionRequest);
 
         ActivityCompat.requestPermissions(activity, permissions, permissionRequest.getRequestCode());
@@ -93,11 +97,11 @@ public class PermissionManager {
     /**
      * 根据授权结果回调,并刷新当前的权限列表
      *
-     * @param requestCode
-     * @param permissions
-     * @param grantResults
+     * @param requestCode Request code
+     * @param permissions Permissions array
+     * @param grantResults Grant results array
      */
-    public static void onRequestPermissionsResult(int requestCode, String[] permissions, int[] grantResults) {
+    public static void onRequestPermissionsResult(int requestCode, @SuppressWarnings("unused") @NonNull String[] permissions, @NonNull int[] grantResults) {
         PermissionRequest requestResult = new PermissionRequest(requestCode);
         if (permissionRequests.contains(requestResult)) {
             PermissionRequest permissionRequest = permissionRequests.get(permissionRequests.indexOf(requestResult));
@@ -118,12 +122,13 @@ public class PermissionManager {
      *
      * @return currently granted permissions
      */
+    @SuppressWarnings("deprecation")
     public static ArrayList<String> getGrantedPermissions() {
         if (context == null) {
             throw new RuntimeException("Must call init() earlier");
         }
-        ArrayList<String> permissions = new ArrayList<String>();
-        ArrayList<String> permissionsGranted = new ArrayList<String>();
+        ArrayList<String> permissions = new ArrayList<>();
+        ArrayList<String> permissionsGranted = new ArrayList<>();
         //Group location
         permissions.add(Manifest.permission.ACCESS_FINE_LOCATION);
         permissions.add(Manifest.permission.ACCESS_COARSE_LOCATION);
@@ -145,7 +150,9 @@ public class PermissionManager {
         permissions.add(Manifest.permission.WRITE_CALL_LOG);
         permissions.add(Manifest.permission.ADD_VOICEMAIL);
         permissions.add(Manifest.permission.USE_SIP);
-        permissions.add(Manifest.permission.PROCESS_OUTGOING_CALLS);
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.Q) {
+            permissions.add(Manifest.permission.PROCESS_OUTGOING_CALLS);
+        }
         //Group Body sensors
         permissions.add(Manifest.permission.BODY_SENSORS);
         //Group SMS
@@ -175,10 +182,7 @@ public class PermissionManager {
      */
     public static void refreshMonitoredList() {
         ArrayList<String> permissions = getGrantedPermissions();
-        Set<String> set = new HashSet<String>();
-        for (String perm : permissions) {
-            set.add(perm);
-        }
+        Set<String> set = new HashSet<>(permissions);
         sharedPreferences.edit().putStringSet(KEY_PREV_PERMISSIONS, set).apply();
     }
 

@@ -68,8 +68,8 @@
 
 
     <string name="app_name">Listener</string>
-    <string name="durationformatshort" translatable="false"><xliff:g id="format">%2$d:%3$02d</xliff:g></string>
-    <string name="durationformatlong" translatable="false"><xliff:g id="format">%1$d:%2$02d:%3$02d</xliff:g></string>
+    <string name="duration_format_short" translatable="false"><xliff:g id="format">%2$d:%3$02d</xliff:g></string>
+    <string name="duration_format_long" translatable="false"><xliff:g id="format">%1$d:%2$02d:%3$02d</xliff:g></string>
 
     <string name="load_artist_fail">load artist error</string>
     <string name="play_next">Play next</string>
@@ -108,15 +108,15 @@
     <string name="delete_folder">Delete Folder</string>
     <string name="delete_folder_confirmation">Delete %d songs in this folder?</string>
     <string name="delete_song_favorite">Delete Song From Favorite?</string>
-    <string name="delete_song_recentlyplay">Delete Song From Recently Play?</string>
-    <string name="clear_song_queue">Remove Song From Quene?</string>
+    <string name="delete_song_recently_play">Delete Song From Recently Play?</string>
+    <string name="clear_song_queue">Remove Song From Queue?</string>
     <string name="delete_song_confirmation">Delete %s ?</string>
-    <string name="remove_recentlyplay_success">Delete Song From Recentyl Play Success</string>
+    <string name="remove_recently_play_success">Delete Song From Recently Play Success</string>
     <string name="color">Color</string>
     <string name="sure">Sure</string>
     <string name="no_lyrics">No lyrics</string>
     <string name="lyric_search_hint">Search by song or artist</string>
-    <string name="searching">Searching...</string>
+    <string name="searching">Searching…</string>
     <string name="download_lyric_success">Download lyric success</string>
     <string name="download_lyric_fail">Download lyric fail</string>
     <string name="colon" translatable="false">:</string>

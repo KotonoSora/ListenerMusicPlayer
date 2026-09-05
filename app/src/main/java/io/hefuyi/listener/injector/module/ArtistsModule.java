@@ -19,7 +19,7 @@ public class ArtistsModule {
     }
 
     @Provides
-    GetArtists getArtistsUsecase(Repository repository) {
+    GetArtists getArtistsUseCase(Repository repository) {
         return new GetArtists(repository);
     }
 }

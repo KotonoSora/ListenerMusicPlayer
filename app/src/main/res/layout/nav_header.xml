@@ -8,6 +8,7 @@
         android:id="@+id/album_art"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
+        android:contentDescription="@null"
         android:scaleType="centerCrop"
         android:src="@drawable/icon_drawer_theme_bg" />
 

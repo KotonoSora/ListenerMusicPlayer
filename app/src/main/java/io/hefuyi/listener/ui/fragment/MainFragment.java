@@ -6,6 +6,8 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 import androidx.appcompat.app.ActionBar;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
@@ -45,14 +47,8 @@ public class MainFragment extends Fragment {
         Bundle bundle = new Bundle();
         switch (action) {
             case Constants.NAVIGATE_ALLSONG:
-                bundle.putString(Constants.PLAYLIST_TYPE, action);
-                break;
             case Constants.NAVIGATE_PLAYLIST_RECENTADD:
-                bundle.putString(Constants.PLAYLIST_TYPE, action);
-                break;
             case Constants.NAVIGATE_PLAYLIST_RECENTPLAY:
-                bundle.putString(Constants.PLAYLIST_TYPE, action);
-                break;
             case Constants.NAVIGATE_PLAYLIST_FAVORITE:
                 bundle.putString(Constants.PLAYLIST_TYPE, action);
                 break;
@@ -64,22 +60,23 @@ public class MainFragment extends Fragment {
     }
 
     @Override
-    public void onCreate(final Bundle savedInstanceState) {
+    public void onCreate(@Nullable final Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        mPreferences = PreferencesUtility.getInstance(getActivity());
+        mPreferences = PreferencesUtility.getInstance(requireActivity());
 
         if (getArguments() != null) {
             action = getArguments().getString(Constants.PLAYLIST_TYPE);
         }
     }
 
+    @Nullable
     @Override
-    public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
+    public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
         return inflater.inflate(R.layout.fragment_main, container, false);
     }
 
     @Override
-    public void onViewCreated(View view, Bundle savedInstanceState) {
+    public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
 
         appBarLayout = view.findViewById(R.id.appbar);
@@ -87,29 +84,32 @@ public class MainFragment extends Fragment {
         tabLayout = view.findViewById(R.id.tabs);
         viewPager = view.findViewById(R.id.viewpager);
 
-        ATE.apply(this, ATEUtil.getATEKey(getActivity()));
+        ATE.apply(this, ATEUtil.getATEKey(requireActivity()));
 
 
         ListenerUtil.applySystemBarPaddingAndHeight(appBarLayout, true, false);
 
-        ((AppCompatActivity) getActivity()).setSupportActionBar(toolbar);
-        final ActionBar ab = ((AppCompatActivity) getActivity()).getSupportActionBar();
-        ab.setHomeAsUpIndicator(R.drawable.ic_menu);
-        ab.setDisplayHomeAsUpEnabled(true);
+        AppCompatActivity activity = (AppCompatActivity) requireActivity();
+        activity.setSupportActionBar(toolbar);
+        final ActionBar ab = activity.getSupportActionBar();
+        if (ab != null) {
+            ab.setHomeAsUpIndicator(R.drawable.ic_menu);
+            ab.setDisplayHomeAsUpEnabled(true);
 
-        switch (action) {
-            case Constants.NAVIGATE_ALLSONG:
-                ab.setTitle(R.string.library);
-                break;
-            case Constants.NAVIGATE_PLAYLIST_RECENTADD:
-                ab.setTitle(R.string.recent_add);
-                break;
-            case Constants.NAVIGATE_PLAYLIST_RECENTPLAY:
-                ab.setTitle(R.string.recent_play);
-                break;
-            case Constants.NAVIGATE_PLAYLIST_FAVORITE:
-                ab.setTitle(R.string.favorite);
-                break;
+            switch (action) {
+                case Constants.NAVIGATE_ALLSONG:
+                    ab.setTitle(R.string.library);
+                    break;
+                case Constants.NAVIGATE_PLAYLIST_RECENTADD:
+                    ab.setTitle(R.string.recent_add);
+                    break;
+                case Constants.NAVIGATE_PLAYLIST_RECENTPLAY:
+                    ab.setTitle(R.string.recent_play);
+                    break;
+                case Constants.NAVIGATE_PLAYLIST_FAVORITE:
+                    ab.setTitle(R.string.favorite);
+                    break;
+            }
         }
 
         tabLayout.setupWithViewPager(viewPager);
@@ -136,12 +136,13 @@ public class MainFragment extends Fragment {
         mPreferences.setStartPageIndex(viewPager.getCurrentItem());
     }
 
+    @SuppressWarnings("deprecation")
     static class Adapter extends FragmentPagerAdapter {
         private final List<Fragment> mFragments = new ArrayList<>();
         private final List<String> mFragmentTitles = new ArrayList<>();
 
         public Adapter(FragmentManager fm) {
-            super(fm);
+            super(fm, BEHAVIOR_RESUME_ONLY_CURRENT_FRAGMENT);
         }
 
         public void addFragment(Fragment fragment, String title) {
@@ -149,6 +150,7 @@ public class MainFragment extends Fragment {
             mFragmentTitles.add(title);
         }
 
+        @NonNull
         @Override
         public Fragment getItem(int position) {
             return mFragments.get(position);

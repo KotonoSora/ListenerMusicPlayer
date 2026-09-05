@@ -48,10 +48,12 @@ public class MusicViewModel extends ViewModel {
         }
     }
 
+    @SuppressWarnings("unused")
     public LiveData<Long> getSongId() {
         return songId;
     }
 
+    @SuppressWarnings("unused")
     public LiveData<Boolean> getIsPlaying() {
         return isPlaying;
     }
@@ -85,15 +87,12 @@ public class MusicViewModel extends ViewModel {
                 .toObservable(PlayStateChangedEvent.class)
                 .subscribeOn(Schedulers.io())
                 .observeOn(AndroidSchedulers.mainThread())
-                .subscribe(event -> {
-                    isPlaying.setValue(event.isPlaying());
-                }, throwable -> {
+                .subscribe(event -> isPlaying.setValue(event.isPlaying()), throwable -> {
                 });
     }
 
     @Override
     protected void onCleared() {
-        super.onCleared();
         if (metaSubscription != null && !metaSubscription.isUnsubscribed()) {
             metaSubscription.unsubscribe();
         }

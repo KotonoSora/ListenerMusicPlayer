@@ -13,6 +13,7 @@ import android.widget.Toast;
 
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.fragment.app.Fragment;
+import androidx.fragment.app.FragmentManager;
 import androidx.fragment.app.FragmentTransaction;
 
 import io.hefuyi.listener.Constants;
@@ -31,7 +32,8 @@ import io.hefuyi.listener.ui.fragment.PlaylistDetailFragment;
 public class NavigationUtil {
 
     public static void navigateToAlbum(Activity context, long albumID, String albumName, Pair<View, String> transitionViews) {
-        FragmentTransaction transaction = ((AppCompatActivity) context).getSupportFragmentManager().beginTransaction();
+        FragmentManager fm = ((AppCompatActivity) context).getSupportFragmentManager();
+        FragmentTransaction transaction = fm.beginTransaction();
         Fragment fragment;
 
         if (transitionViews != null) {
@@ -45,14 +47,18 @@ public class NavigationUtil {
                     R.anim.activity_fade_out, R.anim.activity_fade_in, R.anim.activity_fade_out);
             fragment = AlbumDetailFragment.newInstance(albumID, albumName, false, null);
         }
-        transaction.hide(((AppCompatActivity) context).getSupportFragmentManager().findFragmentById(R.id.fragment_container));
+        Fragment currentFragment = fm.findFragmentById(R.id.fragment_container);
+        if (currentFragment != null) {
+            transaction.hide(currentFragment);
+        }
         transaction.add(R.id.fragment_container, fragment);
         transaction.addToBackStack(null).commit();
 
     }
 
     public static void navigateToArtist(Activity context, long artistID, String name, Pair<View, String> transitionViews) {
-        FragmentTransaction transaction = ((AppCompatActivity) context).getSupportFragmentManager().beginTransaction();
+        FragmentManager fm = ((AppCompatActivity) context).getSupportFragmentManager();
+        FragmentTransaction transaction = fm.beginTransaction();
         Fragment fragment;
 
         if (transitionViews != null) {
@@ -66,7 +72,10 @@ public class NavigationUtil {
                     R.anim.activity_fade_out, R.anim.activity_fade_in, R.anim.activity_fade_out);
             fragment = ArtistDetailFragment.newInstance(artistID, name, false, null);
         }
-        transaction.hide(((AppCompatActivity) context).getSupportFragmentManager().findFragmentById(R.id.fragment_container));
+        Fragment currentFragment = fm.findFragmentById(R.id.fragment_container);
+        if (currentFragment != null) {
+            transaction.hide(currentFragment);
+        }
         transaction.add(R.id.fragment_container, fragment);
         transaction.addToBackStack(null).commit();
     }
@@ -99,7 +108,8 @@ public class NavigationUtil {
     }
 
     public static void navigateToPlaylistDetail(Activity context, long playlistID, String playlistName, long firstAlbumID, Pair<View, String> transitionViews) {
-        FragmentTransaction transaction = ((AppCompatActivity) context).getSupportFragmentManager().beginTransaction();
+        FragmentManager fm = ((AppCompatActivity) context).getSupportFragmentManager();
+        FragmentTransaction transaction = fm.beginTransaction();
         Fragment fragment;
 
         if (transitionViews != null) {
@@ -113,24 +123,31 @@ public class NavigationUtil {
                     R.anim.activity_fade_out, R.anim.activity_fade_in, R.anim.activity_fade_out);
             fragment = PlaylistDetailFragment.newInstance(playlistID, playlistName, firstAlbumID, false, null);
         }
-        transaction.hide(((AppCompatActivity) context).getSupportFragmentManager().findFragmentById(R.id.fragment_container));
+        Fragment currentFragment = fm.findFragmentById(R.id.fragment_container);
+        if (currentFragment != null) {
+            transaction.hide(currentFragment);
+        }
         transaction.add(R.id.fragment_container, fragment);
         transaction.addToBackStack(null).commit();
     }
 
     public static void navigateToFolderSongs(Activity context, String path) {
-        FragmentTransaction transaction = ((AppCompatActivity) context).getSupportFragmentManager().beginTransaction();
+        FragmentManager fm = ((AppCompatActivity) context).getSupportFragmentManager();
+        FragmentTransaction transaction = fm.beginTransaction();
         Fragment fragment = FolderSongsFragment.newInstance(path);
         transaction.setCustomAnimations(R.anim.activity_fade_in,
                 R.anim.activity_fade_out, R.anim.activity_fade_in, R.anim.activity_fade_out);
-        transaction.hide(((AppCompatActivity) context).getSupportFragmentManager().findFragmentById(R.id.fragment_container));
+        Fragment currentFragment = fm.findFragmentById(R.id.fragment_container);
+        if (currentFragment != null) {
+            transaction.hide(currentFragment);
+        }
         transaction.add(R.id.fragment_container, fragment);
         transaction.addToBackStack(null).commit();
     }
 
     public static void navigateToEqualizer(Activity context) {
         try {
-            // The google MusicFX apps need to be started using startActivityForResult
+            // The Google MusicFX apps need to be started using startActivityForResult
             context.startActivityForResult(ListenerUtil.createEffectsIntent(), 666);
         } catch (final ActivityNotFoundException notFound) {
             Toast.makeText(context, R.string.equalizer_not_found, Toast.LENGTH_SHORT).show();

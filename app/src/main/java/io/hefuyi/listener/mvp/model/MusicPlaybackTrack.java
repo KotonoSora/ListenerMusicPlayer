@@ -6,15 +6,15 @@ import android.os.Parcelable;
 import io.hefuyi.listener.util.ListenerUtil;
 
 /**
- * This is used by the music playback service to track the music tracks it is playing
- * It has extra meta data to determine where the track came from so that we can show the appropriate
- * song playing indicator
+ * This is used by the music playback service to track the music tracks it is playing.
+ * It has extra metadata to determine where the track came from.
+ * This allows showing the appropriate song playing indicator.
  * 用来记录当前播放曲目来自什么资源(专辑,歌手,播放列表或无),资源id,在资源中的序号
  */
 
 public class MusicPlaybackTrack implements Parcelable {
 
-    public static final Creator<MusicPlaybackTrack> CREATOR = new Creator<MusicPlaybackTrack>() {
+    public static final Creator<MusicPlaybackTrack> CREATOR = new Creator<>() {
         @Override
         public MusicPlaybackTrack createFromParcel(Parcel in) {
             return new MusicPlaybackTrack(in);

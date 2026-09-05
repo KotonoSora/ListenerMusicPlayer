@@ -26,37 +26,33 @@ public class PlaylistLoader {
     private static ArrayList<Playlist> mPlaylistList;
 
     public static Observable<List<Playlist>> getPlaylists(final Context context, final boolean defaultIncluded) {
-        return Observable.create(new Observable.OnSubscribe<List<Playlist>>() {
-            @Override
-            public void call(Subscriber<? super List<Playlist>> subscriber) {
-                mPlaylistList = new ArrayList<>();
+        return Observable.create(subscriber -> {
+            mPlaylistList = new ArrayList<>();
 
-                if (defaultIncluded)
-                    makeDefaultPlaylists(context);
+            if (defaultIncluded)
+                makeDefaultPlaylists(context);
 
-                Cursor mCursor = makePlaylistCursor(context);
+            Cursor mCursor = makePlaylistCursor(context);
 
-                if (mCursor != null && mCursor.moveToFirst()) {
-                    do {
+            if (mCursor != null && mCursor.moveToFirst()) {
+                do {
 
-                        final long id = mCursor.getLong(0);
+                    final long id = mCursor.getLong(0);
 
-                        final String name = mCursor.getString(1);
+                    final String name = mCursor.getString(1);
 
-                        final int songCount = getSongCountForPlaylist(context, id);
+                    final int songCount = getSongCountForPlaylist(context, id);
 
-                        final Playlist playlist = new Playlist(id, name, songCount);
+                    final Playlist playlist = new Playlist(id, name, songCount);
 
-                        mPlaylistList.add(playlist);
-                    } while (mCursor.moveToNext());
-                }
-                if (mCursor != null) {
-                    mCursor.close();
-                    mCursor = null;
-                }
-                subscriber.onNext(mPlaylistList);
-                subscriber.onCompleted();
+                    mPlaylistList.add(playlist);
+                } while (mCursor.moveToNext());
             }
+            if (mCursor != null) {
+                mCursor.close();
+            }
+            subscriber.onNext(mPlaylistList);
+            subscriber.onCompleted();
         });
     }
 

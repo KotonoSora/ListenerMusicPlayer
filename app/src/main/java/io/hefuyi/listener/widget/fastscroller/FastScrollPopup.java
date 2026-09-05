@@ -26,6 +26,8 @@ import android.graphics.RectF;
 import android.graphics.Typeface;
 import android.text.TextUtils;
 
+import androidx.annotation.Keep;
+
 import io.hefuyi.listener.util.DensityUtil;
 import io.hefuyi.listener.util.ListenerUtil;
 
@@ -68,28 +70,28 @@ class FastScrollPopup {
 
     public void setBgColor(int color) {
         mBackgroundPaint.setColor(color);
-        mRecyclerView.invalidate(mBgBounds);
+        mRecyclerView.invalidate();
     }
 
     public void setTextColor(int color) {
         mTextPaint.setColor(color);
-        mRecyclerView.invalidate(mBgBounds);
+        mRecyclerView.invalidate();
     }
 
     public void setTextSize(int size) {
         mTextPaint.setTextSize(size);
-        mRecyclerView.invalidate(mBgBounds);
+        mRecyclerView.invalidate();
     }
 
     public void setBackgroundSize(int size) {
         mBackgroundSize = size;
         mCornerRadius = mBackgroundSize / 2;
-        mRecyclerView.invalidate(mBgBounds);
+        mRecyclerView.invalidate();
     }
 
     public void setTypeface(Typeface typeface) {
         mTextPaint.setTypeface(typeface);
-        mRecyclerView.invalidate(mBgBounds);
+        mRecyclerView.invalidate();
     }
 
     /**
@@ -107,14 +109,18 @@ class FastScrollPopup {
         }
     }
 
+    @Keep
+    @SuppressWarnings("unused")
     public float getAlpha() {
         return mAlpha;
     }
 
     // Setter/getter for the popup alpha for animations
+    @Keep
+    @SuppressWarnings("unused")
     public void setAlpha(float alpha) {
         mAlpha = alpha;
-        mRecyclerView.invalidate(mBgBounds);
+        mRecyclerView.invalidate();
     }
 
     public void draw(Canvas canvas) {
@@ -142,8 +148,8 @@ class FastScrollPopup {
             mBackgroundPaint.setAlpha((int) (mAlpha * 255));
             mTextPaint.setAlpha((int) (mAlpha * 255));
             canvas.drawPath(mBackgroundPath, mBackgroundPaint);
-            canvas.drawText(mSectionName, (mBgBounds.width() - mTextBounds.width()) / 2,
-                    mBgBounds.height() - (mBgBounds.height() - mTextBounds.height()) / 2,
+            canvas.drawText(mSectionName, (mBgBounds.width() - mTextBounds.width()) / 2.0f,
+                    mBgBounds.height() - (mBgBounds.height() - mTextBounds.height()) / 2.0f,
                     mTextPaint);
             canvas.restoreToCount(restoreCount);
         }
@@ -160,10 +166,8 @@ class FastScrollPopup {
 
     /**
      * Updates the bounds for the fast scroller.
-     *
-     * @return the invalidation rect for this update.
      */
-    public Rect updateFastScrollerBounds(FastScrollRecyclerView recyclerView, int thumbOffsetY) {
+    public void updateFastScrollerBounds(FastScrollRecyclerView recyclerView, int thumbOffsetY) {
         mInvalidateRect.set(mBgBounds);
 
         if (isVisible()) {
@@ -188,7 +192,6 @@ class FastScrollPopup {
 
         // Combine the old and new fast scroller bounds to create the full invalidate rect
         mInvalidateRect.union(mBgBounds);
-        return mInvalidateRect;
     }
 
     private boolean isVisible() {

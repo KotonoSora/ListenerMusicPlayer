@@ -13,9 +13,9 @@ public class RecentStore {
 
     private static final int MAX_ITEMS_IN_DB = 100;
 
-    private static volatile RecentStore sInstance = null;
+    private static volatile RecentStore sInstance;
 
-    private MusicDB mMusicDatabase = null;
+    private final MusicDB mMusicDatabase;
 
     private RecentStore(final Context context) {
         mMusicDatabase = MusicDB.getInstance(context);
@@ -34,13 +34,15 @@ public class RecentStore {
 
     public void onCreate(final SQLiteDatabase db) {
         db.execSQL("CREATE TABLE IF NOT EXISTS " + RecentStoreColumns.NAME + " ("
-                + RecentStoreColumns.ID + " LONG NOT NULL," + RecentStoreColumns.TIMEPLAYED
+                + RecentStoreColumns.ID + " LONG NOT NULL," + RecentStoreColumns.TIME_PLAYED
                 + " LONG NOT NULL);");
     }
 
+    @SuppressWarnings("unused")
     public void onUpgrade(final SQLiteDatabase db, final int oldVersion, final int newVersion) {
     }
 
+    @SuppressWarnings("unused")
     public void onDowngrade(SQLiteDatabase db, int oldVersion, int newVersion) {
         db.execSQL("DROP TABLE IF EXISTS " + RecentStoreColumns.NAME);
         onCreate(db);
@@ -56,51 +58,36 @@ public class RecentStore {
         database.beginTransaction();
 
         try {
-
-            Cursor mostRecentItem = null;
-            try {
-                mostRecentItem = queryRecentIds("1");
-                if (mostRecentItem != null && mostRecentItem.moveToFirst()) {
+            try (Cursor mostRecentItem = queryRecentIds("1")) {
+                if (mostRecentItem.moveToFirst()) {
                     if (songId == mostRecentItem.getLong(0)) {
+                        database.setTransactionSuccessful();
                         return;
                     }
                 }
-            } finally {
-                if (mostRecentItem != null) {
-                    mostRecentItem.close();
-                    mostRecentItem = null;
-                }
             }
-
 
             final ContentValues values = new ContentValues(2);
             values.put(RecentStoreColumns.ID, songId);
-            values.put(RecentStoreColumns.TIMEPLAYED, System.currentTimeMillis());
+            values.put(RecentStoreColumns.TIME_PLAYED, System.currentTimeMillis());
             database.insert(RecentStoreColumns.NAME, null, values);
 
-            Cursor oldest = null;
-            try {
-                oldest = database.query(RecentStoreColumns.NAME,
-                        new String[]{RecentStoreColumns.TIMEPLAYED}, null, null, null, null,
-                        RecentStoreColumns.TIMEPLAYED + " ASC");
+            try (Cursor oldest = database.query(RecentStoreColumns.NAME,
+                    new String[]{RecentStoreColumns.TIME_PLAYED}, null, null, null, null,
+                    RecentStoreColumns.TIME_PLAYED + " ASC")) {
 
-                if (oldest != null && oldest.getCount() > MAX_ITEMS_IN_DB) {
+                if (oldest.getCount() > MAX_ITEMS_IN_DB) {
                     oldest.moveToPosition(oldest.getCount() - MAX_ITEMS_IN_DB);
                     long timeOfRecordToKeep = oldest.getLong(0);
 
                     database.delete(RecentStoreColumns.NAME,
-                            RecentStoreColumns.TIMEPLAYED + " < ?",
+                            RecentStoreColumns.TIME_PLAYED + " < ?",
                             new String[]{String.valueOf(timeOfRecordToKeep)});
 
                 }
-            } finally {
-                if (oldest != null) {
-                    oldest.close();
-                    oldest = null;
-                }
             }
-        } finally {
             database.setTransactionSuccessful();
+        } finally {
             database.endTransaction();
         }
     }
@@ -108,7 +95,7 @@ public class RecentStore {
     /**
      * 删除某曲目的播放记录
      *
-     * @param ids
+     * @param ids The array of song IDs to remove from recent history.
      */
     public void removeItem(final long[] ids) {
         final SQLiteDatabase database = mMusicDatabase.getWritableDatabase();
@@ -131,14 +118,14 @@ public class RecentStore {
     /**
      * 获取最近播放的n首歌曲的id
      *
-     * @param limit
-     * @return
+     * @param limit The maximum number of recent song IDs to return.
+     * @return A cursor containing the queried recent song IDs.
      */
     public Cursor queryRecentIds(final String limit) {
         final SQLiteDatabase database = mMusicDatabase.getReadableDatabase();
         return database.query(RecentStoreColumns.NAME,
                 new String[]{RecentStoreColumns.ID}, null, null, null, null,
-                RecentStoreColumns.TIMEPLAYED + " DESC", limit);
+                RecentStoreColumns.TIME_PLAYED + " DESC", limit);
     }
 
     interface RecentStoreColumns {
@@ -149,6 +136,6 @@ public class RecentStore {
         String ID = "songid";
 
         /* Time played column */
-        String TIMEPLAYED = "timeplayed";
+        String TIME_PLAYED = "timeplayed";
     }
 }

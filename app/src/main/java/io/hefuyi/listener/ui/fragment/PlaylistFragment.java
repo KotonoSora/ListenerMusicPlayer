@@ -10,12 +10,13 @@ import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 
+import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.ActionBar;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
+import androidx.core.view.MenuProvider;
 import androidx.fragment.app.Fragment;
-
 import androidx.recyclerview.widget.GridLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
@@ -45,7 +46,6 @@ import io.hefuyi.listener.widget.DividerItemDecoration;
 import io.hefuyi.listener.widget.fastscroller.FastScrollRecyclerView;
 import rx.Subscription;
 import rx.android.schedulers.AndroidSchedulers;
-import rx.functions.Action1;
 import rx.schedulers.Schedulers;
 
 
@@ -63,23 +63,23 @@ public class PlaylistFragment extends Fragment implements PlaylistContract.View 
     private boolean isGrid;
 
     @Override
-    public void onCreate(final Bundle savedInstanceState) {
+    public void onCreate(@Nullable final Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        injectDependences();
+        injectDependencies();
         mPresenter.attachView(this);
 
-        mPreferences = PreferencesUtility.getInstance(getActivity());
+        mPreferences = PreferencesUtility.getInstance(requireActivity());
         isGrid = mPreferences.getPlaylistView() == Constants.PLAYLIST_VIEW_GRID;
         mAdapter = new PlaylistAdapter(this, null);
         if (isGrid) {
-            layoutManager = new GridLayoutManager(getActivity(), 2);
+            layoutManager = new GridLayoutManager(requireActivity(), 2);
         } else {
-            layoutManager = new GridLayoutManager(getActivity(), 1);
+            layoutManager = new GridLayoutManager(requireActivity(), 1);
         }
     }
 
-    private void injectDependences() {
-        ApplicationComponent applicationComponent = ((ListenerApp) getActivity().getApplication()).getApplicationComponent();
+    private void injectDependencies() {
+        ApplicationComponent applicationComponent = ((ListenerApp) requireActivity().getApplication()).getApplicationComponent();
         PlaylistComponent playlistComponent = DaggerPlaylistComponent.builder()
                 .applicationComponent(applicationComponent)
                 .playlistModule(new PlaylistModule())
@@ -87,30 +87,33 @@ public class PlaylistFragment extends Fragment implements PlaylistContract.View 
         playlistComponent.inject(this);
     }
 
+    @Nullable
     @Override
-    public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
-        View rootView = inflater.inflate(R.layout.fragment_list_layout, container, false);
-        return rootView;
+    public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
+        return inflater.inflate(R.layout.fragment_list_layout, container, false);
     }
 
     @Override
-    public void onViewCreated(View view, @Nullable Bundle savedInstanceState) {
+    public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
 
         recyclerView = view.findViewById(R.id.recyclerview);
         emptyView = view.findViewById(R.id.view_empty);
         toolbar = view.findViewById(R.id.toolbar);
 
-        ATE.apply(this, ATEUtil.getATEKey(getActivity()));
+        ATE.apply(this, ATEUtil.getATEKey(requireActivity()));
 
         ListenerUtil.applySystemBarPaddingAndHeight(toolbar, true, false);
 
-        ((AppCompatActivity) getActivity()).setSupportActionBar(toolbar);
+        AppCompatActivity activity = (AppCompatActivity) requireActivity();
+        activity.setSupportActionBar(toolbar);
 
-        final ActionBar ab = ((AppCompatActivity) getActivity()).getSupportActionBar();
-        ab.setHomeAsUpIndicator(R.drawable.ic_menu);
-        ab.setDisplayHomeAsUpEnabled(true);
-        ab.setTitle(R.string.playlists);
+        final ActionBar ab = activity.getSupportActionBar();
+        if (ab != null) {
+            ab.setHomeAsUpIndicator(R.drawable.ic_menu);
+            ab.setDisplayHomeAsUpEnabled(true);
+            ab.setTitle(R.string.playlists);
+        }
 
         recyclerView.setLayoutManager(layoutManager);
         recyclerView.setAdapter(mAdapter);
@@ -118,14 +121,43 @@ public class PlaylistFragment extends Fragment implements PlaylistContract.View 
 
         ListenerUtil.applyBottomInsetWithPlayer(recyclerView);
 
+        setupMenu();
+
         mPresenter.subscribe();
         subscribePlaylistUpdateEvent();
     }
 
-    @Override
-    public void onActivityCreated(final Bundle savedInstanceState) {
-        super.onActivityCreated(savedInstanceState);
-        setHasOptionsMenu(true);
+    private void setupMenu() {
+        requireActivity().addMenuProvider(new MenuProvider() {
+            @Override
+            public void onCreateMenu(@NonNull Menu menu, @NonNull MenuInflater menuInflater) {
+                menuInflater.inflate(R.menu.menu_playlist, menu);
+            }
+
+            @Override
+            public boolean onMenuItemSelected(@NonNull MenuItem menuItem) {
+                int itemId = menuItem.getItemId();
+                if (itemId == R.id.action_new_playlist) {
+                    CreatePlaylistDialog.newInstance().show(getChildFragmentManager(), "CREATE_PLAYLIST");
+                    return true;
+                } else if (itemId == R.id.menu_show_as_list) {
+                    if (isGrid) {
+                        mPreferences.setPlaylistView(Constants.PLAYLIST_VIEW_LIST);
+                        isGrid = false;
+                        updateLayoutManager(1);
+                    }
+                    return true;
+                } else if (itemId == R.id.menu_show_as_grid) {
+                    if (!isGrid) {
+                        mPreferences.setPlaylistView(Constants.PLAYLIST_VIEW_GRID);
+                        isGrid = true;
+                        updateLayoutManager(2);
+                    }
+                    return true;
+                }
+                return false;
+            }
+        }, getViewLifecycleOwner());
     }
 
     @Override
@@ -134,37 +166,6 @@ public class PlaylistFragment extends Fragment implements PlaylistContract.View 
         mPresenter.unsubscribe();
         RxBus.getInstance().unSubscribe(this);
     }
-
-    @Override
-    public void onCreateOptionsMenu(Menu menu, MenuInflater inflater) {
-        super.onCreateOptionsMenu(menu, inflater);
-        inflater.inflate(R.menu.menu_playlist, menu);
-    }
-
-    @Override
-    public boolean onOptionsItemSelected(MenuItem item) {
-        int itemId = item.getItemId();
-        if (itemId == R.id.action_new_playlist) {
-            CreatePlaylistDialog.newInstance().show(getChildFragmentManager(), "CREATE_PLAYLIST");
-            return true;
-        } else if (itemId == R.id.menu_show_as_list) {
-            if (isGrid) {
-                mPreferences.setPlaylistView(Constants.PLAYLIST_VIEW_LIST);
-                isGrid = false;
-                updateLayoutManager(1);
-            }
-            return true;
-        } else if (itemId == R.id.menu_show_as_grid) {
-            if (!isGrid) {
-                mPreferences.setPlaylistView(Constants.PLAYLIST_VIEW_GRID);
-                isGrid = true;
-                updateLayoutManager(2);
-            }
-            return true;
-        }
-        return super.onOptionsItemSelected(item);
-    }
-
 
     @Override
     public void showPlaylist(List<Playlist> playlists) {
@@ -180,10 +181,10 @@ public class PlaylistFragment extends Fragment implements PlaylistContract.View 
 
     private void setItemDecoration() {
         if (isGrid) {
-            int spacingInPixels = getActivity().getResources().getDimensionPixelSize(R.dimen.spacing_card_album_grid);
-            itemDecoration = new PlaylistFragment.SpacesItemDecoration(spacingInPixels);
+            int spacingInPixels = requireContext().getResources().getDimensionPixelSize(R.dimen.spacing_card_album_grid);
+            itemDecoration = new SpacesItemDecoration(spacingInPixels);
         } else {
-            itemDecoration = new DividerItemDecoration(getActivity(), DividerItemDecoration.VERTICAL_LIST, false);
+            itemDecoration = new DividerItemDecoration(requireContext(), DividerItemDecoration.VERTICAL_LIST, false);
         }
         recyclerView.addItemDecoration(itemDecoration);
     }
@@ -203,21 +204,12 @@ public class PlaylistFragment extends Fragment implements PlaylistContract.View 
                 .toObservable(PlaylistUpdateEvent.class)
                 .subscribeOn(Schedulers.io())
                 .observeOn(AndroidSchedulers.mainThread())
-                .subscribe(new Action1<PlaylistUpdateEvent>() {
-                    @Override
-                    public void call(PlaylistUpdateEvent event) {
-                        mPresenter.loadPlaylist();
-                    }
-                }, new Action1<Throwable>() {
-                    @Override
-                    public void call(Throwable throwable) {
-
-                    }
+                .subscribe(event -> mPresenter.loadPlaylist(), throwable -> {
                 });
         RxBus.getInstance().addSubscription(this, subscription);
     }
 
-    public class SpacesItemDecoration extends RecyclerView.ItemDecoration {
+    public static class SpacesItemDecoration extends RecyclerView.ItemDecoration {
         private final int space;
 
         public SpacesItemDecoration(int space) {
@@ -225,7 +217,7 @@ public class PlaylistFragment extends Fragment implements PlaylistContract.View 
         }
 
         @Override
-        public void getItemOffsets(Rect outRect, View view, RecyclerView parent, RecyclerView.State state) {
+        public void getItemOffsets(@NonNull Rect outRect, @NonNull View view, @NonNull RecyclerView parent, @NonNull RecyclerView.State state) {
             int position = parent.getChildAdapterPosition(view);
             if (position % 2 == 0) {
                 outRect.left = 0;

@@ -3,7 +3,7 @@ package io.hefuyi.listener;
 /**
  * Created by hefuyi on 2016/11/3.
  */
-
+@SuppressWarnings({"SpellCheckingInspection", "unused"})
 public class Constants {
 
     public static final String NAVIGATE_LIBRARY = "navigate_library";

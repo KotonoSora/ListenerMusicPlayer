@@ -2,9 +2,9 @@ package io.hefuyi.listener.widget;
 
 import android.content.Context;
 import android.util.AttributeSet;
-import android.widget.ImageView;
+import androidx.appcompat.widget.AppCompatImageView;
 
-public class SquareImageView extends ImageView {
+public class SquareImageView extends AppCompatImageView {
 
 
     public SquareImageView(Context context) {
@@ -22,6 +22,20 @@ public class SquareImageView extends ImageView {
     @Override
     protected void onMeasure(int widthMeasureSpec, int heightMeasureSpec) {
         super.onMeasure(widthMeasureSpec, heightMeasureSpec);
-        setMeasuredDimension(getMeasuredWidth(), getMeasuredWidth());
+        int width = getMeasuredWidth();
+        int height = getMeasuredHeight();
+
+        int heightMode = MeasureSpec.getMode(heightMeasureSpec);
+
+        int size;
+        if (heightMode != MeasureSpec.UNSPECIFIED && height > 0 && (height < width || width == 0)) {
+            size = height;
+        } else if (width > 0) {
+            size = width;
+        } else {
+            size = height;
+        }
+
+        setMeasuredDimension(size, size);
     }
 }

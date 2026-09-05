@@ -1,14 +1,12 @@
 package io.hefuyi.listener.mvp.presenter;
 
-import java.util.List;
+import androidx.annotation.NonNull;
 
 import io.hefuyi.listener.Constants;
 import io.hefuyi.listener.mvp.contract.PlayqueueSongContract;
-import io.hefuyi.listener.mvp.model.Song;
 import io.hefuyi.listener.mvp.usecase.GetSongs;
 import rx.Subscription;
 import rx.android.schedulers.AndroidSchedulers;
-import rx.functions.Action1;
 import rx.schedulers.Schedulers;
 import rx.subscriptions.CompositeSubscription;
 
@@ -18,17 +16,17 @@ import rx.subscriptions.CompositeSubscription;
 
 public class PlayqueueSongPresenter implements PlayqueueSongContract.Presenter {
 
-    private final GetSongs mUsecase;
+    private final GetSongs mUseCase;
     private final CompositeSubscription mCompositeSubscription;
     private PlayqueueSongContract.View mView;
 
     public PlayqueueSongPresenter(GetSongs getSongs) {
-        mUsecase = getSongs;
+        mUseCase = getSongs;
         mCompositeSubscription = new CompositeSubscription();
     }
 
     @Override
-    public void attachView(PlayqueueSongContract.View view) {
+    public void attachView(@NonNull PlayqueueSongContract.View view) {
         mView = view;
     }
 
@@ -44,16 +42,11 @@ public class PlayqueueSongPresenter implements PlayqueueSongContract.Presenter {
 
     @Override
     public void loadSongs() {
-        Subscription subscription = mUsecase.execute(new GetSongs.RequestValues(Constants.NAVIGATE_QUEUE))
+        Subscription subscription = mUseCase.execute(new GetSongs.RequestValues(Constants.NAVIGATE_QUEUE))
                 .getSongList()
                 .subscribeOn(Schedulers.io())
                 .observeOn(AndroidSchedulers.mainThread())
-                .subscribe(new Action1<List<Song>>() {
-                    @Override
-                    public void call(List<Song> songs) {
-                        mView.showSongs(songs);
-                    }
-                });
+                .subscribe(mView::showSongs);
         mCompositeSubscription.add(subscription);
     }
 }

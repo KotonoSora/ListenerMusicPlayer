@@ -1,17 +1,16 @@
 package io.hefuyi.listener.ui.fragment;
 
 
-import android.annotation.TargetApi;
 import android.graphics.Bitmap;
 import android.graphics.Color;
 import android.graphics.drawable.Drawable;
-import android.os.Build;
 import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageView;
 
+import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.ActionBar;
 import androidx.appcompat.app.AppCompatActivity;
@@ -70,19 +69,20 @@ public class ArtistDetailFragment extends Fragment implements ArtistDetailContra
     }
 
     @Override
-    public void onCreate(Bundle savedInstanceState) {
+    public void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        injetDependences();
+        injectDependencies();
         mPresenter.attachView(this);
-        if (getArguments() != null) {
-            artistID = getArguments().getLong(Constants.ARTIST_ID);
-            artistName = getArguments().getString(Constants.ARTIST_NAME);
+        Bundle args = getArguments();
+        if (args != null) {
+            artistID = args.getLong(Constants.ARTIST_ID);
+            artistName = args.getString(Constants.ARTIST_NAME);
         }
 
     }
 
-    private void injetDependences() {
-        ApplicationComponent applicationComponent = ((ListenerApp) getActivity().getApplication()).getApplicationComponent();
+    private void injectDependencies() {
+        ApplicationComponent applicationComponent = ((ListenerApp) requireActivity().getApplication()).getApplicationComponent();
         ArtistInfoComponent artistInfoComponent = DaggerArtistInfoComponent.builder()
                 .applicationComponent(applicationComponent)
                 .artistInfoModule(new ArtistInfoModule())
@@ -90,17 +90,17 @@ public class ArtistDetailFragment extends Fragment implements ArtistDetailContra
         artistInfoComponent.injectForFragment(this);
     }
 
+    @Nullable
     @Override
-    public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
+    public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
         View root = inflater.inflate(R.layout.fragment_artist_detail, container, false);
         toolbar = root.findViewById(R.id.toolbar);
         ListenerUtil.applySystemBarPaddingAndHeight(toolbar, true, false);
         return root;
     }
 
-    @TargetApi(Build.VERSION_CODES.LOLLIPOP)
     @Override
-    public void onViewCreated(View view, @Nullable Bundle savedInstanceState) {
+    public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
 
         artistArt = view.findViewById(R.id.artist_art);
@@ -109,18 +109,14 @@ public class ArtistDetailFragment extends Fragment implements ArtistDetailContra
         appBarLayout = view.findViewById(R.id.app_bar);
         fabPlay = view.findViewById(R.id.fab_play);
 
-        ATE.apply(this, ATEUtil.getATEKey(getActivity()));
+        ATE.apply(this, ATEUtil.getATEKey(requireActivity()));
 
-        if (getArguments().getBoolean("transition")) {
-            artistArt.setTransitionName(getArguments().getString("transition_name"));
+        Bundle args = getArguments();
+        if (args != null && args.getBoolean("transition")) {
+            artistArt.setTransitionName(args.getString("transition_name"));
         }
 
-        fabPlay.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                onFabPlayClick();
-            }
-        });
+        fabPlay.setOnClickListener(v -> onFabPlayClick());
 
         setupToolbar();
 
@@ -146,24 +142,26 @@ public class ArtistDetailFragment extends Fragment implements ArtistDetailContra
     }
 
     private void setupToolbar() {
-        ((AppCompatActivity) getActivity()).setSupportActionBar(toolbar);
-        final ActionBar ab = ((AppCompatActivity) getActivity()).getSupportActionBar();
-        ab.setDisplayHomeAsUpEnabled(true);
+        AppCompatActivity activity = (AppCompatActivity) requireActivity();
+        activity.setSupportActionBar(toolbar);
+        ActionBar ab = activity.getSupportActionBar();
+        if (ab != null) {
+            ab.setDisplayHomeAsUpEnabled(true);
+        }
         collapsingToolbarLayout.setTitle(artistName);
     }
 
     @Override
     public void showArtistArt(Bitmap bitmap) {
         artistArt.setImageBitmap(bitmap);
-        if (ATEUtil.isDarkTheme(getActivity())) {
-            primaryColor = ATEUtil.getThemePrimaryColor(getContext());
+        if (ATEUtil.isDarkTheme(requireActivity())) {
+            primaryColor = ATEUtil.getThemePrimaryColor(requireContext());
             collapsingToolbarLayout.setContentScrimColor(primaryColor);
             collapsingToolbarLayout.setStatusBarScrimColor(ColorUtil.getStatusBarColor(primaryColor));
             return;
         }
-        new Palette.Builder(bitmap).generate(new Palette.PaletteAsyncListener() {
-            @Override
-            public void onGenerated(Palette palette) {
+        new Palette.Builder(bitmap).generate(palette -> {
+            if (palette != null) {
                 Palette.Swatch swatch = ColorUtil.getMostPopulousSwatch(palette);
                 if (swatch != null) {
                     int color = swatch.getRgb();
@@ -178,12 +176,14 @@ public class ArtistDetailFragment extends Fragment implements ArtistDetailContra
     @Override
     public void showArtistArt(Drawable drawable) {
         artistArt.setImageDrawable(drawable);
-        primaryColor = ATEUtil.getThemePrimaryColor(getContext());
+        primaryColor = ATEUtil.getThemePrimaryColor(requireContext());
         collapsingToolbarLayout.setContentScrimColor(primaryColor);
         collapsingToolbarLayout.setStatusBarScrimColor(ColorUtil.getStatusBarColor(primaryColor));
     }
 
     public void onFabPlayClick() {
-        MusicPlayer.playAll(getActivity(), mArtistMusicFragment.mSongAdapter.getSongIds(), 0, artistID, ListenerUtil.IdType.Artist, false);
+        if (mArtistMusicFragment != null && mArtistMusicFragment.mSongAdapter != null) {
+            MusicPlayer.playAll(requireActivity(), mArtistMusicFragment.mSongAdapter.getSongIds(), 0, artistID, ListenerUtil.IdType.Artist, false);
+        }
     }
 }

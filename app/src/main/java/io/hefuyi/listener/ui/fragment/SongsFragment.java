@@ -10,8 +10,10 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.view.ViewStub;
 
+import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.view.MenuProvider;
 import androidx.fragment.app.Fragment;
 import androidx.recyclerview.widget.LinearLayoutManager;
 
@@ -46,7 +48,6 @@ import io.hefuyi.listener.widget.DividerItemDecoration;
 import io.hefuyi.listener.widget.fastscroller.FastScrollRecyclerView;
 import rx.Subscription;
 import rx.android.schedulers.AndroidSchedulers;
-import rx.functions.Action1;
 import rx.schedulers.Schedulers;
 
 
@@ -68,14 +69,8 @@ public class SongsFragment extends Fragment implements SongsContract.View {
         Bundle args = new Bundle();
         switch (action) {
             case Constants.NAVIGATE_ALLSONG:
-                args.putString(Constants.PLAYLIST_TYPE, action);
-                break;
             case Constants.NAVIGATE_PLAYLIST_RECENTADD:
-                args.putString(Constants.PLAYLIST_TYPE, action);
-                break;
             case Constants.NAVIGATE_PLAYLIST_RECENTPLAY:
-                args.putString(Constants.PLAYLIST_TYPE, action);
-                break;
             case Constants.NAVIGATE_PLAYLIST_FAVORITE:
                 args.putString(Constants.PLAYLIST_TYPE, action);
                 break;
@@ -88,49 +83,51 @@ public class SongsFragment extends Fragment implements SongsContract.View {
     }
 
     @Override
-    public void onCreate(final Bundle savedInstanceState) {
+    public void onCreate(@Nullable final Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        injectDependences();
+        injectDependencies();
         mPresenter.attachView(this);
-        mPreferences = PreferencesUtility.getInstance(getActivity());
+        mPreferences = PreferencesUtility.getInstance(requireActivity());
 
         if (getArguments() != null) {
             action = getArguments().getString(Constants.PLAYLIST_TYPE);
         }
 
-        mAdapter = new SongsListAdapter((AppCompatActivity) getActivity(), null, action, true);
+        mAdapter = new SongsListAdapter((AppCompatActivity) requireActivity(), null, action, true);
     }
 
-    public void injectDependences() {
-        ApplicationComponent applicationComponent = ((ListenerApp) getActivity().getApplication()).getApplicationComponent();
+    public void injectDependencies() {
+        ApplicationComponent applicationComponent = ((ListenerApp) requireActivity().getApplication()).getApplicationComponent();
         SongsComponent songsComponent = DaggerSongsComponent.builder()
                 .applicationComponent(applicationComponent)
-                .activityModule(new ActivityModule(getActivity()))
+                .activityModule(new ActivityModule(requireActivity()))
                 .songsModule(new SongsModule())
                 .build();
         songsComponent.inject(this);
     }
 
+    @Nullable
     @Override
-    public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
-        View rootView = inflater.inflate(R.layout.fragment_recyclerview, container, false);
-        return rootView;
+    public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
+        return inflater.inflate(R.layout.fragment_recyclerview, container, false);
     }
 
     @Override
-    public void onViewCreated(View view, @Nullable Bundle savedInstanceState) {
+    public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
 
         recyclerView = view.findViewById(R.id.recyclerview);
         emptyView = view.findViewById(R.id.view_empty);
 
-        ATE.apply(this, ATEUtil.getATEKey(getActivity()));
+        ATE.apply(this, ATEUtil.getATEKey(requireActivity()));
 
-        recyclerView.setLayoutManager(new LinearLayoutManager(getActivity()));
+        recyclerView.setLayoutManager(new LinearLayoutManager(requireActivity()));
         recyclerView.setAdapter(mAdapter);
-        recyclerView.addItemDecoration(new DividerItemDecoration(getActivity(), DividerItemDecoration.VERTICAL_LIST, true));
+        recyclerView.addItemDecoration(new DividerItemDecoration(requireActivity(), DividerItemDecoration.VERTICAL_LIST, true));
 
         ListenerUtil.applyBottomInsetWithPlayer(recyclerView);
+
+        setupMenu();
 
         mPresenter.loadSongs(action);
 
@@ -144,6 +141,52 @@ public class SongsFragment extends Fragment implements SongsContract.View {
         subscribeMetaChangedEvent();
     }
 
+    private void setupMenu() {
+        requireActivity().addMenuProvider(new MenuProvider() {
+            @Override
+            public void onCreateMenu(@NonNull Menu menu, @NonNull MenuInflater menuInflater) {
+                menuInflater.inflate(R.menu.song_sort_by, menu);
+                if (!Constants.NAVIGATE_ALLSONG.equals(action)) {
+                    MenuItem sortItem = menu.findItem(R.id.menu_sort_by);
+                    if (sortItem != null) {
+                        sortItem.setVisible(false);
+                    }
+                }
+            }
+
+            @Override
+            public boolean onMenuItemSelected(@NonNull MenuItem menuItem) {
+                int itemId = menuItem.getItemId();
+                if (itemId == R.id.menu_sort_by_az) {
+                    mPreferences.setSongSortOrder(SortOrder.SongSortOrder.SONG_A_Z);
+                    mPresenter.loadSongs(action);
+                    return true;
+                } else if (itemId == R.id.menu_sort_by_za) {
+                    mPreferences.setSongSortOrder(SortOrder.SongSortOrder.SONG_Z_A);
+                    mPresenter.loadSongs(action);
+                    return true;
+                } else if (itemId == R.id.menu_sort_by_add) {
+                    mPreferences.setSongSortOrder(SortOrder.SongSortOrder.SONG_DATE);
+                    mPresenter.loadSongs(action);
+                    return true;
+                } else if (itemId == R.id.menu_sort_by_artist) {
+                    mPreferences.setSongSortOrder(SortOrder.SongSortOrder.SONG_ARTIST);
+                    mPresenter.loadSongs(action);
+                    return true;
+                } else if (itemId == R.id.menu_sort_by_album) {
+                    mPreferences.setSongSortOrder(SortOrder.SongSortOrder.SONG_ALBUM);
+                    mPresenter.loadSongs(action);
+                    return true;
+                } else if (itemId == R.id.menu_sort_by_duration) {
+                    mPreferences.setSongSortOrder(SortOrder.SongSortOrder.SONG_DURATION);
+                    mPresenter.loadSongs(action);
+                    return true;
+                }
+                return false;
+            }
+        }, getViewLifecycleOwner());
+    }
+
     @Override
     public void onDestroyView() {
         super.onDestroyView();
@@ -151,70 +194,16 @@ public class SongsFragment extends Fragment implements SongsContract.View {
         RxBus.getInstance().unSubscribe(this);
     }
 
+    @SuppressWarnings("notifyDataSetChanged")
     private void subscribeMetaChangedEvent() {
         Subscription subscription = RxBus.getInstance()
                 .toObservable(MetaChangedEvent.class)
                 .subscribeOn(Schedulers.io())
                 .observeOn(AndroidSchedulers.mainThread())
                 .distinctUntilChanged()
-                .subscribe(new Action1<MetaChangedEvent>() {
-                    @Override
-                    public void call(MetaChangedEvent event) {
-                        mAdapter.notifyDataSetChanged();
-                    }
-                }, new Action1<Throwable>() {
-                    @Override
-                    public void call(Throwable throwable) {
-
-                    }
+                .subscribe(event -> mAdapter.notifyDataSetChanged(), throwable -> {
                 });
         RxBus.getInstance().addSubscription(this, subscription);
-    }
-
-    @Override
-    public void onActivityCreated(final Bundle savedInstanceState) {
-        super.onActivityCreated(savedInstanceState);
-        setHasOptionsMenu(true);
-    }
-
-    @Override
-    public void onCreateOptionsMenu(Menu menu, MenuInflater inflater) {
-        super.onCreateOptionsMenu(menu, inflater);
-        inflater.inflate(R.menu.song_sort_by, menu);
-        if (!Constants.NAVIGATE_ALLSONG.equals(action)) {
-            menu.findItem(R.id.menu_sort_by).setVisible(false);
-        }
-    }
-
-    @Override
-    public boolean onOptionsItemSelected(MenuItem item) {
-        int itemId = item.getItemId();
-        if (itemId == R.id.menu_sort_by_az) {
-            mPreferences.setSongSortOrder(SortOrder.SongSortOrder.SONG_A_Z);
-            mPresenter.loadSongs(action);
-            return true;
-        } else if (itemId == R.id.menu_sort_by_za) {
-            mPreferences.setSongSortOrder(SortOrder.SongSortOrder.SONG_Z_A);
-            mPresenter.loadSongs(action);
-            return true;
-        } else if (itemId == R.id.menu_sort_by_add) {
-            mPreferences.setSongSortOrder(SortOrder.SongSortOrder.SONG_DATE);
-            mPresenter.loadSongs(action);
-            return true;
-        } else if (itemId == R.id.menu_sort_by_artist) {
-            mPreferences.setSongSortOrder(SortOrder.SongSortOrder.SONG_ARTIST);
-            mPresenter.loadSongs(action);
-            return true;
-        } else if (itemId == R.id.menu_sort_by_album) {
-            mPreferences.setSongSortOrder(SortOrder.SongSortOrder.SONG_ALBUM);
-            mPresenter.loadSongs(action);
-            return true;
-        } else if (itemId == R.id.menu_sort_by_duration) {
-            mPreferences.setSongSortOrder(SortOrder.SongSortOrder.SONG_DURATION);
-            mPresenter.loadSongs(action);
-            return true;
-        }
-        return super.onOptionsItemSelected(item);
     }
 
     @Override
@@ -235,16 +224,7 @@ public class SongsFragment extends Fragment implements SongsContract.View {
                 .toObservable(FavoriteSongEvent.class)
                 .subscribeOn(Schedulers.io())
                 .observeOn(AndroidSchedulers.mainThread())
-                .subscribe(new Action1<FavoriteSongEvent>() {
-                    @Override
-                    public void call(FavoriteSongEvent event) {
-                        mPresenter.loadSongs(action);
-                    }
-                }, new Action1<Throwable>() {
-                    @Override
-                    public void call(Throwable throwable) {
-
-                    }
+                .subscribe(event -> mPresenter.loadSongs(action), throwable -> {
                 });
         RxBus.getInstance().addSubscription(this, subscription);
     }
@@ -254,16 +234,7 @@ public class SongsFragment extends Fragment implements SongsContract.View {
                 .toObservable(RecentlyPlayEvent.class)
                 .subscribeOn(Schedulers.io())
                 .observeOn(AndroidSchedulers.mainThread())
-                .subscribe(new Action1<RecentlyPlayEvent>() {
-                    @Override
-                    public void call(RecentlyPlayEvent event) {
-                        mPresenter.loadSongs(action);
-                    }
-                }, new Action1<Throwable>() {
-                    @Override
-                    public void call(Throwable throwable) {
-
-                    }
+                .subscribe(event -> mPresenter.loadSongs(action), throwable -> {
                 });
         RxBus.getInstance().addSubscription(this, subscription);
     }
@@ -274,16 +245,7 @@ public class SongsFragment extends Fragment implements SongsContract.View {
                 .subscribeOn(Schedulers.io())
                 .observeOn(AndroidSchedulers.mainThread())
                 .debounce(1, TimeUnit.SECONDS)
-                .subscribe(new Action1<MediaUpdateEvent>() {
-                    @Override
-                    public void call(MediaUpdateEvent event) {
-                        mPresenter.loadSongs(action);
-                    }
-                }, new Action1<Throwable>() {
-                    @Override
-                    public void call(Throwable throwable) {
-
-                    }
+                .subscribe(event -> mPresenter.loadSongs(action), throwable -> {
                 });
         RxBus.getInstance().addSubscription(this, subscription);
     }

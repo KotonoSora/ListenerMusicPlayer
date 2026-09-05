@@ -5,6 +5,7 @@ import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.Drawable;
 import android.text.TextUtils;
 
+import androidx.annotation.NonNull;
 import androidx.palette.graphics.Palette;
 
 import com.bumptech.glide.Glide;
@@ -44,7 +45,7 @@ public class QuickControlsPresenter implements QuickControlsContract.Presenter {
     }
 
     @Override
-    public void attachView(QuickControlsContract.View view) {
+    public void attachView(@NonNull QuickControlsContract.View view) {
         this.mView = view;
         mCompositeSubscription = new CompositeSubscription();
     }
@@ -61,12 +62,7 @@ public class QuickControlsPresenter implements QuickControlsContract.Presenter {
     @Override
     public void onPlayPauseClick() {
         mDuetoplaypause = true;
-        Schedulers.io().createWorker().schedule(new rx.functions.Action0() {
-            @Override
-            public void call() {
-                MusicPlayer.playOrPause();
-            }
-        });
+        Schedulers.io().createWorker().schedule(MusicPlayer::playOrPause);
     }
 
     @Override
@@ -91,7 +87,7 @@ public class QuickControlsPresenter implements QuickControlsContract.Presenter {
         Subscription subscription = LyricUtil.getLocalLyricFile(title, artist)
                 .subscribeOn(Schedulers.io())
                 .observeOn(AndroidSchedulers.mainThread())
-                .subscribe(new Subscriber<File>() {
+                .subscribe(new Subscriber<>() {
                     @Override
                     public void onCompleted() {
                     }
@@ -151,12 +147,7 @@ public class QuickControlsPresenter implements QuickControlsContract.Presenter {
                             mView.setAlbumArt(errorDrawable);
                             if (!TextUtils.isEmpty(title) || !TextUtils.isEmpty(artist)) {
                                 if (errorDrawable instanceof BitmapDrawable) {
-                                    new Palette.Builder(((BitmapDrawable) errorDrawable).getBitmap()).generate(new Palette.PaletteAsyncListener() {
-                                        @Override
-                                        public void onGenerated(Palette palette) {
-                                            mView.setPalette(palette);
-                                        }
-                                    });
+                                    new Palette.Builder(((BitmapDrawable) errorDrawable).getBitmap()).generate(mView::setPalette);
                                 } else {
                                     mView.setPalette(null);
                                 }
@@ -166,12 +157,7 @@ public class QuickControlsPresenter implements QuickControlsContract.Presenter {
                         @Override
                         public void onResourceReady(Bitmap resource, GlideAnimation<? super Bitmap> glideAnimation) {
                             mView.setAlbumArt(resource);
-                            new Palette.Builder(resource).generate(new Palette.PaletteAsyncListener() {
-                                @Override
-                                public void onGenerated(Palette palette) {
-                                    mView.setPalette(palette);
-                                }
-                            });
+                            new Palette.Builder(resource).generate(mView::setPalette);
                         }
                     });
         }

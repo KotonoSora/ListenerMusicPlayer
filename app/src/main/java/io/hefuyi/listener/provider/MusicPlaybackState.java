@@ -18,9 +18,9 @@ import io.hefuyi.listener.util.ListenerUtil;
 
 public class MusicPlaybackState {
 
-    private static volatile MusicPlaybackState sInstance = null;
+    private static volatile MusicPlaybackState sInstance;
 
-    private MusicDB mMusicDatabase = null;
+    private final MusicDB mMusicDatabase;
 
     private MusicPlaybackState(final Context context) {
         mMusicDatabase = MusicDB.getInstance(context);
@@ -75,6 +75,7 @@ public class MusicPlaybackState {
         }
     }
 
+    @SuppressWarnings("unused")
     public void onDowngrade(SQLiteDatabase db, int oldVersion, int newVersion) {
 
         db.execSQL("DROP TABLE IF EXISTS " + PlaybackQueueColumns.NAME);
@@ -85,8 +86,8 @@ public class MusicPlaybackState {
     /**
      * 将输入数据保存到两个表中(旧数据被清除)
      *
-     * @param queue
-     * @param history
+     * @param queue The queue of playback tracks to save.
+     * @param history The history of played song positions to save.
      */
     public synchronized void saveState(final ArrayList<MusicPlaybackTrack> queue,
                                        LinkedList<Integer> history) {
@@ -148,17 +149,15 @@ public class MusicPlaybackState {
     /**
      * 获取playbackqueue表中的数据
      *
-     * @return
+     * @return The list of music playback tracks in the queue.
      */
     public ArrayList<MusicPlaybackTrack> getQueue() {
         ArrayList<MusicPlaybackTrack> results = new ArrayList<>();
 
-        Cursor cursor = null;
-        try {
-            cursor = mMusicDatabase.getReadableDatabase().query(PlaybackQueueColumns.NAME, null,
-                    null, null, null, null, null);
+        try (Cursor cursor = mMusicDatabase.getReadableDatabase().query(PlaybackQueueColumns.NAME, null,
+                null, null, null, null, null)) {
 
-            if (cursor != null && cursor.moveToFirst()) {
+            if (cursor.moveToFirst()) {
                 results.ensureCapacity(cursor.getCount());
 
                 do {
@@ -168,29 +167,22 @@ public class MusicPlaybackState {
             }
 
             return results;
-        } finally {
-            if (cursor != null) {
-                cursor.close();
-                cursor = null;
-            }
         }
     }
 
     /**
      * 获取playbackhistory表中的数据
      *
-     * @param playlistSize
-     * @return
+     * @param playlistSize The current size of the playlist.
+     * @return The list of position indices in playback history.
      */
     public LinkedList<Integer> getHistory(final int playlistSize) {
         LinkedList<Integer> results = new LinkedList<>();
 
-        Cursor cursor = null;
-        try {
-            cursor = mMusicDatabase.getReadableDatabase().query(PlaybackHistoryColumns.NAME, null,
-                    null, null, null, null, null);
+        try (Cursor cursor = mMusicDatabase.getReadableDatabase().query(PlaybackHistoryColumns.NAME, null,
+                null, null, null, null, null)) {
 
-            if (cursor != null && cursor.moveToFirst()) {
+            if (cursor.moveToFirst()) {
                 do {
                     int pos = cursor.getInt(0);
                     if (pos >= 0 && pos < playlistSize) {
@@ -200,11 +192,6 @@ public class MusicPlaybackState {
             }
 
             return results;
-        } finally {
-            if (cursor != null) {
-                cursor.close();
-                cursor = null;
-            }
         }
     }
 

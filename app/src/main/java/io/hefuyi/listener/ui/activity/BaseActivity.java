@@ -8,14 +8,17 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.ServiceConnection;
+import android.os.Build;
 import android.os.Bundle;
 import android.os.IBinder;
+import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.Toast;
 
 import androidx.activity.EdgeToEdge;
+import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.core.content.ContextCompat;
 import androidx.fragment.app.FragmentManager;
@@ -45,11 +48,13 @@ public class BaseActivity extends ATEActivity implements ServiceConnection {
     private PlaybackStatus mPlaybackStatus;
 
     @Override
-    public void onCreate(Bundle savedInstanceState) {
+    public void onCreate(@Nullable Bundle savedInstanceState) {
         EdgeToEdge.enable(this);
         super.onCreate(savedInstanceState);
 
-        getWindow().setNavigationBarContrastEnforced(false);
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+            getWindow().setNavigationBarContrastEnforced(false);
+        }
 
         mToken = MusicPlayer.bindToService(this, this);
         mPlaybackStatus = new PlaybackStatus(this);
@@ -81,7 +86,7 @@ public class BaseActivity extends ATEActivity implements ServiceConnection {
         try {
             unregisterReceiver(mPlaybackStatus);
         } catch (final Throwable e) {
-            e.printStackTrace();
+            Log.e("BaseActivity", "Failed to unregister receiver", e);
         }
     }
 
@@ -122,7 +127,7 @@ public class BaseActivity extends ATEActivity implements ServiceConnection {
     }
 
     @Override
-    public boolean onOptionsItemSelected(MenuItem item) {
+    public boolean onOptionsItemSelected(@NonNull MenuItem item) {
         int itemId = item.getItemId();
         if (itemId == android.R.id.home) {
             getOnBackPressedDispatcher().onBackPressed();
@@ -147,9 +152,10 @@ public class BaseActivity extends ATEActivity implements ServiceConnection {
         QuickControlsFragment fragment1 = new QuickControlsFragment();
         FragmentManager fragmentManager1 = getSupportFragmentManager();
         fragmentManager1.beginTransaction()
-                .replace(R.id.quickcontrols_container, fragment1).commitAllowingStateLoss();
+                .replace(R.id.quick_controls_container, fragment1).commitAllowingStateLoss();
     }
 
+    @SuppressWarnings("unused")
     public void applySystemBarPadding(View view, boolean top, boolean bottom) {
         ListenerUtil.applySystemBarPadding(view, top, bottom);
     }
@@ -158,6 +164,7 @@ public class BaseActivity extends ATEActivity implements ServiceConnection {
         ListenerUtil.applyBottomInsetWithPlayer(view);
     }
 
+    @SuppressWarnings("unused")
     public void applyBottomInsetWithPlayerAndIme(View view) {
         ListenerUtil.applyBottomInsetWithPlayerAndIme(view);
     }
@@ -172,7 +179,7 @@ public class BaseActivity extends ATEActivity implements ServiceConnection {
 
 
         public PlaybackStatus(final BaseActivity activity) {
-            mReference = new WeakReference<BaseActivity>(activity);
+            mReference = new WeakReference<>(activity);
         }
 
         @Override
@@ -180,7 +187,7 @@ public class BaseActivity extends ATEActivity implements ServiceConnection {
             final String action = intent.getAction();
             BaseActivity baseActivity = mReference.get();
             if (baseActivity != null) {
-                if (action.equals(MusicService.TRACK_ERROR)) {
+                if (MusicService.TRACK_ERROR.equals(action)) {
                     final String errorMsg = context.getString(R.string.error_playing_track);
                     Toast.makeText(baseActivity, errorMsg, Toast.LENGTH_SHORT).show();
                 }

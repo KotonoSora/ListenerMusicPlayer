@@ -11,9 +11,9 @@ import android.database.sqlite.SQLiteDatabase;
 
 public class FavoriteSong {
 
-    private static volatile FavoriteSong sInstance = null;
+    private static volatile FavoriteSong sInstance;
 
-    private MusicDB mMusicDatabase = null;
+    private final MusicDB mMusicDatabase;
 
     private FavoriteSong(final Context context) {
         mMusicDatabase = MusicDB.getInstance(context);
@@ -31,14 +31,16 @@ public class FavoriteSong {
     }
 
     public void onCreate(final SQLiteDatabase db) {
-        db.execSQL("CREATE TABLE IF NOT EXISTS " + FavoriteSong.FavoriteSongColumns.NAME + " ("
-                + FavoriteSongColumns.SONGID + " LONG NOT NULL,"
-                + FavoriteSongColumns.TIMEADDED + " LONG NOT NULL);");
+        db.execSQL("CREATE TABLE IF NOT EXISTS " + FavoriteSongColumns.NAME + " ("
+                + FavoriteSongColumns.SONG_ID + " LONG NOT NULL,"
+                + FavoriteSongColumns.TIME_ADDED + " LONG NOT NULL);");
     }
 
+    @SuppressWarnings("unused")
     public void onUpgrade(final SQLiteDatabase db, final int oldVersion, final int newVersion) {
     }
 
+    @SuppressWarnings("unused")
     public void onDowngrade(SQLiteDatabase db, int oldVersion, int newVersion) {
         db.execSQL("DROP TABLE IF EXISTS " + FavoriteSongColumns.NAME);
         onCreate(db);
@@ -48,26 +50,23 @@ public class FavoriteSong {
         final SQLiteDatabase database = mMusicDatabase.getWritableDatabase();
         database.beginTransaction();
 
-        Cursor cursor = null;
         int insert = 0;
         try {
             for (long aSongId : songId) {
-                cursor = database.query(FavoriteSongColumns.NAME, new String[]{FavoriteSongColumns.SONGID},
-                        FavoriteSongColumns.SONGID + " =? ", new String[]{String.valueOf(aSongId)}, null, null, null);
-                if (cursor != null && cursor.getCount() == 0) { //若无重复则插入
-                    ContentValues values = new ContentValues(2);
-                    values.put(FavoriteSongColumns.SONGID, aSongId);
-                    values.put(FavoriteSongColumns.TIMEADDED, System.currentTimeMillis());
-                    database.insert(FavoriteSongColumns.NAME, null, values);
-                    insert++;
+                try (Cursor cursor = database.query(FavoriteSongColumns.NAME, new String[]{FavoriteSongColumns.SONG_ID},
+                        FavoriteSongColumns.SONG_ID + " =? ", new String[]{String.valueOf(aSongId)}, null, null, null)) {
+                    if (cursor.getCount() == 0) { //若无重复则插入
+                        ContentValues values = new ContentValues(2);
+                        values.put(FavoriteSongColumns.SONG_ID, aSongId);
+                        values.put(FavoriteSongColumns.TIME_ADDED, System.currentTimeMillis());
+                        database.insert(FavoriteSongColumns.NAME, null, values);
+                        insert++;
+                    }
                 }
             }
+            database.setTransactionSuccessful();
             return insert;
         } finally {
-            if (cursor != null) {
-                cursor.close();
-            }
-            database.setTransactionSuccessful();
             database.endTransaction();
         }
     }
@@ -76,34 +75,30 @@ public class FavoriteSong {
         final SQLiteDatabase database = mMusicDatabase.getWritableDatabase();
         database.beginTransaction();
 
-        Cursor cursor = null;
         int deleted = 0;
         try {
             for (long aSongId : songId) {
-                cursor = database.query(FavoriteSongColumns.NAME, new String[]{FavoriteSongColumns.SONGID},
-                        FavoriteSongColumns.SONGID + " =? ", new String[]{String.valueOf(aSongId)}, null, null, null);
-                if (cursor != null && cursor.getCount() > 0) {
-                    database.delete(FavoriteSongColumns.NAME, FavoriteSongColumns.SONGID + " =? ",
-                            new String[]{String.valueOf(aSongId)});
-                    deleted++;
+                try (Cursor cursor = database.query(FavoriteSongColumns.NAME, new String[]{FavoriteSongColumns.SONG_ID},
+                        FavoriteSongColumns.SONG_ID + " =? ", new String[]{String.valueOf(aSongId)}, null, null, null)) {
+                    if (cursor.getCount() > 0) {
+                        database.delete(FavoriteSongColumns.NAME, FavoriteSongColumns.SONG_ID + " =? ",
+                                new String[]{String.valueOf(aSongId)});
+                        deleted++;
+                    }
                 }
             }
+            database.setTransactionSuccessful();
             return deleted;
         } finally {
-            if (cursor != null) {
-                cursor.close();
-            }
-            database.setTransactionSuccessful();
             database.endTransaction();
         }
     }
 
     public Cursor getFavoriteSong() {
         final SQLiteDatabase database = mMusicDatabase.getReadableDatabase();
-        Cursor cursor = database.query(FavoriteSongColumns.NAME,
-                new String[]{FavoriteSongColumns.SONGID}, null, null, null, null,
-                FavoriteSongColumns.TIMEADDED + " DESC", null);
-        return cursor;
+        return database.query(FavoriteSongColumns.NAME,
+                new String[]{FavoriteSongColumns.SONG_ID}, null, null, null, null,
+                FavoriteSongColumns.TIME_ADDED + " DESC", null);
     }
 
 
@@ -111,18 +106,16 @@ public class FavoriteSong {
         final SQLiteDatabase database = mMusicDatabase.getWritableDatabase();
         database.beginTransaction();
 
-        Cursor cursor = null;
         try {
-            cursor = database.query(FavoriteSongColumns.NAME, new String[]{FavoriteSongColumns.SONGID},
-                    FavoriteSongColumns.SONGID + " =? ", new String[]{String.valueOf(songId)}, null, null, null);
-            if (cursor != null && cursor.getCount() > 0) {
-                return true;
-            }
-        } finally {
-            if (cursor != null) {
-                cursor.close();
+            try (Cursor cursor = database.query(FavoriteSongColumns.NAME, new String[]{FavoriteSongColumns.SONG_ID},
+                    FavoriteSongColumns.SONG_ID + " =? ", new String[]{String.valueOf(songId)}, null, null, null)) {
+                if (cursor.getCount() > 0) {
+                    database.setTransactionSuccessful();
+                    return true;
+                }
             }
             database.setTransactionSuccessful();
+        } finally {
             database.endTransaction();
         }
         return false;
@@ -133,10 +126,10 @@ public class FavoriteSong {
         String NAME = "favoritesong";
 
         /* What was searched */
-        String SONGID = "songid";
+        String SONG_ID = "songid";
 
         /* Time of search */
-        String TIMEADDED = "timeadded";
+        String TIME_ADDED = "timeadded";
     }
 
 }

@@ -1,14 +1,13 @@
 package io.hefuyi.listener.ui.fragment;
 
 
-import android.annotation.TargetApi;
 import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.Color;
 import android.graphics.drawable.Drawable;
-import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
+import android.os.Looper;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuInflater;
@@ -23,13 +22,13 @@ import androidx.annotation.Nullable;
 import androidx.appcompat.app.ActionBar;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
+import androidx.core.view.MenuProvider;
 import androidx.fragment.app.Fragment;
 import androidx.palette.graphics.Palette;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.afollestad.appthemeengine.ATE;
-import com.afollestad.materialdialogs.DialogAction;
 import com.afollestad.materialdialogs.MaterialDialog;
 import com.google.android.material.appbar.AppBarLayout;
 import com.google.android.material.appbar.CollapsingToolbarLayout;
@@ -60,7 +59,6 @@ import io.hefuyi.listener.util.ListenerUtil;
 import io.hefuyi.listener.widget.DividerItemDecoration;
 import rx.Subscription;
 import rx.android.schedulers.AndroidSchedulers;
-import rx.functions.Action1;
 import rx.schedulers.Schedulers;
 
 
@@ -99,22 +97,23 @@ public class PlaylistDetailFragment extends Fragment implements PlaylistDetailCo
     }
 
     @Override
-    public void onCreate(Bundle savedInstanceState) {
+    public void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        injectDependences();
+        injectDependencies();
         mPresenter.attachView(this);
 
-        if (getArguments() != null) {
-            playlistName = getArguments().getString(Constants.PLAYLIST_NAME);
-            firstAlbumID = getArguments().getLong(Constants.FIRST_ALBUM_ID);
-            playlistID = getArguments().getLong(Constants.PLAYLIST_ID);
+        Bundle args = getArguments();
+        if (args != null) {
+            playlistName = args.getString(Constants.PLAYLIST_NAME);
+            firstAlbumID = args.getLong(Constants.FIRST_ALBUM_ID);
+            playlistID = args.getLong(Constants.PLAYLIST_ID);
         }
-        mContext = getActivity();
-        mAdapter = new PlaylistSongAdapter(getContext(), playlistID, null);
+        mContext = requireActivity();
+        mAdapter = new PlaylistSongAdapter(requireContext(), playlistID, null);
     }
 
-    private void injectDependences() {
-        ApplicationComponent applicationComponent = ((ListenerApp) getActivity().getApplication()).getApplicationComponent();
+    private void injectDependencies() {
+        ApplicationComponent applicationComponent = ((ListenerApp) requireActivity().getApplication()).getApplicationComponent();
         PlaylistSongComponent playlistSongComponent = DaggerPlaylistSongComponent.builder()
                 .applicationComponent(applicationComponent)
                 .playlistSongModule(new PlaylistSongModule())
@@ -122,17 +121,17 @@ public class PlaylistDetailFragment extends Fragment implements PlaylistDetailCo
         playlistSongComponent.inject(this);
     }
 
+    @Nullable
     @Override
-    public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
+    public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
         View root = inflater.inflate(R.layout.fragment_album_detail, container, false);
         toolbar = root.findViewById(R.id.toolbar);
         ListenerUtil.applySystemBarPaddingAndHeight(toolbar, true, false);
         return root;
     }
 
-    @TargetApi(Build.VERSION_CODES.LOLLIPOP)
     @Override
-    public void onViewCreated(View view, @Nullable Bundle savedInstanceState) {
+    public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
 
         playlistArt = view.findViewById(R.id.album_art);
@@ -142,26 +141,23 @@ public class PlaylistDetailFragment extends Fragment implements PlaylistDetailCo
         fabPlay = view.findViewById(R.id.fab_play);
         recyclerView = view.findViewById(R.id.recyclerview);
 
-        ATE.apply(this, ATEUtil.getATEKey(getActivity()));
+        ATE.apply(this, ATEUtil.getATEKey(requireActivity()));
 
-        if (getArguments().getBoolean("transition")) {
-            playlistArt.setTransitionName(getArguments().getString("transition_name"));
+        Bundle args = getArguments();
+        if (args != null && args.getBoolean("transition")) {
+            playlistArt.setTransitionName(args.getString("transition_name"));
         }
 
-        fabPlay.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                onFabPlayClick();
-            }
-        });
+        fabPlay.setOnClickListener(v -> onFabPlayClick());
 
         recyclerView.setAdapter(mAdapter);
-        recyclerView.setLayoutManager(new LinearLayoutManager(getActivity()));
-        recyclerView.addItemDecoration(new DividerItemDecoration(getActivity(), DividerItemDecoration.VERTICAL_LIST, false));
+        recyclerView.setLayoutManager(new LinearLayoutManager(requireActivity()));
+        recyclerView.addItemDecoration(new DividerItemDecoration(requireActivity(), DividerItemDecoration.VERTICAL_LIST, false));
 
         ListenerUtil.applyBottomInsetWithPlayer(recyclerView);
 
         setupToolbar();
+        setupMenu();
 
         mPresenter.loadPlaylistSongs(playlistID);
         mPresenter.loadPlaylistArt(firstAlbumID);
@@ -173,7 +169,7 @@ public class PlaylistDetailFragment extends Fragment implements PlaylistDetailCo
                 RxBus.getInstance().post(new PlaylistUpdateEvent());
                 if (positionStart == 0) {
                     List<Song> songs = mAdapter.getSongList();
-                    if (songs.size() == 0) {
+                    if (songs.isEmpty()) {
                         firstAlbumID = -1;
                     } else {
                         firstAlbumID = songs.get(0).albumId;
@@ -185,24 +181,40 @@ public class PlaylistDetailFragment extends Fragment implements PlaylistDetailCo
         subscribeMetaChangedEvent();
     }
 
+    private void setupMenu() {
+        requireActivity().addMenuProvider(new MenuProvider() {
+            @Override
+            public void onCreateMenu(@NonNull Menu menu, @NonNull MenuInflater menuInflater) {
+                menu.clear();
+                menuInflater.inflate(R.menu.menu_playlist_detail, menu);
+            }
+
+            @Override
+            public boolean onMenuItemSelected(@NonNull MenuItem menuItem) {
+                int itemId = menuItem.getItemId();
+                if (itemId == R.id.action_playlist_detail_rename) {
+                    showRenamePlaylistDialog(playlistName);
+                    return true;
+                } else if (itemId == R.id.action_playlist_detail_addto_playlist) {
+                    ListenerUtil.showAddPlaylistDialog(requireActivity(), mAdapter.getSongIds());
+                    return true;
+                } else if (itemId == R.id.action_playlist_detail_addto_queue) {
+                    MusicPlayer.addToQueue(mContext, mAdapter.getSongIds(), -1, ListenerUtil.IdType.Playlist);
+                    return true;
+                } else if (itemId == R.id.action_playlist_detail_delete) {
+                    showDeletePlaylistDialog();
+                    return true;
+                }
+                return false;
+            }
+        }, getViewLifecycleOwner());
+    }
+
     @Override
     public void onDestroyView() {
         super.onDestroyView();
         mPresenter.unsubscribe();
         RxBus.getInstance().unSubscribe(this);
-    }
-
-    @Override
-    public void onActivityCreated(final Bundle savedInstanceState) {
-        super.onActivityCreated(savedInstanceState);
-        setHasOptionsMenu(true);
-    }
-
-    @Override
-    public void onCreateOptionsMenu(Menu menu, MenuInflater inflater) {
-        super.onCreateOptionsMenu(menu, inflater);
-        menu.clear();
-        inflater.inflate(R.menu.menu_playlist_detail, menu);
     }
 
     @Override
@@ -215,54 +227,29 @@ public class PlaylistDetailFragment extends Fragment implements PlaylistDetailCo
         }
     }
 
-    @Override
-    public boolean onOptionsItemSelected(final MenuItem item) {
-        int itemId = item.getItemId();
-        if (itemId == R.id.action_playlist_detail_rename) {
-            showRenamePlaylistDialog(playlistName);
-        } else if (itemId == R.id.action_playlist_detail_addto_playlist) {
-            ListenerUtil.showAddPlaylistDialog(getActivity(), mAdapter.getSongIds());
-        } else if (itemId == R.id.action_playlist_detail_addto_queue) {
-            MusicPlayer.addToQueue(mContext, mAdapter.getSongIds(), -1, ListenerUtil.IdType.Playlist);
-        } else if (itemId == R.id.action_playlist_detail_delete) {
-            showDeletePlaylistDialog();
-        }
-        return super.onOptionsItemSelected(item);
-    }
-
     private void setupToolbar() {
-        ((AppCompatActivity) getActivity()).setSupportActionBar(toolbar);
-        final ActionBar ab = ((AppCompatActivity) getActivity()).getSupportActionBar();
-        ab.setDisplayHomeAsUpEnabled(true);
+        AppCompatActivity activity = (AppCompatActivity) requireActivity();
+        activity.setSupportActionBar(toolbar);
+        final ActionBar ab = activity.getSupportActionBar();
+        if (ab != null) {
+            ab.setDisplayHomeAsUpEnabled(true);
+        }
         collapsingToolbarLayout.setTitle(playlistName);
     }
 
     public void onFabPlayClick() {
-        Handler handler = new Handler();
-        handler.postDelayed(new Runnable() {
-            @Override
-            public void run() {
-                MusicPlayer.playAll(getActivity(), mAdapter.getSongIds(), 0, playlistID, ListenerUtil.IdType.Playlist, false);
-            }
-        }, 150);
+        Handler handler = new Handler(Looper.getMainLooper());
+        handler.postDelayed(() -> MusicPlayer.playAll(requireActivity(), mAdapter.getSongIds(), 0, playlistID, ListenerUtil.IdType.Playlist, false), 150);
     }
 
+    @SuppressWarnings("notifyDataSetChanged")
     private void subscribeMetaChangedEvent() {
         Subscription subscription = RxBus.getInstance()
                 .toObservable(MetaChangedEvent.class)
                 .subscribeOn(Schedulers.io())
                 .observeOn(AndroidSchedulers.mainThread())
                 .distinctUntilChanged()
-                .subscribe(new Action1<MetaChangedEvent>() {
-                    @Override
-                    public void call(MetaChangedEvent event) {
-                        mAdapter.notifyDataSetChanged();
-                    }
-                }, new Action1<Throwable>() {
-                    @Override
-                    public void call(Throwable throwable) {
-
-                    }
+                .subscribe(event -> mAdapter.notifyDataSetChanged(), throwable -> {
                 });
         RxBus.getInstance().addSubscription(this, subscription);
     }
@@ -285,9 +272,8 @@ public class PlaylistDetailFragment extends Fragment implements PlaylistDetailCo
         if (ATEUtil.isDarkTheme(mContext)) {
             return;
         }
-        new Palette.Builder(bitmap).generate(new Palette.PaletteAsyncListener() {
-            @Override
-            public void onGenerated(Palette palette) {
+        new Palette.Builder(bitmap).generate(palette -> {
+            if (palette != null) {
                 Palette.Swatch swatch = ColorUtil.getMostPopulousSwatch(palette);
                 if (swatch != null) {
                     int color = swatch.getRgb();
@@ -300,45 +286,34 @@ public class PlaylistDetailFragment extends Fragment implements PlaylistDetailCo
     }
 
     private void showDeletePlaylistDialog() {
-        new MaterialDialog.Builder(getActivity())
+        new MaterialDialog.Builder(requireActivity())
                 .title(R.string.delete_playlist_song)
                 .positiveText(R.string.delete)
                 .negativeText(R.string.cancel)
-                .onPositive(new MaterialDialog.SingleButtonCallback() {
-                    @Override
-                    public void onClick(@NonNull MaterialDialog dialog, @NonNull DialogAction which) {
-                        PlaylistSongLoader.removeFromPlaylist(mContext, mAdapter.getSongIds(), playlistID);
-                        mPresenter.loadPlaylistSongs(playlistID);
-                        showPlaylistArt(ATEUtil.getDefaultAlbumDrawable(mContext));
-                        primaryColor = ATEUtil.getThemePrimaryColor(mContext);
-                        collapsingToolbarLayout.setContentScrimColor(primaryColor);
-                        collapsingToolbarLayout.setStatusBarScrimColor(ColorUtil.getStatusBarColor(primaryColor));
-                        RxBus.getInstance().post(new PlaylistUpdateEvent());
-                    }
+                .onPositive((dialog, which) -> {
+                    PlaylistSongLoader.removeFromPlaylist(mContext, mAdapter.getSongIds(), playlistID);
+                    mPresenter.loadPlaylistSongs(playlistID);
+                    showPlaylistArt(ATEUtil.getDefaultAlbumDrawable(mContext));
+                    primaryColor = ATEUtil.getThemePrimaryColor(mContext);
+                    collapsingToolbarLayout.setContentScrimColor(primaryColor);
+                    collapsingToolbarLayout.setStatusBarScrimColor(ColorUtil.getStatusBarColor(primaryColor));
+                    RxBus.getInstance().post(new PlaylistUpdateEvent());
                 })
-                .onNegative(new MaterialDialog.SingleButtonCallback() {
-                    @Override
-                    public void onClick(@NonNull MaterialDialog dialog, @NonNull DialogAction which) {
-                        dialog.dismiss();
-                    }
-                })
+                .onNegative((dialog, which) -> dialog.dismiss())
                 .show();
     }
 
     private void showRenamePlaylistDialog(String oldName) {
-        new MaterialDialog.Builder(getActivity())
+        new MaterialDialog.Builder(requireActivity())
                 .title(R.string.rename_playlist)
                 .positiveText(R.string.sure)
                 .negativeText(R.string.cancel)
-                .input(null, oldName, false, new MaterialDialog.InputCallback() {
-                    @Override
-                    public void onInput(@NonNull MaterialDialog dialog, CharSequence input) {
-                        MusicPlayer.renamePlaylist(getActivity(), playlistID, input.toString());
-                        collapsingToolbarLayout.setTitle(input.toString());
-                        playlistName = input.toString();
-                        RxBus.getInstance().post(new PlaylistUpdateEvent());
-                        Toast.makeText(getActivity(), R.string.rename_playlist_success, Toast.LENGTH_SHORT).show();
-                    }
+                .input(null, oldName, false, (dialog, input) -> {
+                    MusicPlayer.renamePlaylist(requireActivity(), playlistID, input.toString());
+                    collapsingToolbarLayout.setTitle(input.toString());
+                    playlistName = input.toString();
+                    RxBus.getInstance().post(new PlaylistUpdateEvent());
+                    Toast.makeText(requireActivity(), R.string.rename_playlist_success, Toast.LENGTH_SHORT).show();
                 })
                 .show();
     }

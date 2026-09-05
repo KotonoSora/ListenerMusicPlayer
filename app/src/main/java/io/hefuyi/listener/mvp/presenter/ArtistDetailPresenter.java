@@ -4,6 +4,7 @@ import android.graphics.Bitmap;
 import android.graphics.drawable.Drawable;
 import android.text.TextUtils;
 
+import androidx.annotation.NonNull;
 import com.bumptech.glide.Glide;
 import com.bumptech.glide.Priority;
 import com.bumptech.glide.load.engine.DiskCacheStrategy;
@@ -31,7 +32,7 @@ public class ArtistDetailPresenter implements ArtistDetailContract.Presenter {
     }
 
     @Override
-    public void attachView(ArtistDetailContract.View view) {
+    public void attachView(@NonNull ArtistDetailContract.View view) {
         mView = view;
         mCompositeSubscription = new CompositeSubscription();
     }

@@ -1,9 +1,14 @@
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    android:layout_width="fill_parent"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:background="?attr/selectableItemBackground"
+    android:fitsSystemWindows="true"
     android:orientation="horizontal"
-    android:paddingLeft="16dp">
+    android:paddingStart="16dp"
+    android:paddingEnd="16dp"
+    tools:ignore="PartiallyHidden">
 
     <ImageView
         android:id="@+id/play_shuffle"
@@ -12,17 +17,19 @@
         android:layout_gravity="center_vertical"
         android:layout_marginTop="16dp"
         android:layout_marginBottom="16dp"
+        android:contentDescription="@string/play_shuffle"
         android:src="@drawable/ic_shuffle_white_36dp"
         android:tag="tint_accent_color"
-        android:tint="?colorAccent" />
+        app:tint="?colorAccent" />
 
     <TextView
         android:id="@+id/textView"
-        style="@style/TextAppearance.AppCompat.Body2"
+        style="@style/ListItemTitleStyle"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_gravity="center_vertical"
-        android:layout_marginLeft="16dp"
-        android:text="@string/play_shuffle" />
+        android:layout_marginStart="16dp"
+        android:text="@string/play_shuffle"
+        tools:ignore="PartiallyHidden" />
 
 </LinearLayout>

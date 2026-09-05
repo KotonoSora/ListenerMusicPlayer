@@ -13,6 +13,7 @@ import android.net.Uri;
 import android.os.IBinder;
 import android.os.RemoteException;
 import android.provider.MediaStore;
+import android.util.Log;
 import android.widget.Toast;
 
 import java.util.Arrays;
@@ -24,6 +25,7 @@ import io.hefuyi.listener.util.ListenerUtil;
  * Created by hefuyi on 2016/10/8.
  */
 
+@SuppressWarnings("deprecation")
 public class MusicPlayer {
 
     private static final WeakHashMap<Context, ServiceBinder> mConnectionMap;
@@ -32,17 +34,14 @@ public class MusicPlayer {
     private static ContentValues[] mContentValuesCache = null;
 
     static {
-        mConnectionMap = new WeakHashMap<Context, ServiceBinder>();
+        mConnectionMap = new WeakHashMap<>();
         sEmptyList = new long[0];
     }
 
     public static ServiceToken bindToService(final Context context,
                                              final ServiceConnection callback) {
 
-        Activity realActivity = ((Activity) context).getParent();
-        if (realActivity == null) {
-            realActivity = (Activity) context;
-        }
+        Activity realActivity = (Activity) context;
         final ContextWrapper contextWrapper = new ContextWrapper(realActivity);
         contextWrapper.startService(new Intent(contextWrapper, MusicService.class));
         final ServiceBinder binder = new ServiceBinder(callback,
@@ -79,6 +78,7 @@ public class MusicPlayer {
         }
     }
 
+    @SuppressWarnings("unused")
     public static void initPlaybackServiceWithSettings(final Context context) {
         setShowAlbumArtOnLockscreen(true);
     }
@@ -86,7 +86,7 @@ public class MusicPlayer {
     /**
      * 在锁屏显示专辑封面
      *
-     * @param enabled
+     * @param enabled enabled state
      */
     public static void setShowAlbumArtOnLockscreen(final boolean enabled) {
         try {
@@ -116,10 +116,10 @@ public class MusicPlayer {
                     mService.play();
                 }
             } else {
-                android.util.Log.e("MusicPlayer", "playOrPause: mService is null!");
+                Log.e("MusicPlayer", "playOrPause: mService is null!");
             }
         } catch (final Exception e) {
-            android.util.Log.e("MusicPlayer", "playOrPause error", e);
+            Log.e("MusicPlayer", "playOrPause error", e);
         }
     }
 
@@ -128,10 +128,10 @@ public class MusicPlayer {
             try {
                 return mService.isPlaying();
             } catch (final RemoteException e) {
-                android.util.Log.e("MusicPlayer", "isPlaying error", e);
+                Log.e("MusicPlayer", "isPlaying error", e);
             }
         } else {
-            android.util.Log.e("MusicPlayer", "isPlaying: mService is null!");
+            Log.e("MusicPlayer", "isPlaying: mService is null!");
         }
         return false;
     }
@@ -146,13 +146,13 @@ public class MusicPlayer {
         return 0;
     }
 
+    @SuppressWarnings("unused")
     public static void setShuffleMode(int mode) {
         try {
             if (mService != null) {
                 mService.setShuffleMode(mode);
             }
         } catch (RemoteException ignored) {
-
         }
     }
 
@@ -166,13 +166,13 @@ public class MusicPlayer {
         return 0;
     }
 
+    @SuppressWarnings("unused")
     public static void setRepeatMode(int mode) {
         try {
             if (mService != null) {
                 mService.setRepeatMode(mode);
             }
         } catch (RemoteException ignored) {
-
         }
     }
 
@@ -250,7 +250,6 @@ public class MusicPlayer {
         try {
             if (mService != null) {
                 return mService.getQueue();
-            } else {
             }
         } catch (final RemoteException ignored) {
         }
@@ -261,7 +260,6 @@ public class MusicPlayer {
         try {
             if (mService != null) {
                 return mService.getQueueSize();
-            } else {
             }
         } catch (final RemoteException ignored) {
         }
@@ -292,11 +290,13 @@ public class MusicPlayer {
             if (mService != null) {
                 return mService.removeTrack(id);
             }
-        } catch (final RemoteException ingored) {
+        } catch (final RemoteException ignored) {
+            // Service disconnected
         }
         return 0;
     }
 
+    @SuppressWarnings("unused")
     public static void playAll(final Context context, final long[] list, int position,
                                final long sourceId, final ListenerUtil.IdType sourceType,
                                final boolean forceShuffle) {
@@ -316,14 +316,12 @@ public class MusicPlayer {
                     return;
                 }
             }
-            if (position < 0) {
-                position = 0;
-            }
-            mService.open(list, forceShuffle ? -1 : position, sourceId, sourceType.mId);
+            final int targetPosition = Math.max(0, position);
+            mService.open(list, forceShuffle ? -1 : targetPosition, sourceId, sourceType.mId);
             mService.play();
         } catch (final RemoteException ignored) {
         } catch (IllegalStateException e) {
-            e.printStackTrace();
+            Log.e("MusicPlayer", "playAll error", e);
         }
     }
 
@@ -359,9 +357,7 @@ public class MusicPlayer {
         if (mService != null) {
             try {
                 return mService.position();
-            } catch (final RemoteException ignored) {
-            } catch (final IllegalStateException ex) {
-
+            } catch (final RemoteException | IllegalStateException ignored) {
             }
         }
         return 0;
@@ -371,9 +367,7 @@ public class MusicPlayer {
         if (mService != null) {
             try {
                 return mService.duration();
-            } catch (final RemoteException ignored) {
-            } catch (final IllegalStateException ignored) {
-
+            } catch (final RemoteException | IllegalStateException ignored) {
             }
         }
         return 0;
@@ -401,7 +395,7 @@ public class MusicPlayer {
         }
         try {
             mService.enqueue(list, MusicService.LAST, sourceId, sourceType.mId);
-            final String message = makeLabel(context, R.plurals.NNNtrackstoqueue, list.length);
+            final String message = makeLabel(context, R.plurals.n_tracks_to_queue, list.length);
             Toast.makeText(context, message, Toast.LENGTH_SHORT).show();
         } catch (final RemoteException ignored) {
         }
@@ -427,52 +421,43 @@ public class MusicPlayer {
     /**
      * 在歌单中批量增加曲目
      *
-     * @param context
-     * @param ids
-     * @param playlistid
+     * @param context    context to use
+     * @param ids        song ids
+     * @param playlistId playlist id
      */
-    public static void addToPlaylist(final Context context, final long[] ids, final long playlistid) {
+    public static void addToPlaylist(final Context context, final long[] ids, final long playlistId) {
         final int size = ids.length;
         final ContentResolver resolver = context.getContentResolver();
         final String[] projection = new String[]{
                 "max(" + "play_order" + ")",
         };
-        final Uri uri = MediaStore.Audio.Playlists.Members.getContentUri("external", playlistid);
-        Cursor cursor = null;
-        int base = 0;
-
-        try {
-            cursor = resolver.query(uri, projection, null, null, null);
-
+        final Uri uri = MediaStore.Audio.Playlists.Members.getContentUri("external", playlistId);
+        final int base;
+        try (Cursor cursor = resolver.query(uri, projection, null, null, null)) {
             if (cursor != null && cursor.moveToFirst()) {
                 base = cursor.getInt(0) + 1;
-            }
-        } finally {
-            if (cursor != null) {
-                cursor.close();
-                cursor = null;
+            } else {
+                base = 0;
             }
         }
 
-        int numinserted = 0;
+        int numInserted = 0;
         for (int offSet = 0; offSet < size; offSet += 1000) {
             makeInsertItems(ids, offSet, 1000, base);
-            numinserted += resolver.bulkInsert(uri, mContentValuesCache);
+            numInserted += resolver.bulkInsert(uri, mContentValuesCache);
         }
         final String message = context.getResources().getQuantityString(
-                R.plurals.NNNtrackstoplaylist, numinserted, numinserted);
+                R.plurals.n_tracks_to_playlist, numInserted, numInserted);
         Toast.makeText(context, message, Toast.LENGTH_SHORT).show();
     }
 
     public static void makeInsertItems(final long[] ids, final int offset, int len, final int base) {
-        if (offset + len > ids.length) {
-            len = ids.length - offset;
-        }
+        final int insertLen = Math.min(len, ids.length - offset);
 
-        if (mContentValuesCache == null || mContentValuesCache.length != len) {
-            mContentValuesCache = new ContentValues[len];
+        if (mContentValuesCache == null || mContentValuesCache.length != insertLen) {
+            mContentValuesCache = new ContentValues[insertLen];
         }
-        for (int i = 0; i < len; i++) {
+        for (int i = 0; i < insertLen; i++) {
             if (mContentValuesCache[i] == null) {
                 mContentValuesCache[i] = new ContentValues();
             }
@@ -489,7 +474,7 @@ public class MusicPlayer {
      * @return playlist id or -1 for fail
      */
     public static long createPlaylist(final Context context, final String name) {
-        if (name != null && name.length() > 0) {
+        if (name != null && !name.isEmpty()) {
             final ContentResolver resolver = context.getContentResolver();
             final String[] projection = new String[]{
                     MediaStore.Audio.PlaylistsColumns.NAME
@@ -497,26 +482,31 @@ public class MusicPlayer {
             final String selection = MediaStore.Audio.PlaylistsColumns.NAME + " = '" + name + "'";
             Cursor cursor = resolver.query(MediaStore.Audio.Playlists.EXTERNAL_CONTENT_URI,
                     projection, selection, null, null);
-            if (cursor.getCount() <= 0) {
-                final ContentValues values = new ContentValues(1);
-                values.put(MediaStore.Audio.PlaylistsColumns.NAME, name);
-                final Uri uri = resolver.insert(MediaStore.Audio.Playlists.EXTERNAL_CONTENT_URI,
-                        values);
-                return Long.parseLong(uri.getLastPathSegment());
+            if (cursor != null) {
+                try {
+                    if (cursor.getCount() <= 0) {
+                        final ContentValues values = new ContentValues(1);
+                        values.put(MediaStore.Audio.PlaylistsColumns.NAME, name);
+                        final Uri uri = resolver.insert(MediaStore.Audio.Playlists.EXTERNAL_CONTENT_URI,
+                                values);
+                        if (uri != null && uri.getLastPathSegment() != null) {
+                            return Long.parseLong(uri.getLastPathSegment());
+                        }
+                    }
+                } finally {
+                    cursor.close();
+                }
             }
-            cursor.close();
-            cursor = null;
-            return -1;
         }
         return -1;
     }
 
-    public static void renamePlaylist(final Context context, long playlistid, String newName) {
+    public static void renamePlaylist(final Context context, long playlistId, String newName) {
         final ContentResolver resolver = context.getContentResolver();
         ContentValues values = new ContentValues(1);
         values.put(MediaStore.Audio.Playlists.NAME, newName);
         resolver.update(MediaStore.Audio.Playlists.EXTERNAL_CONTENT_URI,
-                values, "_id=" + playlistid, null);
+                values, "_id=" + playlistId, null);
     }
 
     public static void openFile(final String path) {

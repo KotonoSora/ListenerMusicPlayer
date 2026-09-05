@@ -1,5 +1,7 @@
 package io.hefuyi.listener;
 
+import android.util.Log;
+
 import java.util.HashMap;
 
 import rx.Observable;
@@ -38,19 +40,19 @@ public class RxBus {
     /**
      * 发送事件
      *
-     * @param o
+     * @param o The event object to post.
      */
     public void post(Object o) {
-        android.util.Log.d("RxBus", "Post event: " + o.getClass().getSimpleName());
+        Log.d("RxBus", "Post event: " + o.getClass().getSimpleName());
         mSubject.onNext(o);
     }
 
     /**
      * 返回指定类型的Observable实例
      *
-     * @param type
-     * @param <T>
-     * @return
+     * @param type Class type of the event.
+     * @param <T> Event type parameter.
+     * @return Observable for the specified event class.
      */
     public <T> Observable<T> toObservable(final Class<T> type) {
         return mSubject.ofType(type);
@@ -59,8 +61,9 @@ public class RxBus {
     /**
      * 是否已有观察者订阅
      *
-     * @return
+     * @return True if observers exist.
      */
+    @SuppressWarnings("unused")
     public boolean hasObservers() {
         return mSubject.hasObservers();
     }
@@ -68,12 +71,13 @@ public class RxBus {
     /**
      * 一个默认的订阅方法
      *
-     * @param type
-     * @param next
-     * @param error
-     * @param <T>
-     * @return
+     * @param type Event class type.
+     * @param next Action for onNext.
+     * @param error Action for onError.
+     * @param <T> Event type.
+     * @return Subscription instance.
      */
+    @SuppressWarnings("unused")
     public <T> Subscription doSubscribe(Class<T> type, Action1<T> next, Action1<Throwable> error) {
         return toObservable(type)
                 .subscribeOn(Schedulers.io())
@@ -84,17 +88,18 @@ public class RxBus {
     /**
      * 保存订阅后的subscription
      *
-     * @param o
-     * @param subscription
+     * @param o Target object subscriber.
+     * @param subscription Subscription to add.
      */
     public void addSubscription(Object o, Subscription subscription) {
         if (mSubscriptionMap == null) {
             mSubscriptionMap = new HashMap<>();
         }
-        if (mSubscriptionMap.get(o) != null) {
-            mSubscriptionMap.get(o).add(subscription);
+        CompositeSubscription compositeSubscription = mSubscriptionMap.get(o);
+        if (compositeSubscription != null) {
+            compositeSubscription.add(subscription);
         } else {
-            CompositeSubscription compositeSubscription = new CompositeSubscription();
+            compositeSubscription = new CompositeSubscription();
             compositeSubscription.add(subscription);
             mSubscriptionMap.put(o, compositeSubscription);
         }
@@ -103,7 +108,7 @@ public class RxBus {
     /**
      * 取消订阅
      *
-     * @param o
+     * @param o Target object subscriber.
      */
     public void unSubscribe(Object o) {
         if (mSubscriptionMap == null) {
@@ -113,8 +118,9 @@ public class RxBus {
         if (!mSubscriptionMap.containsKey(o)) {
             return;
         }
-        if (mSubscriptionMap.get(o) != null) {
-            mSubscriptionMap.get(o).unsubscribe();
+        CompositeSubscription compositeSubscription = mSubscriptionMap.get(o);
+        if (compositeSubscription != null) {
+            compositeSubscription.unsubscribe();
         }
 
         mSubscriptionMap.remove(o);
