@@ -58,9 +58,9 @@ public class AlbumSongsAdapter extends RecyclerView.Adapter<AlbumSongsAdapter.It
         itemHolder.artist.setText(localItem.artistName);
         itemHolder.album.setText(localItem.albumName);
 
-        Glide.with(mContext)
+        Glide.with(itemHolder.itemView.getContext())
                 .load(ListenerUtil.getAlbumArtUri(localItem.albumId))
-                .diskCacheStrategy(DiskCacheStrategy.SOURCE)
+                .diskCacheStrategy(DiskCacheStrategy.DATA)
                 .error(ATEUtil.getDefaultAlbumDrawable(mContext))
                 .centerCrop()
                 .into(itemHolder.albumArt);

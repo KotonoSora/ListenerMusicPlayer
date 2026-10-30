@@ -4,14 +4,14 @@ import android.util.Log;
 
 import java.util.HashMap;
 
-import rx.Observable;
-import rx.Subscription;
-import rx.android.schedulers.AndroidSchedulers;
-import rx.functions.Action1;
-import rx.schedulers.Schedulers;
-import rx.subjects.PublishSubject;
-import rx.subjects.SerializedSubject;
-import rx.subscriptions.CompositeSubscription;
+import io.reactivex.rxjava3.android.schedulers.AndroidSchedulers;
+import io.reactivex.rxjava3.core.Observable;
+import io.reactivex.rxjava3.disposables.CompositeDisposable;
+import io.reactivex.rxjava3.disposables.Disposable;
+import io.reactivex.rxjava3.functions.Consumer;
+import io.reactivex.rxjava3.schedulers.Schedulers;
+import io.reactivex.rxjava3.subjects.PublishSubject;
+import io.reactivex.rxjava3.subjects.Subject;
 
 /**
  * Created by hefuyi on 2017/1/2.
@@ -19,11 +19,11 @@ import rx.subscriptions.CompositeSubscription;
 
 public class RxBus {
     private static volatile RxBus mInstance;
-    private final SerializedSubject<Object, Object> mSubject;
-    private HashMap<Object, CompositeSubscription> mSubscriptionMap;
+    private final Subject<Object> mSubject;
+    private HashMap<Object, CompositeDisposable> mSubscriptionMap;
 
     private RxBus() {
-        mSubject = new SerializedSubject<>(PublishSubject.create());
+        mSubject = PublishSubject.create().toSerialized();
     }
 
     public static RxBus getInstance() {
@@ -75,10 +75,10 @@ public class RxBus {
      * @param next Action for onNext.
      * @param error Action for onError.
      * @param <T> Event type.
-     * @return Subscription instance.
+     * @return Disposable instance.
      */
     @SuppressWarnings("unused")
-    public <T> Subscription doSubscribe(Class<T> type, Action1<T> next, Action1<Throwable> error) {
+    public <T> Disposable doSubscribe(Class<T> type, Consumer<T> next, Consumer<Throwable> error) {
         return toObservable(type)
                 .subscribeOn(Schedulers.io())
                 .observeOn(AndroidSchedulers.mainThread())
@@ -86,22 +86,22 @@ public class RxBus {
     }
 
     /**
-     * 保存订阅后的subscription
+     * 保存订阅后的disposable
      *
      * @param o Target object subscriber.
-     * @param subscription Subscription to add.
+     * @param disposable Disposable to add.
      */
-    public void addSubscription(Object o, Subscription subscription) {
+    public void addSubscription(Object o, Disposable disposable) {
         if (mSubscriptionMap == null) {
             mSubscriptionMap = new HashMap<>();
         }
-        CompositeSubscription compositeSubscription = mSubscriptionMap.get(o);
-        if (compositeSubscription != null) {
-            compositeSubscription.add(subscription);
+        CompositeDisposable compositeDisposable = mSubscriptionMap.get(o);
+        if (compositeDisposable != null) {
+            compositeDisposable.add(disposable);
         } else {
-            compositeSubscription = new CompositeSubscription();
-            compositeSubscription.add(subscription);
-            mSubscriptionMap.put(o, compositeSubscription);
+            compositeDisposable = new CompositeDisposable();
+            compositeDisposable.add(disposable);
+            mSubscriptionMap.put(o, compositeDisposable);
         }
     }
 
@@ -118,9 +118,9 @@ public class RxBus {
         if (!mSubscriptionMap.containsKey(o)) {
             return;
         }
-        CompositeSubscription compositeSubscription = mSubscriptionMap.get(o);
-        if (compositeSubscription != null) {
-            compositeSubscription.unsubscribe();
+        CompositeDisposable compositeDisposable = mSubscriptionMap.get(o);
+        if (compositeDisposable != null) {
+            compositeDisposable.dispose();
         }
 
         mSubscriptionMap.remove(o);

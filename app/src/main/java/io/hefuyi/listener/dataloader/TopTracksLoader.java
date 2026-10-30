@@ -10,7 +10,7 @@ import java.util.List;
 import io.hefuyi.listener.mvp.model.Song;
 import io.hefuyi.listener.provider.RecentStore;
 import io.hefuyi.listener.provider.SongPlayCount;
-import rx.Observable;
+import io.reactivex.rxjava3.core.Observable;
 
 public class TopTracksLoader extends SongLoader {
 

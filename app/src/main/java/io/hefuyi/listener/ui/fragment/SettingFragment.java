@@ -19,7 +19,6 @@ import android.widget.TextView;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.core.widget.CompoundButtonCompat;
-import androidx.fragment.app.Fragment;
 
 import com.afollestad.appthemeengine.ATE;
 import com.afollestad.appthemeengine.Config;
@@ -32,7 +31,7 @@ import io.hefuyi.listener.util.ATEUtil;
 import io.hefuyi.listener.util.PreferencesUtility;
 
 /**
- * A simple {@link Fragment} subclass.
+ * Settings screen (framework PreferenceFragment).
  */
 @SuppressWarnings("deprecation")
 public class SettingFragment extends PreferenceFragment implements SharedPreferences.OnSharedPreferenceChangeListener {

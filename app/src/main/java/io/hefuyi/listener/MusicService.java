@@ -57,8 +57,8 @@ import androidx.media.app.NotificationCompat.MediaStyle;
 import androidx.palette.graphics.Palette;
 
 import com.bumptech.glide.Glide;
-import com.bumptech.glide.request.animation.GlideAnimation;
-import com.bumptech.glide.request.target.SimpleTarget;
+import com.bumptech.glide.request.transition.Transition;
+import com.bumptech.glide.request.target.CustomTarget;
 
 import java.io.IOException;
 import java.lang.ref.WeakReference;
@@ -285,9 +285,6 @@ public class MusicService extends Service {
 
 
         mAudioManager = (AudioManager) getSystemService(Context.AUDIO_SERVICE);
-        ComponentName mediaButtonReceiverComponent = new ComponentName(getPackageName(),
-                MediaButtonIntentReceiver.class.getName());
-        mAudioManager.registerMediaButtonEventReceiver(mediaButtonReceiverComponent);
 
         setUpMediaSession();
 
@@ -310,10 +307,7 @@ public class MusicService extends Service {
         filter.addAction(PREVIOUS_FORCE_ACTION);
         filter.addAction(REPEAT_ACTION);
         filter.addAction(SHUFFLE_ACTION);
-        // Attach the broadcast listener
-        // registerReceiver(mIntentReceiver, filter);
-
-        // Use ContextCompat to register the receiver
+        // Attach the broadcast listener (non-exported, same-app only)
         ContextCompat.registerReceiver(
                 this,
                 mIntentReceiver,
@@ -338,7 +332,6 @@ public class MusicService extends Service {
         shutdownIntent.setAction(SHUTDOWN);
 
         mAlarmManager = (AlarmManager) getSystemService(Context.ALARM_SERVICE);
-        // mShutdownIntent = PendingIntent.getService(this, 0, shutdownIntent, 0);
         int flags = PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE;
 
         mShutdownIntent = PendingIntent.getService(this, 0, shutdownIntent, flags);
@@ -595,11 +588,11 @@ public class MusicService extends Service {
         final Uri albumArtUri = ListenerUtil.getAlbumArtUri(getAlbumId());
         if (albumArtUri != null) {
             Glide.with(MusicService.this)
-                    .load(albumArtUri)
                     .asBitmap()
-                    .into(new SimpleTarget<Bitmap>(500, 500) {
+                    .load(albumArtUri)
+                    .into(new CustomTarget<Bitmap>(500, 500) {
                         @Override
-                        public void onResourceReady(Bitmap resource, GlideAnimation<? super Bitmap> glideAnimation) {
+                        public void onResourceReady(Bitmap resource, Transition<? super Bitmap> transition) {
                             if (mNotifyMode != NOTIFY_MODE_NONE) {
                                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
                                     if (ContextCompat.checkSelfPermission(MusicService.this, Manifest.permission.POST_NOTIFICATIONS)
@@ -610,6 +603,9 @@ public class MusicService extends Service {
                                     mNotificationManager.notify(hashCode(), buildNotification(resource));
                                 }
                             }
+                        }
+                        @Override
+                        public void onLoadCleared(Drawable placeholder) {
                         }
                     });
         }
@@ -942,7 +938,6 @@ public class MusicService extends Service {
                         shutdown = true;
                         break;
                     }
-//                    mPlayPos = pos;
                     stop(false);
                     mPlayPos = pos;
                     updateCursor(mPlaylist.get(mPlayPos).mId); //尝试读取下一首
@@ -1198,7 +1193,7 @@ public class MusicService extends Service {
         intent.putExtra("track", getTrackName());
         intent.putExtra("playing", isPlaying());
 
-        sendStickyBroadcast(intent);
+        sendBroadcast(intent);
 
         switch (what) {
             case META_CHANGED:
@@ -1259,17 +1254,21 @@ public class MusicService extends Service {
         final Uri albumArtUri = ListenerUtil.getAlbumArtUri(getAlbumId());
         if (albumArtUri != null) {
             Glide.with(MusicService.this)
-                    .load(albumArtUri)
                     .asBitmap()
-                    .into(new SimpleTarget<Bitmap>(500, 500) {
+                    .load(albumArtUri)
+                    .into(new CustomTarget<Bitmap>(500, 500) {
                         @Override
-                        public void onResourceReady(Bitmap resource, GlideAnimation<? super Bitmap> glideAnimation) {
+                        public void onResourceReady(Bitmap resource, Transition<? super Bitmap> transition) {
                             setMediaSessionMetadata(resource);
                         }
 
                         @Override
-                        public void onLoadFailed(Exception e, Drawable errorDrawable) {
+                        public void onLoadFailed(Drawable errorDrawable) {
                             setMediaSessionMetadata(null);
+                        }
+
+                        @Override
+                        public void onLoadCleared(Drawable placeholder) {
                         }
                     });
         } else {
@@ -1380,7 +1379,6 @@ public class MusicService extends Service {
         Intent intent = new Intent(action);
         intent.setComponent(serviceName);
 
-        // return PendingIntent.getService(this, 0, intent, 0);
         int flags = PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE;
 
         return PendingIntent.getService(this, 0, intent, flags);
@@ -2067,8 +2065,6 @@ public class MusicService extends Service {
         intent.putExtra(AudioEffect.EXTRA_PACKAGE_NAME, getPackageName());
         sendBroadcast(intent);
 
-        mAudioManager.registerMediaButtonEventReceiver(new ComponentName(getPackageName(),
-                MediaButtonIntentReceiver.class.getName()));
         mSession.setActive(true);
 
         if (createNewNextTrack) {

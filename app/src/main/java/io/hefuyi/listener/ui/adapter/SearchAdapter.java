@@ -35,9 +35,9 @@ import io.hefuyi.listener.util.ATEUtil;
 import io.hefuyi.listener.util.ListenerUtil;
 import io.hefuyi.listener.util.NavigationUtil;
 import io.hefuyi.listener.util.PreferencesUtility;
-import rx.Observable;
-import rx.android.schedulers.AndroidSchedulers;
-import rx.schedulers.Schedulers;
+import io.reactivex.rxjava3.core.Observable;
+import io.reactivex.rxjava3.android.schedulers.AndroidSchedulers;
+import io.reactivex.rxjava3.schedulers.Schedulers;
 
 /**
  * Created by hefuyi on 2017/1/3.
@@ -92,8 +92,8 @@ public class SearchAdapter extends RecyclerView.Adapter<SearchAdapter.ItemHolder
                 itemHolder.subtitle2.setText(ListenerUtil.makeLabel(mContext, R.plurals.n_songs, album.songCount));
 
                 Glide.with(itemHolder.itemView.getContext())
-                        .load(ListenerUtil.getAlbumArtUri(album.id))
                         .asBitmap()
+                        .load(ListenerUtil.getAlbumArtUri(album.id))
                         .placeholder(ATEUtil.getDefaultAlbumDrawable(mContext))
                         .error(ATEUtil.getDefaultAlbumDrawable(mContext))
                         .centerCrop()
@@ -112,11 +112,11 @@ public class SearchAdapter extends RecyclerView.Adapter<SearchAdapter.ItemHolder
                 String artistArtJson = PreferencesUtility.getInstance(mContext).getArtistArt(artist.id);
                 if (!TextUtils.isEmpty(artistArtJson)) {
                     ArtistArt artistArt = new Gson().fromJson(artistArtJson, ArtistArt.class);
-                    Glide.with(mContext)
-                            .load(artistArt.getLarge())
+                    Glide.with(itemHolder.itemView.getContext())
                             .asBitmap()
+                            .load(artistArt.getLarge())
                             .placeholder(ATEUtil.getDefaultSingerDrawable(mContext))
-                            .diskCacheStrategy(DiskCacheStrategy.SOURCE)
+                            .diskCacheStrategy(DiskCacheStrategy.DATA)
                             .error(ATEUtil.getDefaultSingerDrawable(mContext))
                             .into(itemHolder.image);
                 }

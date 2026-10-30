@@ -16,11 +16,7 @@
 #   public *;
 #}
 
-# retrofit
--keep class com.squareup.okhttp.** { *; }
--keep class retrofit2.** { *; }
--keep interface com.squareup.okhttp.** { *; }
--keep class io.hefuyi.listener.api.model.** { *; }
+# mvp models (incl. ArtistArt parsed by Gson, MusicPlaybackTrack parcelable)
 -keep class io.hefuyi.listener.mvp.model.** { *; }
 
 -keep class androidx.fragment.app.** { *; }
@@ -28,14 +24,7 @@
 -keep class androidx.appcompat.app.** { *; }
 -keep interface androidx.appcompat.app.** { *; }
 
--dontwarn com.squareup.okhttp.**
--dontwarn okio.**
--dontwarn retrofit2.**
--dontwarn rx.**
-
--keepclasseswithmembers class * {
-    @retrofit2.http.* <methods>;
-}
+-dontwarn io.reactivex.**
 
 -keepattributes Exceptions
 -keepattributes Signature
@@ -44,15 +33,44 @@
 #searchview
 -keep class androidx.appcompat.widget.SearchView { *; }
 
-# RxJava RxAndroid
+# Dagger2 — generated factories must survive R8 full mode
+-keep class dagger.** { *; }
+-keep class javax.inject.** { *; }
+-keep class io.hefuyi.listener.injector.** { *; }
+-keep class **_MembersInjector { *; }
+-keep class **_Factory { *; }
+-keep class **_Provide*Factory { *; }
+-keepattributes *Annotation*, Signature
+
+# Glide 5.x — reflection-based API (ships its own consumer rules;
+# explicit keeps below survive R8 full mode)
+-keep public class * extends com.bumptech.glide.module.AppGlideModule
+-keep public enum com.bumptech.glide.load.resource.bitmap.ImageHeaderParser$** {
+    **[] $VALUES;
+    public *;
+}
+-dontwarn com.bumptech.glide.**
+
+# AIDL service interface — called across processes via reflection/binder
+-keep class io.hefuyi.listener.IListenerService { *; }
+-keep class io.hefuyi.listener.IListenerService$Stub { *; }
+
+# Parcelable model used in queue/history
+-keep class io.hefuyi.listener.mvp.model.MusicPlaybackTrack { *; }
+
+# App widgets inflated from layout XML (TimelyView, FastScrollRecyclerView,
+# SquareImageView, ForegroundImageView, LyricView, PlayPauseView) and the
+# CoordinatorLayout behavior referenced by string (RotationFabBehavior).
+# AGP auto-keeps most of these; explicit keep survives R8 full-mode upgrades.
+-keep class io.hefuyi.listener.widget.** { *; }
+
+# SlidingUpPanel / ATE / MaterialDialogs — reflection and custom views
+-keep class com.sothree.slidinguppanel.** { *; }
+-keep class com.afollestad.appthemeengine.** { *; }
+-keep class com.afollestad.materialdialogs.** { *; }
+-keep class androidx.media.** { *; }
+-keep class android.support.v4.media.** { *; }
+-keep class androidx.lifecycle.** { *; }
+
+# RxJava3 / RxAndroid3 (ships its own consumer rules; only silence Unsafe warnings)
 -dontwarn sun.misc.**
--keepclassmembers class rx.internal.util.unsafe.*ArrayQueue*Field* {
-    long producerIndex;
-    long consumerIndex;
-}
--keepclassmembers class rx.internal.util.unsafe.BaseLinkedQueueProducerNodeRef {
-    rx.internal.util.atomic.LinkedQueueNode producerNode;
-}
--keepclassmembers class rx.internal.util.unsafe.BaseLinkedQueueConsumerNodeRef {
-    rx.internal.util.atomic.LinkedQueueNode consumerNode;
-}

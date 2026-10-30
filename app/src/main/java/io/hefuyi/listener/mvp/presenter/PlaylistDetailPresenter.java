@@ -5,8 +5,8 @@ import android.graphics.drawable.Drawable;
 
 import com.bumptech.glide.Glide;
 import com.bumptech.glide.Priority;
-import com.bumptech.glide.request.animation.GlideAnimation;
-import com.bumptech.glide.request.target.SimpleTarget;
+import com.bumptech.glide.request.transition.Transition;
+import com.bumptech.glide.request.target.CustomTarget;
 
 import androidx.annotation.NonNull;
 
@@ -14,10 +14,10 @@ import io.hefuyi.listener.mvp.contract.PlaylistDetailContract;
 import io.hefuyi.listener.mvp.usecase.GetPlaylistSongs;
 import io.hefuyi.listener.util.ATEUtil;
 import io.hefuyi.listener.util.ListenerUtil;
-import rx.Subscription;
-import rx.android.schedulers.AndroidSchedulers;
-import rx.schedulers.Schedulers;
-import rx.subscriptions.CompositeSubscription;
+import io.reactivex.rxjava3.disposables.Disposable;
+import io.reactivex.rxjava3.android.schedulers.AndroidSchedulers;
+import io.reactivex.rxjava3.schedulers.Schedulers;
+import io.reactivex.rxjava3.disposables.CompositeDisposable;
 
 /**
  * Created by hefuyi on 2016/12/6.
@@ -27,7 +27,7 @@ public class PlaylistDetailPresenter implements PlaylistDetailContract.Presenter
 
     private final GetPlaylistSongs mUseCase;
     private PlaylistDetailContract.View mView;
-    private CompositeSubscription mCompositeSubscription;
+    private CompositeDisposable mCompositeDisposable;
 
     public PlaylistDetailPresenter(GetPlaylistSongs getPlaylistSongs) {
         mUseCase = getPlaylistSongs;
@@ -35,32 +35,34 @@ public class PlaylistDetailPresenter implements PlaylistDetailContract.Presenter
 
     @Override
     public void loadPlaylistSongs(long playlistID) {
-        mCompositeSubscription.clear();
-        Subscription subscription = mUseCase.execute(new GetPlaylistSongs.RequestValues(playlistID))
+        mCompositeDisposable.clear();
+        Disposable subscription = mUseCase.execute(new GetPlaylistSongs.RequestValues(playlistID))
                 .getSongList()
                 .subscribeOn(Schedulers.io())
                 .observeOn(AndroidSchedulers.mainThread())
                 .subscribe(mView::showPlaylistSongs);
-        mCompositeSubscription.add(subscription);
+        mCompositeDisposable.add(subscription);
     }
 
     @Override
     public void loadPlaylistArt(long firstAlbumID) {
         Glide.with(mView.getContext())
-                .load(ListenerUtil.getAlbumArtUri(firstAlbumID))
                 .asBitmap()
+                .load(ListenerUtil.getAlbumArtUri(firstAlbumID))
                 .priority(Priority.IMMEDIATE)
                 .error(ATEUtil.getDefaultAlbumDrawable(mView.getContext()))
-                .into(new SimpleTarget<Bitmap>() {
+                .into(new CustomTarget<Bitmap>() {
                     @Override
-                    public void onLoadFailed(Exception e, Drawable errorDrawable) {
-                        super.onLoadFailed(e, errorDrawable);
+                    public void onLoadFailed(Drawable errorDrawable) {
                         mView.showPlaylistArt(errorDrawable);
                     }
 
                     @Override
-                    public void onResourceReady(Bitmap resource, GlideAnimation<? super Bitmap> glideAnimation) {
+                    public void onResourceReady(Bitmap resource, Transition<? super Bitmap> transition) {
                         mView.showPlaylistArt(resource);
+                    }
+                    @Override
+                    public void onLoadCleared(Drawable placeholder) {
                     }
                 });
     }
@@ -68,7 +70,7 @@ public class PlaylistDetailPresenter implements PlaylistDetailContract.Presenter
     @Override
     public void attachView(@NonNull PlaylistDetailContract.View view) {
         mView = view;
-        mCompositeSubscription = new CompositeSubscription();
+        mCompositeDisposable = new CompositeDisposable();
     }
 
     @Override
@@ -77,6 +79,6 @@ public class PlaylistDetailPresenter implements PlaylistDetailContract.Presenter
 
     @Override
     public void unsubscribe() {
-        mCompositeSubscription.clear();
+        mCompositeDisposable.clear();
     }
 }

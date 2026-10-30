@@ -23,8 +23,7 @@ import io.hefuyi.listener.mvp.model.FolderInfo;
 import io.hefuyi.listener.mvp.model.Playlist;
 import io.hefuyi.listener.mvp.model.Song;
 import io.hefuyi.listener.respository.interfaces.Repository;
-import rx.Observable;
-import rx.functions.Func1;
+import io.reactivex.rxjava3.core.Observable;
 
 /**
  * Created by hefuyi on 2016/11/3.
@@ -172,18 +171,18 @@ public class RepositoryImpl implements Repository {
     @Override
     public Observable<List<Object>> getSearchResult(String queryString) {
         Observable<Song> songList = SongLoader.searchSongs(mContext, queryString)
-                .flatMap(Observable::from);
+                .flatMap(Observable::fromIterable);
 
         Observable<Album> albumList = AlbumLoader.getAlbums(mContext, queryString)
-                .flatMap(Observable::from);
+                .flatMap(Observable::fromIterable);
 
         Observable<Artist> artistList = ArtistLoader.getArtists(mContext, queryString)
-                .flatMap(Observable::from);
+                .flatMap(Observable::fromIterable);
 
         Observable<String> songHeader = Observable.just(mContext.getString(R.string.songs));
         Observable<String> albumHeader = Observable.just(mContext.getString(R.string.albums));
         Observable<String> artistHeader = Observable.just(mContext.getString(R.string.artists));
 
-        return Observable.merge(songHeader, songList, albumHeader, albumList, artistHeader, artistList).toList();
+        return Observable.<Object>mergeArray(songHeader, songList, albumHeader, albumList, artistHeader, artistList).toList().toObservable();
     }
 }

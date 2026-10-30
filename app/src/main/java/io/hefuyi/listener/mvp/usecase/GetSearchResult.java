@@ -3,7 +3,7 @@ package io.hefuyi.listener.mvp.usecase;
 import java.util.List;
 
 import io.hefuyi.listener.respository.interfaces.Repository;
-import rx.Observable;
+import io.reactivex.rxjava3.core.Observable;
 
 /**
  * Created by hefuyi on 2017/1/3.

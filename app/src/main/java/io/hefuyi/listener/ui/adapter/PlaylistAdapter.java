@@ -13,16 +13,18 @@ import android.widget.ImageView;
 import android.widget.PopupMenu;
 import android.widget.TextView;
 import android.widget.Toast;
+import android.widget.EditText;
+import android.widget.FrameLayout;
 
 import androidx.annotation.NonNull;
 import androidx.fragment.app.Fragment;
 import androidx.palette.graphics.Palette;
 import androidx.recyclerview.widget.RecyclerView;
 
-import com.afollestad.materialdialogs.MaterialDialog;
+import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 import com.bumptech.glide.Glide;
-import com.bumptech.glide.request.animation.GlideAnimation;
-import com.bumptech.glide.request.target.SimpleTarget;
+import com.bumptech.glide.request.transition.Transition;
+import com.bumptech.glide.request.target.CustomTarget;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -39,9 +41,9 @@ import io.hefuyi.listener.util.ListenerUtil;
 import io.hefuyi.listener.util.NavigationUtil;
 import io.hefuyi.listener.util.PreferencesUtility;
 import io.hefuyi.listener.widget.fastscroller.FastScrollRecyclerView;
-import rx.Observable;
-import rx.android.schedulers.AndroidSchedulers;
-import rx.schedulers.Schedulers;
+import io.reactivex.rxjava3.core.Observable;
+import io.reactivex.rxjava3.android.schedulers.AndroidSchedulers;
+import io.reactivex.rxjava3.schedulers.Schedulers;
 
 public class PlaylistAdapter extends RecyclerView.Adapter<PlaylistAdapter.ItemHolder> implements FastScrollRecyclerView.SectionedAdapter {
 
@@ -90,12 +92,12 @@ public class PlaylistAdapter extends RecyclerView.Adapter<PlaylistAdapter.ItemHo
                     itemHolder.playlistArt.setTag(R.string.playlistArt, firstAlbumID);
 
                     Glide.with(itemHolder.itemView.getContext())
-                            .load(uri)
                             .asBitmap()
+                            .load(uri)
                             .placeholder(ATEUtil.getDefaultAlbumDrawable(mContext))
-                            .into(new SimpleTarget<Bitmap>() {
+                            .into(new CustomTarget<Bitmap>() {
                                 @Override
-                                public void onLoadFailed(Exception e, Drawable errorDrawable) {
+                                public void onLoadFailed(Drawable errorDrawable) {
                                     if (isGrid) {
                                         itemHolder.footer.setBackgroundColor(ATEUtil.getThemeAlbumDefaultPaletteColor(mContext));
                                     }
@@ -106,7 +108,7 @@ public class PlaylistAdapter extends RecyclerView.Adapter<PlaylistAdapter.ItemHo
                                 }
 
                                 @Override
-                                public void onResourceReady(final Bitmap resource, GlideAnimation<? super Bitmap> glideAnimation) {
+                                public void onResourceReady(final Bitmap resource, Transition<? super Bitmap> transition) {
                                     if (isGrid) {
                                         new Palette.Builder(resource).generate(palette -> {
                                             Palette.Swatch swatch = ColorUtil.getMostPopulousSwatch(palette);
@@ -124,6 +126,9 @@ public class PlaylistAdapter extends RecyclerView.Adapter<PlaylistAdapter.ItemHo
                                     } else {
                                         itemHolder.playlistArt.setImageBitmap(resource);
                                     }
+                                }
+                                @Override
+                                public void onLoadCleared(Drawable placeholder) {
                                 }
                             });
                 });
@@ -163,15 +168,28 @@ public class PlaylistAdapter extends RecyclerView.Adapter<PlaylistAdapter.ItemHo
                 final Playlist playlist = arraylist.get(adapterPos);
                 int itemId = item.getItemId();
                 if (itemId == R.id.popup_playlist_rename) {
-                    new MaterialDialog.Builder(mContext)
-                            .title(R.string.rename_playlist)
-                            .positiveText(R.string.sure)
-                            .negativeText(R.string.cancel)
-                            .input(null, playlist.name, false, (dialog, input) -> {
-                                MusicPlayer.renamePlaylist(mContext, playlist.id, input.toString());
-                                itemHolder.title.setText(input.toString());
+                    final EditText renameInput = new EditText(mContext);
+                    renameInput.setText(playlist.name);
+                    renameInput.setSelection(playlist.name != null ? playlist.name.length() : 0);
+                    renameInput.setSingleLine(true);
+                    int renameMargin = (int) (24 * mContext.getResources().getDisplayMetrics().density);
+                    FrameLayout renameContainer = new FrameLayout(mContext);
+                    FrameLayout.LayoutParams renameParams = new FrameLayout.LayoutParams(
+                            FrameLayout.LayoutParams.MATCH_PARENT, FrameLayout.LayoutParams.WRAP_CONTENT);
+                    renameParams.leftMargin = renameMargin;
+                    renameParams.rightMargin = renameMargin;
+                    renameInput.setLayoutParams(renameParams);
+                    renameContainer.addView(renameInput);
+                    new MaterialAlertDialogBuilder(mContext)
+                            .setTitle(R.string.rename_playlist)
+                            .setView(renameContainer)
+                            .setPositiveButton(R.string.sure, (dialog, which) -> {
+                                String newName = renameInput.getText().toString();
+                                MusicPlayer.renamePlaylist(mContext, playlist.id, newName);
+                                itemHolder.title.setText(newName);
                                 Toast.makeText(mContext, R.string.rename_playlist_success, Toast.LENGTH_SHORT).show();
                             })
+                            .setNegativeButton(R.string.cancel, null)
                             .show();
                 } else if (itemId == R.id.popup_playlist_addto_playlist) {
                     getSongListIdByPlaylist(playlist.id)
@@ -184,11 +202,9 @@ public class PlaylistAdapter extends RecyclerView.Adapter<PlaylistAdapter.ItemHo
                             .observeOn(AndroidSchedulers.mainThread())
                             .subscribe(ids -> MusicPlayer.addToQueue(mContext, ids, -1, ListenerUtil.IdType.Playlist));
                 } else if (itemId == R.id.popup_playlist_delete) {
-                    new MaterialDialog.Builder(mContext)
-                            .title(R.string.delete_playlist)
-                            .positiveText(R.string.delete)
-                            .negativeText(R.string.cancel)
-                            .onPositive((dialog, which) -> {
+                    new MaterialAlertDialogBuilder(mContext)
+                            .setTitle(R.string.delete_playlist)
+                            .setPositiveButton(R.string.delete, (dialog, which) -> {
                                 int delPos = itemHolder.getBindingAdapterPosition();
                                 if (delPos != RecyclerView.NO_POSITION) {
                                     PlaylistLoader.deletePlaylists(mContext, playlist.id);
@@ -197,7 +213,7 @@ public class PlaylistAdapter extends RecyclerView.Adapter<PlaylistAdapter.ItemHo
                                     Toast.makeText(mContext, R.string.delete_playlist_success, Toast.LENGTH_SHORT).show();
                                 }
                             })
-                            .onNegative((dialog, which) -> dialog.dismiss())
+                            .setNegativeButton(R.string.cancel, null)
                             .show();
                 }
                 return false;

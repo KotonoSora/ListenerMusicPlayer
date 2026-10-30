@@ -62,9 +62,9 @@ import io.hefuyi.listener.ui.fragment.PlaylistFragment;
 import io.hefuyi.listener.ui.fragment.SearchFragment;
 import io.hefuyi.listener.util.ATEUtil;
 import io.hefuyi.listener.util.ListenerUtil;
-import rx.Subscription;
-import rx.android.schedulers.AndroidSchedulers;
-import rx.schedulers.Schedulers;
+import io.reactivex.rxjava3.disposables.Disposable;
+import io.reactivex.rxjava3.android.schedulers.AndroidSchedulers;
+import io.reactivex.rxjava3.schedulers.Schedulers;
 
 public class MainActivity extends BaseActivity implements ATEActivityThemeCustomizer {
 
@@ -170,15 +170,27 @@ public class MainActivity extends BaseActivity implements ATEActivityThemeCustom
     private TextView songArtist;
     private ImageView albumArt;
     private String action;
-    private final PermissionCallback permissionReadStorageCallback = new PermissionCallback() {
+    private final PermissionCallback permissionStorageCallback = new PermissionCallback() {
         @Override
         public void permissionGranted() {
             loadEverything();
+            requestNotificationPermissionIfNeeded();
         }
 
         @Override
         public void permissionRefused() {
             finish();
+        }
+    };
+    private final PermissionCallback permissionNotificationCallback = new PermissionCallback() {
+        @Override
+        public void permissionGranted() {
+            // Notifications are optional. Nothing to do — playback UI already loaded.
+        }
+
+        @Override
+        public void permissionRefused() {
+            // Notifications are optional. App must keep working without them.
         }
     };
     private PanelSlideListener mPanelSlideListener;
@@ -241,15 +253,18 @@ public class MainActivity extends BaseActivity implements ATEActivityThemeCustom
         addBackstackListener();
 
         if (Intent.ACTION_VIEW.equals(action) && getIntent().getData() != null) {
-            String path = getIntent().getData().getPath();
-            if (path != null) {
-                Handler handler = new Handler(Looper.getMainLooper());
-                handler.postDelayed(() -> {
-                    MusicPlayer.clearQueue();
-                    MusicPlayer.openFile(path);
-                    MusicPlayer.playOrPause();
-                }, 350);
+            android.net.Uri data = getIntent().getData();
+            String uriString = data.toString();
+            if ("file".equals(data.getScheme()) && data.getPath() != null) {
+                uriString = data.getPath();
             }
+            final String pathToOpen = uriString;
+            Handler handler = new Handler(Looper.getMainLooper());
+            handler.postDelayed(() -> {
+                MusicPlayer.clearQueue();
+                MusicPlayer.openFile(pathToOpen);
+                MusicPlayer.playOrPause();
+            }, 350);
         }
         subscribeMetaChangedEvent();
 
@@ -294,10 +309,12 @@ public class MainActivity extends BaseActivity implements ATEActivityThemeCustom
     }
 
     private void checkPermissionAndThenLoad() {
-        //check for permission
-        String[] requiredPermissions = ListenerUtil.getRequiredPermissions();
-        if (PermissionManager.hasPermission(this, requiredPermissions)) {
+        // Storage permission is mandatory, notification permission is optional.
+        // Never bundle them: denying POST_NOTIFICATIONS must not block the app.
+        String[] storagePermissions = ListenerUtil.getStoragePermissions();
+        if (PermissionManager.hasPermission(this, storagePermissions)) {
             loadEverything();
+            requestNotificationPermissionIfNeeded();
         } else {
             String storagePermission = ListenerUtil.getStoragePermission();
             String rationale = getString(R.string.permission_rationale_storage);
@@ -305,14 +322,33 @@ public class MainActivity extends BaseActivity implements ATEActivityThemeCustom
                 rationale = getString(R.string.permission_rationale_tiramisu);
             }
 
-            if (PermissionManager.shouldShowRequestPermissionRationale(this, storagePermission)) {
-                Snackbar.make(panelLayout, rationale,
-                                Snackbar.LENGTH_INDEFINITE)
-                        .setAction(android.R.string.ok, view -> PermissionManager.askForPermission(MainActivity.this, requiredPermissions, permissionReadStorageCallback))
-                        .show();
-            } else {
-                PermissionManager.askForPermission(this, requiredPermissions, permissionReadStorageCallback);
-            }
+            requestPermissionWithRationale(storagePermission, rationale,
+                    storagePermissions, permissionStorageCallback);
+        }
+    }
+
+    private void requestNotificationPermissionIfNeeded() {
+        if (!ListenerUtil.isNotificationPermissionRequired()) {
+            return;
+        }
+        String notificationPermission = ListenerUtil.getNotificationPermission();
+        if (PermissionManager.hasPermission(this, new String[]{notificationPermission})) {
+            return;
+        }
+        requestPermissionWithRationale(notificationPermission,
+                getString(R.string.permission_rationale_notification),
+                new String[]{notificationPermission}, permissionNotificationCallback);
+    }
+
+    private void requestPermissionWithRationale(String rationalePermission, String rationaleText,
+                                               String[] permissions, PermissionCallback callback) {
+        if (PermissionManager.shouldShowRequestPermissionRationale(this, rationalePermission)) {
+            Snackbar.make(panelLayout, rationaleText, Snackbar.LENGTH_INDEFINITE)
+                    .setAction(android.R.string.ok,
+                            view -> PermissionManager.askForPermission(MainActivity.this, permissions, callback))
+                    .show();
+        } else {
+            PermissionManager.askForPermission(this, permissions, callback);
         }
     }
 
@@ -532,7 +568,7 @@ public class MainActivity extends BaseActivity implements ATEActivityThemeCustom
     }
 
     private void subscribeMetaChangedEvent() {
-        Subscription subscription = RxBus.getInstance()
+        Disposable subscription = RxBus.getInstance()
                 .toObservable(MetaChangedEvent.class)
                 .subscribeOn(Schedulers.io())
                 .observeOn(AndroidSchedulers.mainThread())

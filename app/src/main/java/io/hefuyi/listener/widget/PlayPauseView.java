@@ -83,10 +83,6 @@ public class PlayPauseView extends FrameLayout {
         setCircleAlpha(alpah);
     }
 
-    private int getCircleColor() {
-        return mBackgroundColor;
-    }
-
     public void setCircleColor(@ColorInt int color) {
         mBackgroundColor = color;
         invalidate();

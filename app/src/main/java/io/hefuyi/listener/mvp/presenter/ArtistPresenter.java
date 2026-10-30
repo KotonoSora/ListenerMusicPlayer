@@ -5,10 +5,10 @@ import androidx.annotation.NonNull;
 
 import io.hefuyi.listener.mvp.contract.ArtistContract;
 import io.hefuyi.listener.mvp.usecase.GetArtists;
-import rx.Subscription;
-import rx.android.schedulers.AndroidSchedulers;
-import rx.schedulers.Schedulers;
-import rx.subscriptions.CompositeSubscription;
+import io.reactivex.rxjava3.disposables.Disposable;
+import io.reactivex.rxjava3.android.schedulers.AndroidSchedulers;
+import io.reactivex.rxjava3.schedulers.Schedulers;
+import io.reactivex.rxjava3.disposables.CompositeDisposable;
 
 /**
  * Created by hefuyi on 2016/11/13.
@@ -18,7 +18,7 @@ public class ArtistPresenter implements ArtistContract.Presenter {
 
     private final GetArtists mUseCase;
     private ArtistContract.View mView;
-    private CompositeSubscription mCompositeSubscription;
+    private CompositeDisposable mCompositeDisposable;
 
     public ArtistPresenter(GetArtists getArtists) {
         mUseCase = getArtists;
@@ -27,7 +27,7 @@ public class ArtistPresenter implements ArtistContract.Presenter {
     @Override
     public void attachView(@NonNull ArtistContract.View view) {
         mView = view;
-        mCompositeSubscription = new CompositeSubscription();
+        mCompositeDisposable = new CompositeDisposable();
     }
 
     @Override
@@ -36,13 +36,13 @@ public class ArtistPresenter implements ArtistContract.Presenter {
 
     @Override
     public void unsubscribe() {
-        mCompositeSubscription.clear();
+        mCompositeDisposable.clear();
     }
 
     @Override
     public void loadArtists(String action) {
-        mCompositeSubscription.clear();
-        Subscription subscription = mUseCase.execute(new GetArtists.RequestValues(action))
+        mCompositeDisposable.clear();
+        Disposable subscription = mUseCase.execute(new GetArtists.RequestValues(action))
                 .getArtistList()
                 .subscribeOn(Schedulers.io())
                 .observeOn(AndroidSchedulers.mainThread())
@@ -53,6 +53,6 @@ public class ArtistPresenter implements ArtistContract.Presenter {
                         mView.showArtists(artists);
                     }
                 });
-        mCompositeSubscription.add(subscription);
+        mCompositeDisposable.add(subscription);
     }
 }

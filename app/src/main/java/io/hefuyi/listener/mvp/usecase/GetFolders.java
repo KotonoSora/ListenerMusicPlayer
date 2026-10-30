@@ -4,7 +4,7 @@ import java.util.List;
 
 import io.hefuyi.listener.mvp.model.FolderInfo;
 import io.hefuyi.listener.respository.interfaces.Repository;
-import rx.Observable;
+import io.reactivex.rxjava3.core.Observable;
 
 /**
  * Created by hefuyi on 2016/12/11.

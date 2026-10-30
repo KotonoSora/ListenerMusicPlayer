@@ -12,8 +12,7 @@ import io.hefuyi.listener.mvp.model.Song;
 import io.hefuyi.listener.provider.FavoriteSong;
 import io.hefuyi.listener.provider.SongPlayCount;
 import io.hefuyi.listener.util.PreferencesUtility;
-import rx.Observable;
-import rx.Subscriber;
+import io.reactivex.rxjava3.core.Observable;
 
 
 /**
@@ -44,7 +43,7 @@ public class SongLoader {
                 cursor.close();
             }
             subscriber.onNext(arrayList);
-            subscriber.onCompleted();
+            subscriber.onComplete();
         });
     }
 
@@ -81,7 +80,7 @@ public class SongLoader {
                 scoreCursor.close();
             }
             subscriber.onNext(arrayList);
-            subscriber.onCompleted();
+            subscriber.onComplete();
         });
     }
 

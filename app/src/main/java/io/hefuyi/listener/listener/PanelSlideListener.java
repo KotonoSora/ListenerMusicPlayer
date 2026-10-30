@@ -40,10 +40,10 @@ import io.hefuyi.listener.util.ScrimUtil;
 import io.hefuyi.listener.widget.ForegroundImageView;
 import io.hefuyi.listener.widget.LyricView;
 import io.hefuyi.listener.widget.PlayPauseView;
-import rx.Observable;
-import rx.Subscription;
-import rx.android.schedulers.AndroidSchedulers;
-import rx.schedulers.Schedulers;
+import io.reactivex.rxjava3.core.Observable;
+import io.reactivex.rxjava3.disposables.Disposable;
+import io.reactivex.rxjava3.android.schedulers.AndroidSchedulers;
+import io.reactivex.rxjava3.schedulers.Schedulers;
 
 /**
  * Created by hefuyi on 2016/11/7.
@@ -471,7 +471,7 @@ public class PanelSlideListener implements SlidingUpPanelLayout.PanelSlideListen
     }
 
     private void subscribeMetaChangedEvent() {
-        Subscription subscription = RxBus.getInstance()
+        Disposable subscription = RxBus.getInstance()
                 .toObservable(MetaChangedEvent.class)
                 .subscribeOn(Schedulers.io())
                 .observeOn(AndroidSchedulers.mainThread())

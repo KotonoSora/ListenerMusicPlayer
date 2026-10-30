@@ -11,7 +11,7 @@ import java.util.List;
 import java.util.Map;
 
 import io.hefuyi.listener.mvp.model.FolderInfo;
-import rx.Observable;
+import io.reactivex.rxjava3.core.Observable;
 
 /**
  * Created by hefuyi on 2016/12/11.
@@ -58,7 +58,7 @@ public class FolderLoader {
                 }
             }
             subscriber.onNext(folderInfos);
-            subscriber.onCompleted();
+            subscriber.onComplete();
         });
     }
 }

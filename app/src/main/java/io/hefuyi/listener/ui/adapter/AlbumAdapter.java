@@ -18,8 +18,8 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import com.bumptech.glide.Glide;
 import com.bumptech.glide.load.engine.DiskCacheStrategy;
-import com.bumptech.glide.request.animation.GlideAnimation;
-import com.bumptech.glide.request.target.SimpleTarget;
+import com.bumptech.glide.request.transition.Transition;
+import com.bumptech.glide.request.target.CustomTarget;
 
 import java.util.List;
 
@@ -34,9 +34,9 @@ import io.hefuyi.listener.util.ListenerUtil;
 import io.hefuyi.listener.util.NavigationUtil;
 import io.hefuyi.listener.util.PreferencesUtility;
 import io.hefuyi.listener.widget.fastscroller.FastScrollRecyclerView;
-import rx.Observable;
-import rx.android.schedulers.AndroidSchedulers;
-import rx.schedulers.Schedulers;
+import io.reactivex.rxjava3.core.Observable;
+import io.reactivex.rxjava3.android.schedulers.AndroidSchedulers;
+import io.reactivex.rxjava3.schedulers.Schedulers;
 
 
 public class AlbumAdapter extends RecyclerView.Adapter<AlbumAdapter.ItemHolder> implements FastScrollRecyclerView.SectionedAdapter {
@@ -69,12 +69,12 @@ public class AlbumAdapter extends RecyclerView.Adapter<AlbumAdapter.ItemHolder> 
         itemHolder.songCount.setText(ListenerUtil.makeLabel(mContext, R.plurals.n_songs, localItem.songCount));
 
         Glide.with(itemHolder.itemView.getContext())
-                .load(ListenerUtil.getAlbumArtUri(localItem.id))
                 .asBitmap()
-                .diskCacheStrategy(DiskCacheStrategy.SOURCE)
-                .into(new SimpleTarget<Bitmap>() {
+                .load(ListenerUtil.getAlbumArtUri(localItem.id))
+                .diskCacheStrategy(DiskCacheStrategy.DATA)
+                .into(new CustomTarget<Bitmap>() {
                     @Override
-                    public void onLoadFailed(Exception e, Drawable errorDrawable) {
+                    public void onLoadFailed(Drawable errorDrawable) {
                         if (isGrid) {
                             itemHolder.footer.setBackgroundColor(ATEUtil.getThemeAlbumDefaultPaletteColor(mContext));
                         }
@@ -86,7 +86,7 @@ public class AlbumAdapter extends RecyclerView.Adapter<AlbumAdapter.ItemHolder> 
                     }
 
                     @Override
-                    public void onResourceReady(final Bitmap resource, GlideAnimation<? super Bitmap> glideAnimation) {
+                    public void onResourceReady(final Bitmap resource, Transition<? super Bitmap> transition) {
                         if (isGrid) {
                             new Palette.Builder(resource).generate(palette -> {
                                 Palette.Swatch swatch = ColorUtil.getMostPopulousSwatch(palette);
@@ -105,6 +105,9 @@ public class AlbumAdapter extends RecyclerView.Adapter<AlbumAdapter.ItemHolder> 
                         } else {
                             itemHolder.albumArt.setImageBitmap(resource);
                         }
+                    }
+                    @Override
+                    public void onLoadCleared(Drawable placeholder) {
                     }
                 });
 

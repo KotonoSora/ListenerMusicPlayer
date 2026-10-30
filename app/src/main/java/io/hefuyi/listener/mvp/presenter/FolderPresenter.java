@@ -4,10 +4,10 @@ import androidx.annotation.NonNull;
 
 import io.hefuyi.listener.mvp.contract.FoldersContract;
 import io.hefuyi.listener.mvp.usecase.GetFolders;
-import rx.Subscription;
-import rx.android.schedulers.AndroidSchedulers;
-import rx.schedulers.Schedulers;
-import rx.subscriptions.CompositeSubscription;
+import io.reactivex.rxjava3.disposables.Disposable;
+import io.reactivex.rxjava3.android.schedulers.AndroidSchedulers;
+import io.reactivex.rxjava3.schedulers.Schedulers;
+import io.reactivex.rxjava3.disposables.CompositeDisposable;
 
 /**
  * Created by hefuyi on 2016/12/11.
@@ -17,7 +17,7 @@ public class FolderPresenter implements FoldersContract.Presenter {
 
     private final GetFolders mUseCase;
     private FoldersContract.View mView;
-    private CompositeSubscription mCompositeSubscription;
+    private CompositeDisposable mCompositeDisposable;
 
     public FolderPresenter(GetFolders getFolders) {
         this.mUseCase = getFolders;
@@ -26,7 +26,7 @@ public class FolderPresenter implements FoldersContract.Presenter {
     @Override
     public void attachView(@NonNull FoldersContract.View view) {
         this.mView = view;
-        mCompositeSubscription = new CompositeSubscription();
+        mCompositeDisposable = new CompositeDisposable();
     }
 
     @Override
@@ -36,13 +36,13 @@ public class FolderPresenter implements FoldersContract.Presenter {
 
     @Override
     public void unsubscribe() {
-        mCompositeSubscription.clear();
+        mCompositeDisposable.clear();
     }
 
     @Override
     public void loadFolders() {
-        mCompositeSubscription.clear();
-        Subscription subscription = mUseCase.execute(new GetFolders.RequestValues())
+        mCompositeDisposable.clear();
+        Disposable subscription = mUseCase.execute(new GetFolders.RequestValues())
                 .getFolderList()
                 .subscribeOn(Schedulers.io())
                 .observeOn(AndroidSchedulers.mainThread())
@@ -53,6 +53,6 @@ public class FolderPresenter implements FoldersContract.Presenter {
                         mView.showFolders(folderInfos);
                     }
                 });
-        mCompositeSubscription.add(subscription);
+        mCompositeDisposable.add(subscription);
     }
 }

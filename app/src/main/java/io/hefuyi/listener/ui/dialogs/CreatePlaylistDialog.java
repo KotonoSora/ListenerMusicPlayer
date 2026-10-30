@@ -2,13 +2,15 @@ package io.hefuyi.listener.ui.dialogs;
 
 import android.app.Dialog;
 import android.os.Bundle;
+import android.widget.EditText;
+import android.widget.FrameLayout;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.fragment.app.DialogFragment;
 
-import com.afollestad.materialdialogs.MaterialDialog;
+import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 
 import io.hefuyi.listener.MusicPlayer;
 import io.hefuyi.listener.R;
@@ -48,14 +50,24 @@ public class CreatePlaylistDialog extends DialogFragment {
     @NonNull
     @Override
     public Dialog onCreateDialog(@Nullable Bundle savedInstanceState) {
-        return new MaterialDialog.Builder(requireActivity())
-                .title(R.string.create_new_playlist)
-                .positiveText(R.string.create)
-                .negativeText(R.string.cancel)
-                .input(getString(R.string.playlist_name), "", false, (dialog, input) -> {
+        final EditText input = new EditText(requireActivity());
+        input.setHint(R.string.playlist_name);
+        input.setSingleLine(true);
+        int margin = (int) (24 * requireActivity().getResources().getDisplayMetrics().density);
+        FrameLayout container = new FrameLayout(requireActivity());
+        FrameLayout.LayoutParams params = new FrameLayout.LayoutParams(
+                FrameLayout.LayoutParams.MATCH_PARENT, FrameLayout.LayoutParams.WRAP_CONTENT);
+        params.leftMargin = margin;
+        params.rightMargin = margin;
+        input.setLayoutParams(params);
+        container.addView(input);
+        return new MaterialAlertDialogBuilder(requireActivity())
+                .setTitle(R.string.create_new_playlist)
+                .setView(container)
+                .setPositiveButton(R.string.create, (dialog, which) -> {
                     Bundle args = getArguments();
                     long[] songs = args != null ? args.getLongArray("songs") : null;
-                    long playlistId = MusicPlayer.createPlaylist(requireActivity(), input.toString());
+                    long playlistId = MusicPlayer.createPlaylist(requireActivity(), input.getText().toString());
 
                     if (playlistId != -1) {
                         if (songs != null && songs.length != 0) {
@@ -67,6 +79,8 @@ public class CreatePlaylistDialog extends DialogFragment {
                     } else {
                         Toast.makeText(requireActivity(), R.string.create_playlist_fail, Toast.LENGTH_SHORT).show();
                     }
-                }).build();
+                })
+                .setNegativeButton(R.string.cancel, null)
+                .create();
     }
 }

@@ -13,7 +13,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import io.hefuyi.listener.mvp.model.Song;
-import rx.Observable;
+import io.reactivex.rxjava3.core.Observable;
 
 public class PlaylistSongLoader {
 
@@ -92,7 +92,7 @@ public class PlaylistSongLoader {
             cursor.close();
             cursor = null;
         }
-        return Observable.from(mSongList).toList();
+        return Observable.fromIterable(mSongList).toList().toObservable();
     }
 
     /**

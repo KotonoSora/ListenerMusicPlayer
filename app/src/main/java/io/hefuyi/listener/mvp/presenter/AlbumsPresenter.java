@@ -4,10 +4,10 @@ import androidx.annotation.NonNull;
 
 import io.hefuyi.listener.mvp.contract.AlbumsContract;
 import io.hefuyi.listener.mvp.usecase.GetAlbums;
-import rx.Subscription;
-import rx.android.schedulers.AndroidSchedulers;
-import rx.schedulers.Schedulers;
-import rx.subscriptions.CompositeSubscription;
+import io.reactivex.rxjava3.disposables.Disposable;
+import io.reactivex.rxjava3.android.schedulers.AndroidSchedulers;
+import io.reactivex.rxjava3.schedulers.Schedulers;
+import io.reactivex.rxjava3.disposables.CompositeDisposable;
 
 /**
  * Created by hefuyi on 2016/11/12.
@@ -17,7 +17,7 @@ public class AlbumsPresenter implements AlbumsContract.Presenter {
 
     private final GetAlbums mUseCase;
     private AlbumsContract.View mView;
-    private CompositeSubscription mCompositeSubscription;
+    private CompositeDisposable mCompositeDisposable;
 
     public AlbumsPresenter(GetAlbums getAlbums) {
         mUseCase = getAlbums;
@@ -26,7 +26,7 @@ public class AlbumsPresenter implements AlbumsContract.Presenter {
     @Override
     public void attachView(@NonNull AlbumsContract.View view) {
         mView = view;
-        mCompositeSubscription = new CompositeSubscription();
+        mCompositeDisposable = new CompositeDisposable();
     }
 
     @Override
@@ -35,13 +35,13 @@ public class AlbumsPresenter implements AlbumsContract.Presenter {
 
     @Override
     public void unsubscribe() {
-        mCompositeSubscription.clear();
+        mCompositeDisposable.clear();
     }
 
     @Override
     public void loadAlbums(String action) {
-        mCompositeSubscription.clear();
-        Subscription subscription = mUseCase.execute(new GetAlbums.RequestValues(action))
+        mCompositeDisposable.clear();
+        Disposable subscription = mUseCase.execute(new GetAlbums.RequestValues(action))
                 .getSongList()
                 .subscribeOn(Schedulers.io())
                 .observeOn(AndroidSchedulers.mainThread())
@@ -52,6 +52,6 @@ public class AlbumsPresenter implements AlbumsContract.Presenter {
                         mView.showAlbums(albumList);
                     }
                 });
-        mCompositeSubscription.add(subscription);
+        mCompositeDisposable.add(subscription);
     }
 }

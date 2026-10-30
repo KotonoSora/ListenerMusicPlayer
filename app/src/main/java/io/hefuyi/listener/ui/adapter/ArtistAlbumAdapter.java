@@ -52,8 +52,8 @@ public class ArtistAlbumAdapter extends RecyclerView.Adapter<ArtistAlbumAdapter.
         String songCount = ListenerUtil.makeLabel(mContext, R.plurals.n_songs, localItem.songCount);
         itemHolder.details.setText(songCount);
 
-        Glide.with(mContext).load(ListenerUtil.getAlbumArtUri(localItem.id))
-                .diskCacheStrategy(DiskCacheStrategy.SOURCE)
+        Glide.with(itemHolder.itemView.getContext()).load(ListenerUtil.getAlbumArtUri(localItem.id))
+                .diskCacheStrategy(DiskCacheStrategy.DATA)
                 .error(ATEUtil.getDefaultAlbumDrawable(mContext))
                 .centerCrop()
                 .into(itemHolder.albumArt);

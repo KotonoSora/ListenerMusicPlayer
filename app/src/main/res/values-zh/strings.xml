@@ -56,6 +56,7 @@
     <string name="notification_channel_description">音乐播放控制</string>
     <string name="permission_rationale_storage">听听需要读取外部存储权限来显示您设备上的歌曲。</string>
     <string name="permission_rationale_tiramisu">听听需要访问音频文件和显示通知的权限。</string>
+    <string name="permission_rationale_notification">听听需要通知权限来显示播放控制。拒绝后应用仍可正常使用。</string>
 
     <string name="count_song"><xliff:g id="count">%d</xliff:g> 首歌</string>
     <string name="count_songs"><xliff:g id="count">%d</xliff:g> 首歌</string>

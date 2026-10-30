@@ -8,9 +8,9 @@ import io.hefuyi.listener.MusicPlayer;
 import io.hefuyi.listener.RxBus;
 import io.hefuyi.listener.event.MetaChangedEvent;
 import io.hefuyi.listener.event.PlayStateChangedEvent;
-import rx.Subscription;
-import rx.android.schedulers.AndroidSchedulers;
-import rx.schedulers.Schedulers;
+import io.reactivex.rxjava3.disposables.Disposable;
+import io.reactivex.rxjava3.android.schedulers.AndroidSchedulers;
+import io.reactivex.rxjava3.schedulers.Schedulers;
 
 public class MusicViewModel extends ViewModel {
 
@@ -19,8 +19,8 @@ public class MusicViewModel extends ViewModel {
     private final MutableLiveData<Long> songId = new MutableLiveData<>();
     private final MutableLiveData<Boolean> isPlaying = new MutableLiveData<>();
 
-    private Subscription metaSubscription;
-    private Subscription playStateSubscription;
+    private Disposable metaSubscription;
+    private Disposable playStateSubscription;
 
     public MusicViewModel() {
         // Initialize with current state
@@ -93,11 +93,11 @@ public class MusicViewModel extends ViewModel {
 
     @Override
     protected void onCleared() {
-        if (metaSubscription != null && !metaSubscription.isUnsubscribed()) {
-            metaSubscription.unsubscribe();
+        if (metaSubscription != null && !metaSubscription.isDisposed()) {
+            metaSubscription.dispose();
         }
-        if (playStateSubscription != null && !playStateSubscription.isUnsubscribed()) {
-            playStateSubscription.unsubscribe();
+        if (playStateSubscription != null && !playStateSubscription.isDisposed()) {
+            playStateSubscription.dispose();
         }
     }
 }

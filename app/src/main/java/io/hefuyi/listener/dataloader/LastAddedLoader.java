@@ -10,9 +10,7 @@ import java.util.List;
 import io.hefuyi.listener.mvp.model.Album;
 import io.hefuyi.listener.mvp.model.Artist;
 import io.hefuyi.listener.mvp.model.Song;
-import rx.Observable;
-import rx.Subscriber;
-import rx.functions.Func1;
+import io.reactivex.rxjava3.core.Observable;
 
 /**
  * Created by hefuyi on 2016/11/4.
@@ -45,24 +43,24 @@ public class LastAddedLoader {
                 mCursor.close();
             }
             subscriber.onNext(mSongList);
-            subscriber.onCompleted();
+            subscriber.onComplete();
         });
     }
 
     public static Observable<List<Album>> getLastAddedAlbums(final Context context) {
         return getLastAddedSongs(context)
-                .flatMap(Observable::from)
+                .flatMap(Observable::fromIterable)
                 .distinct(song -> song.albumId)
                 .flatMap(song -> AlbumLoader.getAlbum(context, song.albumId))
-                .toList();
+                .toList().toObservable();
     }
 
     public static Observable<List<Artist>> getLastAddedArtist(final Context context) {
         return getLastAddedSongs(context)
-                .flatMap(Observable::from)
+                .flatMap(Observable::fromIterable)
                 .distinct(song -> song.artistId)
                 .flatMap(song -> ArtistLoader.getArtist(context, song.artistId))
-                .toList();
+                .toList().toObservable();
     }
 
     private static Cursor makeLastAddedCursor(final Context context) {

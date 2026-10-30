@@ -19,8 +19,8 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import com.bumptech.glide.Glide;
 import com.bumptech.glide.load.engine.DiskCacheStrategy;
-import com.bumptech.glide.request.animation.GlideAnimation;
-import com.bumptech.glide.request.target.SimpleTarget;
+import com.bumptech.glide.request.transition.Transition;
+import com.bumptech.glide.request.target.CustomTarget;
 import com.google.gson.Gson;
 
 import java.util.List;
@@ -42,9 +42,9 @@ import io.hefuyi.listener.util.ListenerUtil;
 import io.hefuyi.listener.util.NavigationUtil;
 import io.hefuyi.listener.util.PreferencesUtility;
 import io.hefuyi.listener.widget.fastscroller.FastScrollRecyclerView;
-import rx.Observable;
-import rx.android.schedulers.AndroidSchedulers;
-import rx.schedulers.Schedulers;
+import io.reactivex.rxjava3.core.Observable;
+import io.reactivex.rxjava3.android.schedulers.AndroidSchedulers;
+import io.reactivex.rxjava3.schedulers.Schedulers;
 
 
 public class ArtistAdapter extends RecyclerView.Adapter<ArtistAdapter.ItemHolder> implements FastScrollRecyclerView.SectionedAdapter {
@@ -125,14 +125,14 @@ public class ArtistAdapter extends RecyclerView.Adapter<ArtistAdapter.ItemHolder
             return;
         }
         if (isGrid) {
-            Glide.with(mContext)
-                    .load(artistArt.getExtralarge())
+            Glide.with(itemHolder.itemView.getContext())
                     .asBitmap()
+                    .load(artistArt.getExtralarge())
                     .placeholder(ATEUtil.getDefaultSingerDrawable(mContext))
-                    .diskCacheStrategy(DiskCacheStrategy.SOURCE)
-                    .into(new SimpleTarget<Bitmap>() {
+                    .diskCacheStrategy(DiskCacheStrategy.DATA)
+                    .into(new CustomTarget<Bitmap>() {
                         @Override
-                        public void onLoadFailed(Exception e, Drawable errorDrawable) {
+                        public void onLoadFailed(Drawable errorDrawable) {
                             itemHolder.artistImage.setImageDrawable(ATEUtil.getDefaultSingerDrawable(mContext));
                             itemHolder.name.setTextColor(ATEUtil.getThemeTextColorPrimary(mContext));
                             itemHolder.albumCount.setTextColor(ATEUtil.getThemeTextColorSecondly(mContext));
@@ -142,7 +142,7 @@ public class ArtistAdapter extends RecyclerView.Adapter<ArtistAdapter.ItemHolder
                         }
 
                         @Override
-                        public void onResourceReady(final Bitmap resource, GlideAnimation<? super Bitmap> glideAnimation) {
+                        public void onResourceReady(final Bitmap resource, Transition<? super Bitmap> transition) {
                             new Palette.Builder(resource).generate(palette -> {
                                 Palette.Swatch swatch = ColorUtil.getMostPopulousSwatch(palette);
                                 if (swatch != null) {
@@ -158,12 +158,15 @@ public class ArtistAdapter extends RecyclerView.Adapter<ArtistAdapter.ItemHolder
                                 }
                             });
                         }
+                        @Override
+                        public void onLoadCleared(Drawable placeholder) {
+                        }
                     });
         } else {
-            Glide.with(mContext)
+            Glide.with(itemHolder.itemView.getContext())
                     .load(artistArt.getLarge())
                     .placeholder(ATEUtil.getDefaultSingerDrawable(mContext))
-                    .diskCacheStrategy(DiskCacheStrategy.SOURCE)
+                    .diskCacheStrategy(DiskCacheStrategy.DATA)
                     .error(ATEUtil.getDefaultSingerDrawable(mContext))
                     .into(itemHolder.artistImage);
         }

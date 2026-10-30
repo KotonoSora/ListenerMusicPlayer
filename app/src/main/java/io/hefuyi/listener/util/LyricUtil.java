@@ -4,7 +4,7 @@ import android.os.Environment;
 
 import java.io.File;
 
-import rx.Observable;
+import io.reactivex.rxjava3.core.Observable;
 
 /**
  * Created by hefuyi on 2016/11/8.
@@ -16,12 +16,6 @@ public class LyricUtil {
             .getExternalStorageDirectory().toString()
             + "/Listener/lyric/";
 
-
-    @SuppressWarnings("unused")
-    public static boolean isLrcFileExist(String title, String artist) {
-        File file = new File(getLrcPath(title, artist));
-        return file.exists();
-    }
 
     public static Observable<File> getLocalLyricFile(String title, String artist) {
         File file = new File(getLrcPath(title, artist));

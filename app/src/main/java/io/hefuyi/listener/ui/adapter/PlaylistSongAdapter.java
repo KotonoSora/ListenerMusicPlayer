@@ -15,7 +15,7 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.recyclerview.widget.RecyclerView;
 
-import com.afollestad.materialdialogs.MaterialDialog;
+import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 import com.bumptech.glide.Glide;
 import com.bumptech.glide.load.engine.DiskCacheStrategy;
 
@@ -71,7 +71,7 @@ public class PlaylistSongAdapter extends RecyclerView.Adapter<RecyclerView.ViewH
         Glide.with(holder.itemView.getContext()).load(ListenerUtil.getAlbumArtUri(localItem.albumId))
                 .error(ATEUtil.getDefaultAlbumDrawable(mContext))
                 .placeholder(ATEUtil.getDefaultAlbumDrawable(mContext))
-                .diskCacheStrategy(DiskCacheStrategy.SOURCE)
+                .diskCacheStrategy(DiskCacheStrategy.DATA)
                 .centerCrop()
                 .into(itemHolder.albumArt);
 
@@ -114,17 +114,15 @@ public class PlaylistSongAdapter extends RecyclerView.Adapter<RecyclerView.ViewH
                 } else if (itemId == R.id.popup_song_addto_playlist) {
                     ListenerUtil.showAddPlaylistDialog(mContext, new long[]{song.id});
                 } else if (itemId == R.id.popup_song_delete) {
-                    new MaterialDialog.Builder(mContext)
-                            .title(R.string.delete_playlist_song)
-                            .positiveText(R.string.delete)
-                            .negativeText(R.string.cancel)
-                            .onPositive((dialog, which) -> {
+                    new MaterialAlertDialogBuilder(mContext)
+                            .setTitle(R.string.delete_playlist_song)
+                            .setPositiveButton(R.string.delete, (dialog, which) -> {
                                 PlaylistSongLoader.removeFromPlaylist(mContext, new long[]{song.id}, playlistId);
                                 arraylist.remove(adapterPosition);
                                 songIDs = getSongIds();
                                 notifyItemRemoved(adapterPosition);
                             })
-                            .onNegative((dialog, which) -> dialog.dismiss())
+                            .setNegativeButton(R.string.cancel, null)
                             .show();
                 }
                 return false;

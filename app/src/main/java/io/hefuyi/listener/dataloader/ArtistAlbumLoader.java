@@ -8,8 +8,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import io.hefuyi.listener.mvp.model.Album;
-import rx.Observable;
-import rx.Subscriber;
+import io.reactivex.rxjava3.core.Observable;
 
 /**
  * Created by hefuyi on 2016/11/4.
@@ -34,7 +33,7 @@ public class ArtistAlbumLoader {
                 cursor.close();
             }
             subscriber.onNext(albumList);
-            subscriber.onCompleted();
+            subscriber.onComplete();
         });
     }
 

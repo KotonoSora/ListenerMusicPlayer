@@ -8,11 +8,8 @@ import java.util.ArrayList;
 import java.util.List;
 
 import io.hefuyi.listener.mvp.model.Album;
-import io.hefuyi.listener.mvp.model.Song;
 import io.hefuyi.listener.util.PreferencesUtility;
-import rx.Observable;
-import rx.Subscriber;
-import rx.functions.Func1;
+import io.reactivex.rxjava3.core.Observable;
 
 
 /**
@@ -32,24 +29,24 @@ public class AlbumLoader {
                 cursor.close();
             }
             subscriber.onNext(album);
-            subscriber.onCompleted();
+            subscriber.onComplete();
         });
     }
 
     public static Observable<List<Album>> getFavoriteAlbums(final Context context) {
         return SongLoader.getFavoriteSongs(context)
-                .flatMap(Observable::from)
+                .flatMap(Observable::fromIterable)
                 .distinct(song -> song.albumId)
                 .flatMap(song -> AlbumLoader.getAlbum(context, song.albumId))
-                .toList();
+                .toList().toObservable();
     }
 
     public static Observable<List<Album>> getRecentlyPlayedAlbums(final Context context) {
         return TopTracksLoader.getTopRecentSongs(context)
-                .flatMap(Observable::from)
+                .flatMap(Observable::fromIterable)
                 .distinct(song -> song.albumId)
                 .flatMap(song -> AlbumLoader.getAlbum(context, song.albumId))
-                .toList();
+                .toList().toObservable();
     }
 
     private static Observable<List<Album>> getAlbumsForCursor(final Cursor cursor) {
@@ -64,7 +61,7 @@ public class AlbumLoader {
                 cursor.close();
             }
             subscriber.onNext(arrayList);
-            subscriber.onCompleted();
+            subscriber.onComplete();
         });
     }
 

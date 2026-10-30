@@ -16,7 +16,7 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.content.ContextCompat;
 import androidx.recyclerview.widget.RecyclerView;
 
-import com.afollestad.materialdialogs.MaterialDialog;
+import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -31,9 +31,9 @@ import io.hefuyi.listener.util.DensityUtil;
 import io.hefuyi.listener.util.ListenerUtil;
 import io.hefuyi.listener.util.NavigationUtil;
 import io.hefuyi.listener.widget.fastscroller.FastScrollRecyclerView;
-import rx.Observable;
-import rx.android.schedulers.AndroidSchedulers;
-import rx.schedulers.Schedulers;
+import io.reactivex.rxjava3.core.Observable;
+import io.reactivex.rxjava3.android.schedulers.AndroidSchedulers;
+import io.reactivex.rxjava3.schedulers.Schedulers;
 
 public class FolderAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> implements FastScrollRecyclerView.SectionedAdapter {
 
@@ -92,19 +92,17 @@ public class FolderAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder>
                             .observeOn(AndroidSchedulers.mainThread())
                             .subscribe(ids -> ListenerUtil.showAddPlaylistDialog(mContext, ids));
                 } else if (itemId == R.id.popup_folder_delete) {
-                    new MaterialDialog.Builder(mContext)
-                            .title(mContext.getResources().getString(R.string.delete_folder))
-                            .content(mContext.getResources().getString(R.string.delete_folder_confirmation, folderInfo.songCount))
-                            .positiveText(R.string.delete)
-                            .negativeText(R.string.cancel)
-                            .onPositive((dialog, which) -> getSongListIdByFolder(folderInfo.folderPath)
+                    new MaterialAlertDialogBuilder(mContext)
+                            .setTitle(mContext.getResources().getString(R.string.delete_folder))
+                            .setMessage(mContext.getResources().getString(R.string.delete_folder_confirmation, folderInfo.songCount))
+                            .setPositiveButton(R.string.delete, (dialog, which) -> getSongListIdByFolder(folderInfo.folderPath)
                                     .subscribeOn(Schedulers.io())
                                     .observeOn(AndroidSchedulers.mainThread())
                                     .subscribe(ids -> {
                                         ListenerUtil.deleteTracks(mContext, ids);
                                         RxBus.getInstance().post(new MediaUpdateEvent());
                                     }))
-                            .onNegative((dialog, which) -> dialog.dismiss())
+                            .setNegativeButton(R.string.cancel, null)
                             .show();
                 }
                 return false;

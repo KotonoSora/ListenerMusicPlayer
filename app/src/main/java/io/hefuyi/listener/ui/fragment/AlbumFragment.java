@@ -45,9 +45,9 @@ import io.hefuyi.listener.util.PreferencesUtility;
 import io.hefuyi.listener.util.SortOrder;
 import io.hefuyi.listener.widget.DividerItemDecoration;
 import io.hefuyi.listener.widget.fastscroller.FastScrollRecyclerView;
-import rx.Subscription;
-import rx.android.schedulers.AndroidSchedulers;
-import rx.schedulers.Schedulers;
+import io.reactivex.rxjava3.disposables.Disposable;
+import io.reactivex.rxjava3.android.schedulers.AndroidSchedulers;
+import io.reactivex.rxjava3.schedulers.Schedulers;
 
 /**
  * A simple {@link Fragment} subclass.
@@ -232,7 +232,7 @@ public class AlbumFragment extends Fragment implements AlbumsContract.View {
     }
 
     private void subscribeMediaUpdateEvent() {
-        Subscription subscription = RxBus.getInstance()
+        Disposable subscription = RxBus.getInstance()
                 .toObservable(MediaUpdateEvent.class)
                 .subscribeOn(Schedulers.io())
                 .observeOn(AndroidSchedulers.mainThread())
@@ -243,7 +243,7 @@ public class AlbumFragment extends Fragment implements AlbumsContract.View {
     }
 
     private void subscribeFavoriteSongEvent() {
-        Subscription subscription = RxBus.getInstance()
+        Disposable subscription = RxBus.getInstance()
                 .toObservable(FavoriteSongEvent.class)
                 .subscribeOn(Schedulers.io())
                 .observeOn(AndroidSchedulers.mainThread())
@@ -253,7 +253,7 @@ public class AlbumFragment extends Fragment implements AlbumsContract.View {
     }
 
     private void subscribeRecentlyPlayEvent() {
-        Subscription subscription = RxBus.getInstance()
+        Disposable subscription = RxBus.getInstance()
                 .toObservable(RecentlyPlayEvent.class)
                 .subscribeOn(Schedulers.io())
                 .observeOn(AndroidSchedulers.mainThread())

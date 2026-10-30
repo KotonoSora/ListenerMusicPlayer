@@ -7,8 +7,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import io.hefuyi.listener.mvp.model.Song;
-import rx.Observable;
-import rx.Subscriber;
+import io.reactivex.rxjava3.core.Observable;
 
 /**
  * Created by hefuyi on 2016/11/6.
@@ -46,7 +45,7 @@ public class QueueLoader {
                 } while (mCursor.moveToNext());
             }
             subscriber.onNext(mSongList);
-            subscriber.onCompleted();
+            subscriber.onComplete();
             mCursor.close();
         });
     }

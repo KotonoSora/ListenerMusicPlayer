@@ -5,6 +5,7 @@ import android.app.Activity;
 import android.app.Dialog;
 import android.content.ContentUris;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.content.res.Resources;
@@ -23,7 +24,7 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
 
-import com.afollestad.materialdialogs.MaterialDialog;
+import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 
 import java.io.File;
 
@@ -39,7 +40,7 @@ import io.hefuyi.listener.provider.FavoriteSong;
 import io.hefuyi.listener.provider.RecentStore;
 import io.hefuyi.listener.provider.SongPlayCount;
 import io.hefuyi.listener.ui.dialogs.CreatePlaylistDialog;
-import rx.android.schedulers.AndroidSchedulers;
+import io.reactivex.rxjava3.android.schedulers.AndroidSchedulers;
 
 /**
  * Created by hefuyi on 2016/11/4.
@@ -62,14 +63,24 @@ public class ListenerUtil {
         return Manifest.permission.READ_EXTERNAL_STORAGE;
     }
 
+    /**
+     * Legacy bundled permissions. Do not use for blocking requests:
+     * POST_NOTIFICATIONS is optional and must be requested separately.
+     */
     public static String[] getRequiredPermissions() {
-        if (isTiramisu()) {
-            return new String[]{
-                    Manifest.permission.READ_MEDIA_AUDIO,
-                    Manifest.permission.POST_NOTIFICATIONS
-            };
-        }
-        return new String[]{Manifest.permission.READ_EXTERNAL_STORAGE};
+        return getStoragePermissions();
+    }
+
+    public static String getNotificationPermission() {
+        return Manifest.permission.POST_NOTIFICATIONS;
+    }
+
+    public static boolean isNotificationPermissionRequired() {
+        return isTiramisu();
+    }
+
+    public static String[] getStoragePermissions() {
+        return new String[]{getStoragePermission()};
     }
 
 
@@ -110,18 +121,16 @@ public class ListenerUtil {
     }
 
     public static void showDeleteDialog(final Context context, final String name, final long[] list,
-                                        final MaterialDialog.SingleButtonCallback deleteCallback) {
-        new MaterialDialog.Builder(context)
-                .title(R.string.delete_song)
-                .content(context.getString(R.string.delete_song_confirmation, name))
-                .positiveText(R.string.delete)
-                .negativeText(R.string.cancel)
-                .onPositive((dialog, which) -> {
+                                        final DialogInterface.OnClickListener deleteCallback) {
+        new MaterialAlertDialogBuilder(context)
+                .setTitle(R.string.delete_song)
+                .setMessage(context.getString(R.string.delete_song_confirmation, name))
+                .setPositiveButton(R.string.delete, (dialog, which) -> {
                     ListenerUtil.deleteTracks(context, list);
                     deleteCallback.onClick(dialog, which);
                     RxBus.getInstance().post(new MediaUpdateEvent());
                 })
-                .onNegative((dialog, which) -> dialog.dismiss())
+                .setNegativeButton(R.string.cancel, null)
                 .show();
     }
 
@@ -133,10 +142,9 @@ public class ListenerUtil {
                     for (int i = 0; i < playlists.size(); i++) {
                         chars[i + 1] = playlists.get(i).name;
                     }
-                    return new MaterialDialog.Builder(context)
-                            .title(R.string.add_to_playlist)
-                            .items(chars)
-                            .itemsCallback((dialog, itemView, which, text) -> {
+                    return new MaterialAlertDialogBuilder(context)
+                            .setTitle(R.string.add_to_playlist)
+                            .setItems(chars, (dialog, which) -> {
                                 if (which == 0) {
                                     CreatePlaylistDialog.newInstance(songIds)
                                             .show(((AppCompatActivity) context)
@@ -155,37 +163,33 @@ public class ListenerUtil {
                                 RxBus.getInstance().post(new PlaylistUpdateEvent());
                                 dialog.dismiss();
 
-                            }).build();
+                            }).create();
                 })
                 .observeOn(AndroidSchedulers.mainThread())
                 .subscribe(Dialog::show);
     }
 
     public static void showDeleteFromFavorite(final Context context, final long[] ids) {
-        new MaterialDialog.Builder(context)
-                .title(R.string.delete_song_favorite)
-                .positiveText(R.string.delete)
-                .negativeText(R.string.cancel)
-                .onPositive((dialog, which) -> {
+        new MaterialAlertDialogBuilder(context)
+                .setTitle(R.string.delete_song_favorite)
+                .setPositiveButton(R.string.delete, (dialog, which) -> {
                     FavoriteSong.getInstance(context).removeFavoriteSong(ids);
                     RxBus.getInstance().post(new FavoriteSongEvent());
                     Toast.makeText(context, R.string.remove_favorite_success, Toast.LENGTH_SHORT).show();
                 })
-                .onNegative((dialog, which) -> dialog.dismiss())
+                .setNegativeButton(R.string.cancel, null)
                 .show();
     }
 
     public static void showDeleteFromRecentlyPlay(final Context context, final long[] ids) {
-        new MaterialDialog.Builder(context)
-                .title(R.string.delete_song_recently_play)
-                .positiveText(R.string.delete)
-                .negativeText(R.string.cancel)
-                .onPositive((dialog, which) -> {
+        new MaterialAlertDialogBuilder(context)
+                .setTitle(R.string.delete_song_recently_play)
+                .setPositiveButton(R.string.delete, (dialog, which) -> {
                     RecentStore.getInstance(context).removeItem(ids);
                     RxBus.getInstance().post(new RecentlyPlayEvent());
                     Toast.makeText(context, R.string.remove_recently_play_success, Toast.LENGTH_SHORT).show();
                 })
-                .onNegative((dialog, which) -> dialog.dismiss())
+                .setNegativeButton(R.string.cancel, null)
                 .show();
     }
 
@@ -202,9 +206,15 @@ public class ListenerUtil {
             }
         }
         selection.append(")");
-        final Cursor c = context.getContentResolver().query(
-                MediaStore.Audio.Media.EXTERNAL_CONTENT_URI, projection, selection.toString(),
-                null, null);
+        final Cursor c;
+        try {
+            c = context.getContentResolver().query(
+                    MediaStore.Audio.Media.EXTERNAL_CONTENT_URI, projection, selection.toString(),
+                    null, null);
+        } catch (final SecurityException | IllegalArgumentException ex) {
+            Log.e("MusicUtils", "Query failed, cannot delete tracks", ex);
+            return;
+        }
         if (c != null) {
             // Step 1: Remove selected tracks from the current playlist, as well
             // as from the album art cache
@@ -220,9 +230,16 @@ public class ListenerUtil {
                 c.moveToNext();
             }
 
-            // Step 2: Remove selected tracks from the database
-            context.getContentResolver().delete(MediaStore.Audio.Media.EXTERNAL_CONTENT_URI,
-                    selection.toString(), null);
+            // Step 2: Remove selected tracks from the database.
+            // On Android 10+ this can throw SecurityException
+            // (including RecoverableSecurityException) when the app
+            // is not the owner. Never crash the app here.
+            try {
+                context.getContentResolver().delete(MediaStore.Audio.Media.EXTERNAL_CONTENT_URI,
+                        selection.toString(), null);
+            } catch (final SecurityException | IllegalArgumentException ex) {
+                Log.e("MusicUtils", "MediaStore delete blocked on scoped storage", ex);
+            }
 
             // Step 3: Remove files from card
             c.moveToFirst();
@@ -328,24 +345,6 @@ public class ListenerUtil {
         ViewCompat.requestApplyInsets(view);
     }
 
-    @SuppressWarnings("unused")
-    public static void applyMarginForSystemBars(View view, boolean top, boolean bottom) {
-        ViewGroup.MarginLayoutParams lp = (ViewGroup.MarginLayoutParams) view.getLayoutParams();
-        final int initialMarginTop = lp.topMargin;
-        final int initialMarginBottom = lp.bottomMargin;
-        ViewCompat.setOnApplyWindowInsetsListener(view, (v, insets) -> {
-            ViewGroup.MarginLayoutParams layoutParams = (ViewGroup.MarginLayoutParams) v.getLayoutParams();
-            if (top) {
-                layoutParams.topMargin = initialMarginTop + insets.getInsets(WindowInsetsCompat.Type.systemBars()).top;
-            }
-            if (bottom) {
-                layoutParams.bottomMargin = initialMarginBottom + insets.getInsets(WindowInsetsCompat.Type.systemBars()).bottom;
-            }
-            v.setLayoutParams(layoutParams);
-            return insets;
-        });
-    }
-
     public enum IdType {
         NA(0),
         Artist(1),
@@ -384,17 +383,6 @@ public class ListenerUtil {
         PlaylistType(long id, int titleId) {
             mId = id;
             mTitleId = titleId;
-        }
-
-        @SuppressWarnings("unused")
-        public static PlaylistType getTypeById(long id) {
-            for (PlaylistType type : PlaylistType.values()) {
-                if (type.mId == id) {
-                    return type;
-                }
-            }
-
-            return null;
         }
     }
 }

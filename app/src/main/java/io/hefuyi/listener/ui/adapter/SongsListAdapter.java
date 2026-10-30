@@ -19,7 +19,6 @@ import androidx.core.content.ContextCompat;
 import androidx.core.widget.ImageViewCompat;
 import androidx.recyclerview.widget.RecyclerView;
 
-import com.afollestad.materialdialogs.MaterialDialog;
 import com.bumptech.glide.Glide;
 import com.bumptech.glide.load.engine.DiskCacheStrategy;
 
@@ -112,7 +111,7 @@ public class SongsListAdapter extends RecyclerView.Adapter<RecyclerView.ViewHold
                 Glide.with(holder.itemView.getContext()).load(ListenerUtil.getAlbumArtUri(localItem.albumId))
                         .error(ATEUtil.getDefaultAlbumDrawable(mContext))
                         .placeholder(ATEUtil.getDefaultAlbumDrawable(mContext))
-                        .diskCacheStrategy(DiskCacheStrategy.SOURCE)
+                        .diskCacheStrategy(DiskCacheStrategy.DATA)
                         .centerCrop()
                         .into(itemHolder.albumArt);
 

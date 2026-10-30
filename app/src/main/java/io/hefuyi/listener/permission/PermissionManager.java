@@ -22,8 +22,6 @@ import java.util.Set;
 
 public class PermissionManager {
 
-    @SuppressWarnings("unused")
-    private static final String TAG = PermissionManager.class.getSimpleName();
     private static final String KEY_PREV_PERMISSIONS = "previous_permissions";
     private static final ArrayList<PermissionRequest> permissionRequests = new ArrayList<>();
     @SuppressLint("StaticFieldLeak")
@@ -167,8 +165,10 @@ public class PermissionManager {
             permissions.add(Manifest.permission.POST_NOTIFICATIONS);
         } else {
             permissions.add(Manifest.permission.READ_EXTERNAL_STORAGE);
+            if (Build.VERSION.SDK_INT <= 32) {
+                permissions.add(Manifest.permission.WRITE_EXTERNAL_STORAGE);
+            }
         }
-        permissions.add(Manifest.permission.WRITE_EXTERNAL_STORAGE);
         for (String permission : permissions) {
             if (ContextCompat.checkSelfPermission(context, permission) == PackageManager.PERMISSION_GRANTED) {
                 permissionsGranted.add(permission);

@@ -53,6 +53,7 @@
     <string name="notification_channel_description">Music playback controls</string>
     <string name="permission_rationale_storage">Listener will need to read external storage to display songs on your device.</string>
     <string name="permission_rationale_tiramisu">Listener will need permission to access audio files and show notifications.</string>
+    <string name="permission_rationale_notification">Listener needs notification permission to show playback controls. You can deny it and the app will still work.</string>
 
     <string name="count_song"><xliff:g id="count">%d</xliff:g> song</string>
     <string name="count_songs"><xliff:g id="count">%d</xliff:g> songs</string>

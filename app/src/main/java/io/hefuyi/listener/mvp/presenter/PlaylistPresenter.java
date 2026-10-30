@@ -4,10 +4,10 @@ import androidx.annotation.NonNull;
 
 import io.hefuyi.listener.mvp.contract.PlaylistContract;
 import io.hefuyi.listener.mvp.usecase.GetPlaylists;
-import rx.Subscription;
-import rx.android.schedulers.AndroidSchedulers;
-import rx.schedulers.Schedulers;
-import rx.subscriptions.CompositeSubscription;
+import io.reactivex.rxjava3.disposables.Disposable;
+import io.reactivex.rxjava3.android.schedulers.AndroidSchedulers;
+import io.reactivex.rxjava3.schedulers.Schedulers;
+import io.reactivex.rxjava3.disposables.CompositeDisposable;
 
 /**
  * Created by hefuyi on 2016/12/4.
@@ -17,7 +17,7 @@ public class PlaylistPresenter implements PlaylistContract.Presenter {
 
     private final GetPlaylists mUseCase;
     private PlaylistContract.View mView;
-    private CompositeSubscription mCompositeSubscription;
+    private CompositeDisposable mCompositeDisposable;
 
     public PlaylistPresenter(GetPlaylists getPlaylists) {
         mUseCase = getPlaylists;
@@ -26,7 +26,7 @@ public class PlaylistPresenter implements PlaylistContract.Presenter {
     @Override
     public void attachView(@NonNull PlaylistContract.View view) {
         mView = view;
-        mCompositeSubscription = new CompositeSubscription();
+        mCompositeDisposable = new CompositeDisposable();
     }
 
     @Override
@@ -36,13 +36,13 @@ public class PlaylistPresenter implements PlaylistContract.Presenter {
 
     @Override
     public void unsubscribe() {
-        mCompositeSubscription.clear();
+        mCompositeDisposable.clear();
     }
 
     @Override
     public void loadPlaylist() {
-        mCompositeSubscription.clear();
-        Subscription subscription = mUseCase.execute(new GetPlaylists.RequestValues(false))
+        mCompositeDisposable.clear();
+        Disposable subscription = mUseCase.execute(new GetPlaylists.RequestValues(false))
                 .getPlaylists()
                 .subscribeOn(Schedulers.io())
                 .observeOn(AndroidSchedulers.mainThread())
@@ -53,6 +53,6 @@ public class PlaylistPresenter implements PlaylistContract.Presenter {
                         mView.showPlaylist(playlists);
                     }
                 });
-        mCompositeSubscription.add(subscription);
+        mCompositeDisposable.add(subscription);
     }
 }

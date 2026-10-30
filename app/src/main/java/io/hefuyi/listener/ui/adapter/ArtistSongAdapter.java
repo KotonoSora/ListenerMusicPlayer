@@ -17,7 +17,6 @@ import androidx.core.content.ContextCompat;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
-import com.afollestad.materialdialogs.MaterialDialog;
 import com.bumptech.glide.Glide;
 import com.bumptech.glide.load.engine.DiskCacheStrategy;
 
@@ -27,15 +26,13 @@ import java.util.List;
 import io.hefuyi.listener.MusicPlayer;
 import io.hefuyi.listener.R;
 import io.hefuyi.listener.dataloader.ArtistAlbumLoader;
-import io.hefuyi.listener.mvp.model.Album;
 import io.hefuyi.listener.mvp.model.Song;
 import io.hefuyi.listener.util.ATEUtil;
 import io.hefuyi.listener.util.ColorUtil;
 import io.hefuyi.listener.util.ListenerUtil;
 import io.hefuyi.listener.util.NavigationUtil;
-import rx.android.schedulers.AndroidSchedulers;
-import rx.functions.Action1;
-import rx.schedulers.Schedulers;
+import io.reactivex.rxjava3.android.schedulers.AndroidSchedulers;
+import io.reactivex.rxjava3.schedulers.Schedulers;
 
 /**
  * Created by hefuyi on 2016/11/24.
@@ -81,9 +78,9 @@ public class ArtistSongAdapter extends RecyclerView.Adapter<ArtistSongAdapter.It
             itemHolder.artist.setText(localItem.artistName);
             itemHolder.album.setText(localItem.albumName);
 
-            Glide.with(mContext)
+            Glide.with(itemHolder.itemView.getContext())
                     .load(ListenerUtil.getAlbumArtUri(localItem.albumId))
-                    .diskCacheStrategy(DiskCacheStrategy.SOURCE)
+                    .diskCacheStrategy(DiskCacheStrategy.DATA)
                     .error(ATEUtil.getDefaultAlbumDrawable(mContext))
                     .centerCrop()
                     .into(itemHolder.albumArt);

@@ -10,8 +10,8 @@ import androidx.palette.graphics.Palette;
 
 import com.bumptech.glide.Glide;
 import com.bumptech.glide.load.engine.DiskCacheStrategy;
-import com.bumptech.glide.request.animation.GlideAnimation;
-import com.bumptech.glide.request.target.SimpleTarget;
+import com.bumptech.glide.request.transition.Transition;
+import com.bumptech.glide.request.target.CustomTarget;
 
 import java.io.File;
 
@@ -22,11 +22,11 @@ import io.hefuyi.listener.respository.interfaces.Repository;
 import io.hefuyi.listener.util.ATEUtil;
 import io.hefuyi.listener.util.ListenerUtil;
 import io.hefuyi.listener.util.LyricUtil;
-import rx.Subscriber;
-import rx.Subscription;
-import rx.android.schedulers.AndroidSchedulers;
-import rx.schedulers.Schedulers;
-import rx.subscriptions.CompositeSubscription;
+import io.reactivex.rxjava3.observers.DisposableObserver;
+import io.reactivex.rxjava3.disposables.Disposable;
+import io.reactivex.rxjava3.android.schedulers.AndroidSchedulers;
+import io.reactivex.rxjava3.schedulers.Schedulers;
+import io.reactivex.rxjava3.disposables.CompositeDisposable;
 
 /**
  * Created by hefuyi on 2016/11/8.
@@ -35,7 +35,7 @@ import rx.subscriptions.CompositeSubscription;
 public class QuickControlsPresenter implements QuickControlsContract.Presenter {
 
     private final Repository mRepository;
-    private CompositeSubscription mCompositeSubscription;
+    private CompositeDisposable mCompositeDisposable;
     private QuickControlsContract.View mView;
 
     private boolean mDuetoplaypause = false;
@@ -47,7 +47,7 @@ public class QuickControlsPresenter implements QuickControlsContract.Presenter {
     @Override
     public void attachView(@NonNull QuickControlsContract.View view) {
         this.mView = view;
-        mCompositeSubscription = new CompositeSubscription();
+        mCompositeDisposable = new CompositeDisposable();
     }
 
     @Override
@@ -56,7 +56,7 @@ public class QuickControlsPresenter implements QuickControlsContract.Presenter {
 
     @Override
     public void unsubscribe() {
-        mCompositeSubscription.clear();
+        mCompositeDisposable.clear();
     }
 
     @Override
@@ -77,19 +77,19 @@ public class QuickControlsPresenter implements QuickControlsContract.Presenter {
         if (mView.getContext() == null) {
             return;
         }
-        mCompositeSubscription.clear();
+        mCompositeDisposable.clear();
         String title = MusicPlayer.getTrackName();
         String artist = MusicPlayer.getArtistName();
         if (TextUtils.isEmpty(title) || TextUtils.isEmpty(artist)) {
             return;
         }
 
-        Subscription subscription = LyricUtil.getLocalLyricFile(title, artist)
+        Disposable subscription = LyricUtil.getLocalLyricFile(title, artist)
                 .subscribeOn(Schedulers.io())
                 .observeOn(AndroidSchedulers.mainThread())
-                .subscribe(new Subscriber<>() {
+                .subscribeWith(new DisposableObserver<>() {
                     @Override
-                    public void onCompleted() {
+                    public void onComplete() {
                     }
 
                     @Override
@@ -102,7 +102,7 @@ public class QuickControlsPresenter implements QuickControlsContract.Presenter {
                         mView.showLyric(file);
                     }
                 });
-        mCompositeSubscription.add(subscription);
+        mCompositeDisposable.add(subscription);
     }
 
     @Override
@@ -137,13 +137,13 @@ public class QuickControlsPresenter implements QuickControlsContract.Presenter {
 
         if (!mDuetoplaypause) {
             Glide.with(mView.getContext())
-                    .load(ListenerUtil.getAlbumArtUri(MusicPlayer.getCurrentAlbumId()))
                     .asBitmap()
+                    .load(ListenerUtil.getAlbumArtUri(MusicPlayer.getCurrentAlbumId()))
                     .error(ATEUtil.getDefaultAlbumDrawable(mView.getContext()))
-                    .diskCacheStrategy(DiskCacheStrategy.SOURCE)
-                    .into(new SimpleTarget<Bitmap>() {
+                    .diskCacheStrategy(DiskCacheStrategy.DATA)
+                    .into(new CustomTarget<Bitmap>() {
                         @Override
-                        public void onLoadFailed(Exception e, Drawable errorDrawable) {
+                        public void onLoadFailed(Drawable errorDrawable) {
                             mView.setAlbumArt(errorDrawable);
                             if (!TextUtils.isEmpty(title) || !TextUtils.isEmpty(artist)) {
                                 if (errorDrawable instanceof BitmapDrawable) {
@@ -155,9 +155,12 @@ public class QuickControlsPresenter implements QuickControlsContract.Presenter {
                         }
 
                         @Override
-                        public void onResourceReady(Bitmap resource, GlideAnimation<? super Bitmap> glideAnimation) {
+                        public void onResourceReady(Bitmap resource, Transition<? super Bitmap> transition) {
                             mView.setAlbumArt(resource);
                             new Palette.Builder(resource).generate(mView::setPalette);
+                        }
+                        @Override
+                        public void onLoadCleared(Drawable placeholder) {
                         }
                     });
         }

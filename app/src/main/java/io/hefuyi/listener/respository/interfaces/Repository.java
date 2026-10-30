@@ -7,7 +7,7 @@ import io.hefuyi.listener.mvp.model.Artist;
 import io.hefuyi.listener.mvp.model.FolderInfo;
 import io.hefuyi.listener.mvp.model.Playlist;
 import io.hefuyi.listener.mvp.model.Song;
-import rx.Observable;
+import io.reactivex.rxjava3.core.Observable;
 
 /**
  * Created by hefuyi on 2016/11/3.

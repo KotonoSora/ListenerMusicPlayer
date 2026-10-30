@@ -8,11 +8,8 @@ import java.util.ArrayList;
 import java.util.List;
 
 import io.hefuyi.listener.mvp.model.Artist;
-import io.hefuyi.listener.mvp.model.Song;
 import io.hefuyi.listener.util.PreferencesUtility;
-import rx.Observable;
-import rx.Subscriber;
-import rx.functions.Func1;
+import io.reactivex.rxjava3.core.Observable;
 
 
 /**
@@ -32,7 +29,7 @@ public class ArtistLoader {
                 cursor.close();
             }
             subscriber.onNext(artist);
-            subscriber.onCompleted();
+            subscriber.onComplete();
         });
     }
 
@@ -48,24 +45,24 @@ public class ArtistLoader {
                 cursor.close();
             }
             subscriber.onNext(arrayList);
-            subscriber.onCompleted();
+            subscriber.onComplete();
         });
     }
 
     public static Observable<List<Artist>> getFavoriteArtists(final Context context) {
         return SongLoader.getFavoriteSongs(context)
-                .flatMap(Observable::from)
+                .flatMap(Observable::fromIterable)
                 .distinct(song -> song.artistId)
                 .flatMap(song -> ArtistLoader.getArtist(context, song.artistId))
-                .toList();
+                .toList().toObservable();
     }
 
     public static Observable<List<Artist>> getRecentlyPlayedArtist(final Context context) {
         return TopTracksLoader.getTopRecentSongs(context)
-                .flatMap(Observable::from)
+                .flatMap(Observable::fromIterable)
                 .distinct(song -> song.artistId)
                 .flatMap(song -> ArtistLoader.getArtist(context, song.artistId))
-                .toList();
+                .toList().toObservable();
     }
 
     public static Observable<List<Artist>> getAllArtists(Context context) {

@@ -17,7 +17,7 @@ import io.hefuyi.listener.injector.module.NetworkModule;
 import io.hefuyi.listener.mvp.model.Song;
 import io.hefuyi.listener.permission.PermissionManager;
 import io.hefuyi.listener.util.ListenerUtil;
-import rx.schedulers.Schedulers;
+import io.reactivex.rxjava3.schedulers.Schedulers;
 
 /**
  * Created by hefuyi on 2016/10/4.

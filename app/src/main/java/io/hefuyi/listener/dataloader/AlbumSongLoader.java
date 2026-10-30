@@ -11,8 +11,7 @@ import java.util.List;
 
 import io.hefuyi.listener.mvp.model.Song;
 import io.hefuyi.listener.util.PreferencesUtility;
-import rx.Observable;
-import rx.Subscriber;
+import io.reactivex.rxjava3.core.Observable;
 
 /**
  * Created by hefuyi on 2016/11/4.
@@ -46,7 +45,7 @@ public class AlbumSongLoader {
                 cursor.close();
             }
             subscriber.onNext(arrayList);
-            subscriber.onCompleted();
+            subscriber.onComplete();
         });
     }
 

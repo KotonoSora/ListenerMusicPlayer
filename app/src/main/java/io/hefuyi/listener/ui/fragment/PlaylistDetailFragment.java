@@ -16,6 +16,8 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageView;
 import android.widget.Toast;
+import android.widget.EditText;
+import android.widget.FrameLayout;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -29,7 +31,7 @@ import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.afollestad.appthemeengine.ATE;
-import com.afollestad.materialdialogs.MaterialDialog;
+import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 import com.google.android.material.appbar.AppBarLayout;
 import com.google.android.material.appbar.CollapsingToolbarLayout;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
@@ -57,9 +59,9 @@ import io.hefuyi.listener.util.ATEUtil;
 import io.hefuyi.listener.util.ColorUtil;
 import io.hefuyi.listener.util.ListenerUtil;
 import io.hefuyi.listener.widget.DividerItemDecoration;
-import rx.Subscription;
-import rx.android.schedulers.AndroidSchedulers;
-import rx.schedulers.Schedulers;
+import io.reactivex.rxjava3.disposables.Disposable;
+import io.reactivex.rxjava3.android.schedulers.AndroidSchedulers;
+import io.reactivex.rxjava3.schedulers.Schedulers;
 
 
 /**
@@ -244,7 +246,7 @@ public class PlaylistDetailFragment extends Fragment implements PlaylistDetailCo
 
     @SuppressWarnings("notifyDataSetChanged")
     private void subscribeMetaChangedEvent() {
-        Subscription subscription = RxBus.getInstance()
+        Disposable subscription = RxBus.getInstance()
                 .toObservable(MetaChangedEvent.class)
                 .subscribeOn(Schedulers.io())
                 .observeOn(AndroidSchedulers.mainThread())
@@ -286,11 +288,9 @@ public class PlaylistDetailFragment extends Fragment implements PlaylistDetailCo
     }
 
     private void showDeletePlaylistDialog() {
-        new MaterialDialog.Builder(requireActivity())
-                .title(R.string.delete_playlist_song)
-                .positiveText(R.string.delete)
-                .negativeText(R.string.cancel)
-                .onPositive((dialog, which) -> {
+        new MaterialAlertDialogBuilder(requireActivity())
+                .setTitle(R.string.delete_playlist_song)
+                .setPositiveButton(R.string.delete, (dialog, which) -> {
                     PlaylistSongLoader.removeFromPlaylist(mContext, mAdapter.getSongIds(), playlistID);
                     mPresenter.loadPlaylistSongs(playlistID);
                     showPlaylistArt(ATEUtil.getDefaultAlbumDrawable(mContext));
@@ -299,22 +299,35 @@ public class PlaylistDetailFragment extends Fragment implements PlaylistDetailCo
                     collapsingToolbarLayout.setStatusBarScrimColor(ColorUtil.getStatusBarColor(primaryColor));
                     RxBus.getInstance().post(new PlaylistUpdateEvent());
                 })
-                .onNegative((dialog, which) -> dialog.dismiss())
+                .setNegativeButton(R.string.cancel, null)
                 .show();
     }
 
     private void showRenamePlaylistDialog(String oldName) {
-        new MaterialDialog.Builder(requireActivity())
-                .title(R.string.rename_playlist)
-                .positiveText(R.string.sure)
-                .negativeText(R.string.cancel)
-                .input(null, oldName, false, (dialog, input) -> {
-                    MusicPlayer.renamePlaylist(requireActivity(), playlistID, input.toString());
-                    collapsingToolbarLayout.setTitle(input.toString());
-                    playlistName = input.toString();
+        final EditText renameInput = new EditText(requireActivity());
+        renameInput.setText(oldName);
+        renameInput.setSelection(oldName != null ? oldName.length() : 0);
+        renameInput.setSingleLine(true);
+        int renameMargin = (int) (24 * requireActivity().getResources().getDisplayMetrics().density);
+        FrameLayout renameContainer = new FrameLayout(requireActivity());
+        FrameLayout.LayoutParams renameParams = new FrameLayout.LayoutParams(
+                FrameLayout.LayoutParams.MATCH_PARENT, FrameLayout.LayoutParams.WRAP_CONTENT);
+        renameParams.leftMargin = renameMargin;
+        renameParams.rightMargin = renameMargin;
+        renameInput.setLayoutParams(renameParams);
+        renameContainer.addView(renameInput);
+        new MaterialAlertDialogBuilder(requireActivity())
+                .setTitle(R.string.rename_playlist)
+                .setView(renameContainer)
+                .setPositiveButton(R.string.sure, (dialog, which) -> {
+                    String newName = renameInput.getText().toString();
+                    MusicPlayer.renamePlaylist(requireActivity(), playlistID, newName);
+                    collapsingToolbarLayout.setTitle(newName);
+                    playlistName = newName;
                     RxBus.getInstance().post(new PlaylistUpdateEvent());
                     Toast.makeText(requireActivity(), R.string.rename_playlist_success, Toast.LENGTH_SHORT).show();
                 })
+                .setNegativeButton(R.string.cancel, null)
                 .show();
     }
 }

@@ -4,9 +4,9 @@ import androidx.annotation.NonNull;
 
 import io.hefuyi.listener.mvp.contract.SearchContract;
 import io.hefuyi.listener.mvp.usecase.GetSearchResult;
-import rx.Subscription;
-import rx.android.schedulers.AndroidSchedulers;
-import rx.schedulers.Schedulers;
+import io.reactivex.rxjava3.disposables.Disposable;
+import io.reactivex.rxjava3.android.schedulers.AndroidSchedulers;
+import io.reactivex.rxjava3.schedulers.Schedulers;
 
 /**
  * Created by hefuyi on 2017/1/3.
@@ -16,7 +16,7 @@ public class SearchPresenter implements SearchContract.Presenter {
 
     private final GetSearchResult mUseCase;
     private SearchContract.View mView;
-    private Subscription mSubscription;
+    private Disposable mSubscription;
 
     public SearchPresenter(GetSearchResult getSearchResult) {
         mUseCase = getSearchResult;
@@ -34,15 +34,15 @@ public class SearchPresenter implements SearchContract.Presenter {
 
     @Override
     public void unsubscribe() {
-        if (mSubscription != null && mSubscription.isUnsubscribed()) {
-            mSubscription.unsubscribe();
+        if (mSubscription != null && !mSubscription.isDisposed()) {
+            mSubscription.dispose();
         }
     }
 
     @Override
     public void search(String queryString) {
-        if (mSubscription != null && mSubscription.isUnsubscribed()) {
-            mSubscription.unsubscribe();
+        if (mSubscription != null && !mSubscription.isDisposed()) {
+            mSubscription.dispose();
         }
         mSubscription = mUseCase.execute(new GetSearchResult.RequestValues(queryString))
                 .getResultList()

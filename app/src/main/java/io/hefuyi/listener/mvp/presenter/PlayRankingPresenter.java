@@ -5,10 +5,10 @@ import androidx.annotation.NonNull;
 import io.hefuyi.listener.Constants;
 import io.hefuyi.listener.mvp.contract.PlayRankingContract;
 import io.hefuyi.listener.mvp.usecase.GetSongs;
-import rx.Subscription;
-import rx.android.schedulers.AndroidSchedulers;
-import rx.schedulers.Schedulers;
-import rx.subscriptions.CompositeSubscription;
+import io.reactivex.rxjava3.disposables.Disposable;
+import io.reactivex.rxjava3.android.schedulers.AndroidSchedulers;
+import io.reactivex.rxjava3.schedulers.Schedulers;
+import io.reactivex.rxjava3.disposables.CompositeDisposable;
 
 /**
  * Created by hefuyi on 2016/12/9.
@@ -18,7 +18,7 @@ public class PlayRankingPresenter implements PlayRankingContract.Presenter {
 
     private final GetSongs mUseCase;
     private PlayRankingContract.View mView;
-    private CompositeSubscription mCompositeSubscription;
+    private CompositeDisposable mCompositeDisposable;
 
     public PlayRankingPresenter(GetSongs getSongs) {
         mUseCase = getSongs;
@@ -27,7 +27,7 @@ public class PlayRankingPresenter implements PlayRankingContract.Presenter {
     @Override
     public void attachView(@NonNull PlayRankingContract.View view) {
         mView = view;
-        mCompositeSubscription = new CompositeSubscription();
+        mCompositeDisposable = new CompositeDisposable();
     }
 
     @Override
@@ -37,13 +37,13 @@ public class PlayRankingPresenter implements PlayRankingContract.Presenter {
 
     @Override
     public void unsubscribe() {
-        mCompositeSubscription.clear();
+        mCompositeDisposable.clear();
     }
 
     @Override
     public void loadRanking() {
-        mCompositeSubscription.clear();
-        Subscription subscription = mUseCase.execute(new GetSongs.RequestValues(Constants.NAVIGATE_PLAYLIST_TOPPLAYED))
+        mCompositeDisposable.clear();
+        Disposable subscription = mUseCase.execute(new GetSongs.RequestValues(Constants.NAVIGATE_PLAYLIST_TOPPLAYED))
                 .getSongList()
                 .subscribeOn(Schedulers.io())
                 .observeOn(AndroidSchedulers.mainThread())
@@ -54,6 +54,6 @@ public class PlayRankingPresenter implements PlayRankingContract.Presenter {
                         mView.showRanking(songList);
                     }
                 });
-        mCompositeSubscription.add(subscription);
+        mCompositeDisposable.add(subscription);
     }
 }

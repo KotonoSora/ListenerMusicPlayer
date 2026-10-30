@@ -72,9 +72,9 @@ import io.hefuyi.listener.widget.ForegroundImageView;
 import io.hefuyi.listener.widget.LyricView;
 import io.hefuyi.listener.widget.PlayPauseView;
 import io.hefuyi.listener.widget.timely.TimelyView;
-import rx.Subscription;
-import rx.android.schedulers.AndroidSchedulers;
-import rx.schedulers.Schedulers;
+import io.reactivex.rxjava3.disposables.Disposable;
+import io.reactivex.rxjava3.android.schedulers.AndroidSchedulers;
+import io.reactivex.rxjava3.schedulers.Schedulers;
 
 
 /**
@@ -614,7 +614,7 @@ public class QuickControlsFragment extends Fragment implements QuickControlsCont
     }
 
     private void subscribeFavoriteSongEvent() {
-        Subscription subscription = RxBus.getInstance()
+        Disposable subscription = RxBus.getInstance()
                 .toObservable(FavoriteSongEvent.class)
                 .subscribeOn(Schedulers.io())
                 .observeOn(AndroidSchedulers.mainThread())
@@ -634,7 +634,7 @@ public class QuickControlsFragment extends Fragment implements QuickControlsCont
     }
 
     private void subscribeMetaChangedEvent() {
-        Subscription subscription = RxBus.getInstance()
+        Disposable subscription = RxBus.getInstance()
                 .toObservable(MetaChangedEvent.class)
                 .subscribeOn(Schedulers.io())
                 .observeOn(AndroidSchedulers.mainThread())
@@ -647,7 +647,7 @@ public class QuickControlsFragment extends Fragment implements QuickControlsCont
     }
 
     private void subscribePlayStateChangedEvent() {
-        Subscription subscription = RxBus.getInstance()
+        Disposable subscription = RxBus.getInstance()
                 .toObservable(PlayStateChangedEvent.class)
                 .subscribeOn(Schedulers.io())
                 .observeOn(AndroidSchedulers.mainThread())
