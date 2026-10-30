@@ -5,7 +5,7 @@ android {
     ndkVersion "28.0.12433510"
 
     defaultConfig {
-        applicationId "io.hefuyi.listener"
+        applicationId "com.kotonosora.listener"
         minSdk 24
         targetSdk 37
         versionCode 7
@@ -43,7 +43,7 @@ android {
         }
     }
 
-    namespace "io.hefuyi.listener"
+    namespace "com.kotonosora.listener"
 }
 
 tasks.withType(JavaCompile).configureEach {
@@ -95,5 +95,7 @@ dependencies {
     implementation('com.github.naman14:app-theme-engine:0.5.2@aar') {
         transitive = true
     }
+
+    implementation project(':listener-engine')
 }
 
