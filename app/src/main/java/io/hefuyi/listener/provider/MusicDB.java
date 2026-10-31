@@ -1,5 +1,6 @@
 package io.hefuyi.listener.provider;
 
+import android.annotation.SuppressLint;
 import android.content.Context;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
@@ -8,18 +9,20 @@ import android.database.sqlite.SQLiteOpenHelper;
  * Created by hefuyi on 2016/11/5.
  */
 
-public class MusicDB extends SQLiteOpenHelper{
+public class MusicDB extends SQLiteOpenHelper {
 
-    private static final String DATABASENAME = "musicdb.db";
+    private static final String DATABASE_NAME = "musicdb.db";
     private static final int VERSION = 1;
-    private static volatile MusicDB sInstance = null;
+
+    @SuppressLint("StaticFieldLeak")
+    private static volatile MusicDB sInstance;
 
     private final Context mContext;
 
     private MusicDB(final Context context) {
-        super(context, DATABASENAME, null, VERSION);
+        super(context.getApplicationContext(), DATABASE_NAME, null, VERSION);
 
-        mContext = context;
+        mContext = context.getApplicationContext();
     }
 
     public static MusicDB getInstance(final Context context) {
@@ -57,6 +60,6 @@ public class MusicDB extends SQLiteOpenHelper{
         RecentStore.getInstance(mContext).onDowngrade(db, oldVersion, newVersion);
         SongPlayCount.getInstance(mContext).onDowngrade(db, oldVersion, newVersion);
         SearchHistory.getInstance(mContext).onDowngrade(db, oldVersion, newVersion);
-        FavoriteSong.getInstance((mContext)).onDowngrade(db, oldVersion, newVersion);
+        FavoriteSong.getInstance(mContext).onDowngrade(db, oldVersion, newVersion);
     }
 }

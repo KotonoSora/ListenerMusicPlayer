@@ -3,15 +3,15 @@ package io.hefuyi.listener.mvp.usecase;
 import java.util.List;
 
 import io.hefuyi.listener.respository.interfaces.Repository;
-import rx.Observable;
+import io.reactivex.rxjava3.core.Observable;
 
 /**
  * Created by hefuyi on 2017/1/3.
  */
 
-public class GetSearchResult extends UseCase<GetSearchResult.RequestValues,GetSearchResult.ResponseValue>{
+public class GetSearchResult extends UseCase<GetSearchResult.RequestValues, GetSearchResult.ResponseValue> {
 
-    private Repository mRepository;
+    private final Repository mRepository;
 
     public GetSearchResult(Repository repository) {
         this.mRepository = repository;
@@ -44,7 +44,7 @@ public class GetSearchResult extends UseCase<GetSearchResult.RequestValues,GetSe
             mListObservable = listObservable;
         }
 
-        public Observable<List<Object>> getResultList(){
+        public Observable<List<Object>> getResultList() {
             return mListObservable;
         }
     }

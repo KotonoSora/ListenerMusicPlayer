@@ -5,6 +5,8 @@ import android.graphics.drawable.Drawable;
 import android.preference.PreferenceManager;
 import android.util.TypedValue;
 
+import androidx.core.content.ContextCompat;
+
 import com.afollestad.appthemeengine.Config;
 
 import io.hefuyi.listener.R;
@@ -12,12 +14,16 @@ import io.hefuyi.listener.R;
 /**
  * Created by hefuyi on 2017/1/23.
  */
-
+@SuppressWarnings({"deprecation", "unused"})
 public class ATEUtil {
 
     public static String getATEKey(Context context) {
         return PreferenceManager.getDefaultSharedPreferences(context).getBoolean("dark_theme", false) ?
                 "dark_theme" : "light_theme";
+    }
+
+    public static boolean isDarkTheme(Context context) {
+        return "dark_theme".equals(getATEKey(context));
     }
 
     public static int getThemePrimaryColor(Context context) {
@@ -33,33 +39,37 @@ public class ATEUtil {
     }
 
     public static int getThemeTextColorPrimary(Context context) {
-        TypedValue textColorPrimary = new TypedValue();
-        context.getTheme().resolveAttribute(android.R.attr.textColorPrimary, textColorPrimary, true);
-        return context.getResources().getColor(textColorPrimary.resourceId);
+        if (isDarkTheme(context)) {
+            return ContextCompat.getColor(context, R.color.colorPrimaryTextWhite);
+        } else {
+            return ContextCompat.getColor(context, R.color.colorPrimaryTextBlack);
+        }
     }
 
     public static int getThemeTextColorSecondly(Context context) {
-        TypedValue textColorSecondly = new TypedValue();
-        context.getTheme().resolveAttribute(android.R.attr.textColorSecondary, textColorSecondly, true);
-        return context.getResources().getColor(textColorSecondly.resourceId);
+        if (isDarkTheme(context)) {
+            return ContextCompat.getColor(context, R.color.colorSubTextWhite);
+        } else {
+            return ContextCompat.getColor(context, R.color.colorSubTextBlack);
+        }
     }
 
     public static Drawable getDefaultAlbumDrawable(Context context) {
         TypedValue defaultAlbum = new TypedValue();
         context.getTheme().resolveAttribute(R.attr.default_album_drawable, defaultAlbum, true);
-        return context.getResources().getDrawable(defaultAlbum.resourceId);
+        return ContextCompat.getDrawable(context, defaultAlbum.resourceId);
     }
 
     public static Drawable getDefaultSingerDrawable(Context context) {
         TypedValue defaultSinger = new TypedValue();
         context.getTheme().resolveAttribute(R.attr.default_singer_drawable, defaultSinger, true);
-        return context.getResources().getDrawable(defaultSinger.resourceId);
+        return ContextCompat.getDrawable(context, defaultSinger.resourceId);
     }
 
     public static int getThemeAlbumDefaultPaletteColor(Context context) {
         TypedValue paletteColor = new TypedValue();
         context.getTheme().resolveAttribute(R.attr.album_default_palette_color, paletteColor, true);
-        return context.getResources().getColor(paletteColor.resourceId);
+        return paletteColor.resourceId != 0 ? ContextCompat.getColor(context, paletteColor.resourceId) : paletteColor.data;
     }
 
 }

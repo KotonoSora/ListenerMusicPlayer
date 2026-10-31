@@ -19,7 +19,7 @@ public class SongsModule {
     }
 
     @Provides
-    GetSongs getSongsUsecase(Repository repository) {
+    GetSongs getSongsUseCase(Repository repository) {
         return new GetSongs(repository);
     }
 }

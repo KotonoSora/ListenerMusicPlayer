@@ -1,34 +1,32 @@
 package io.hefuyi.listener.mvp.presenter;
 
-import java.util.List;
+import androidx.annotation.NonNull;
 
 import io.hefuyi.listener.mvp.contract.FolderSongsContract;
-import io.hefuyi.listener.mvp.model.Song;
 import io.hefuyi.listener.mvp.usecase.GetFolderSongs;
-import rx.Subscription;
-import rx.android.schedulers.AndroidSchedulers;
-import rx.functions.Action1;
-import rx.schedulers.Schedulers;
-import rx.subscriptions.CompositeSubscription;
+import io.reactivex.rxjava3.disposables.Disposable;
+import io.reactivex.rxjava3.android.schedulers.AndroidSchedulers;
+import io.reactivex.rxjava3.schedulers.Schedulers;
+import io.reactivex.rxjava3.disposables.CompositeDisposable;
 
 /**
  * Created by hefuyi on 2016/12/12.
  */
 
-public class FolderSongsPresenter implements FolderSongsContract.Presenter{
+public class FolderSongsPresenter implements FolderSongsContract.Presenter {
 
-    private GetFolderSongs mUsecase;
+    private final GetFolderSongs mUseCase;
     private FolderSongsContract.View mView;
-    private CompositeSubscription mCompositeSubscription;
+    private CompositeDisposable mCompositeDisposable;
 
     public FolderSongsPresenter(GetFolderSongs getFolderSongs) {
-        mUsecase = getFolderSongs;
+        mUseCase = getFolderSongs;
     }
 
     @Override
-    public void attachView(FolderSongsContract.View view) {
+    public void attachView(@NonNull FolderSongsContract.View view) {
         mView = view;
-        mCompositeSubscription = new CompositeSubscription();
+        mCompositeDisposable = new CompositeDisposable();
     }
 
     @Override
@@ -37,23 +35,18 @@ public class FolderSongsPresenter implements FolderSongsContract.Presenter{
 
     @Override
     public void unsubscribe() {
-        mCompositeSubscription.clear();
+        mCompositeDisposable.clear();
     }
 
     @Override
     public void loadSongs(String path) {
-        mCompositeSubscription.clear();
-        Subscription subscription = mUsecase.execute(new GetFolderSongs.RequestValues(path))
+        mCompositeDisposable.clear();
+        Disposable subscription = mUseCase.execute(new GetFolderSongs.RequestValues(path))
                 .getSongList()
                 .subscribeOn(Schedulers.io())
                 .observeOn(AndroidSchedulers.mainThread())
-                .subscribe(new Action1<List<Song>>() {
-                    @Override
-                    public void call(List<Song> songList) {
-                        mView.showSongs(songList);
-                    }
-                });
-        mCompositeSubscription.add(subscription);
+                .subscribe(mView::showSongs);
+        mCompositeDisposable.add(subscription);
     }
 
 }

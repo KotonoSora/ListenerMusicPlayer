@@ -3,28 +3,30 @@ package io.hefuyi.listener.mvp.presenter;
 import android.graphics.Bitmap;
 import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.Drawable;
-import android.os.AsyncTask;
-import android.support.v7.graphics.Palette;
 import android.text.TextUtils;
+
+import androidx.annotation.NonNull;
+import androidx.palette.graphics.Palette;
 
 import com.bumptech.glide.Glide;
 import com.bumptech.glide.load.engine.DiskCacheStrategy;
-import com.bumptech.glide.request.animation.GlideAnimation;
-import com.bumptech.glide.request.target.SimpleTarget;
+import com.bumptech.glide.request.transition.Transition;
+import com.bumptech.glide.request.target.CustomTarget;
 
 import java.io.File;
 
 import io.hefuyi.listener.MusicPlayer;
 import io.hefuyi.listener.R;
 import io.hefuyi.listener.mvp.contract.QuickControlsContract;
-import io.hefuyi.listener.mvp.usecase.GetLyric;
+import io.hefuyi.listener.respository.interfaces.Repository;
 import io.hefuyi.listener.util.ATEUtil;
 import io.hefuyi.listener.util.ListenerUtil;
-import rx.Subscriber;
-import rx.Subscription;
-import rx.android.schedulers.AndroidSchedulers;
-import rx.schedulers.Schedulers;
-import rx.subscriptions.CompositeSubscription;
+import io.hefuyi.listener.util.LyricUtil;
+import io.reactivex.rxjava3.observers.DisposableObserver;
+import io.reactivex.rxjava3.disposables.Disposable;
+import io.reactivex.rxjava3.android.schedulers.AndroidSchedulers;
+import io.reactivex.rxjava3.schedulers.Schedulers;
+import io.reactivex.rxjava3.disposables.CompositeDisposable;
 
 /**
  * Created by hefuyi on 2016/11/8.
@@ -32,20 +34,20 @@ import rx.subscriptions.CompositeSubscription;
 
 public class QuickControlsPresenter implements QuickControlsContract.Presenter {
 
-    private GetLyric mGetLyric;
-    private CompositeSubscription mCompositeSubscription;
+    private final Repository mRepository;
+    private CompositeDisposable mCompositeDisposable;
     private QuickControlsContract.View mView;
 
     private boolean mDuetoplaypause = false;
 
-    public QuickControlsPresenter(GetLyric getLyric) {
-        this.mGetLyric = getLyric;
+    public QuickControlsPresenter(Repository repository) {
+        this.mRepository = repository;
     }
 
     @Override
-    public void attachView(QuickControlsContract.View view) {
+    public void attachView(@NonNull QuickControlsContract.View view) {
         this.mView = view;
-        mCompositeSubscription = new CompositeSubscription();
+        mCompositeDisposable = new CompositeDisposable();
     }
 
     @Override
@@ -54,53 +56,40 @@ public class QuickControlsPresenter implements QuickControlsContract.Presenter {
 
     @Override
     public void unsubscribe() {
-        mCompositeSubscription.clear();
+        mCompositeDisposable.clear();
     }
 
     @Override
     public void onPlayPauseClick() {
         mDuetoplaypause = true;
-        new AsyncTask<Void, Void, Boolean>() {
-            @Override
-            protected Boolean doInBackground(final Void... unused) {
-                boolean isPlaying = MusicPlayer.isPlaying();
-                MusicPlayer.playOrPause();
-                return isPlaying;
-            }
-
-            @Override
-            protected void onPostExecute(Boolean isPlaying) {
-                if (isPlaying) {
-                    mView.setPlayPauseButton(false);
-                } else {
-                    mView.setPlayPauseButton(true);
-                }
-            }
-        }.execute();
-
+        Schedulers.io().createWorker().schedule(MusicPlayer::playOrPause);
     }
 
     @Override
     public void onPreviousClick() {
-        MusicPlayer.previous(mView.getContext(), true);
+        if (mView.getContext() != null) {
+            MusicPlayer.previous(mView.getContext(), true);
+        }
     }
 
     @Override
     public void loadLyric() {
-        mCompositeSubscription.clear();
+        if (mView.getContext() == null) {
+            return;
+        }
+        mCompositeDisposable.clear();
         String title = MusicPlayer.getTrackName();
         String artist = MusicPlayer.getArtistName();
-        long duration = MusicPlayer.duration();
         if (TextUtils.isEmpty(title) || TextUtils.isEmpty(artist)) {
             return;
         }
-        Subscription subscription = mGetLyric.execute(new GetLyric.RequestValues(title, artist, duration))
-                .getLyricFile()
+
+        Disposable subscription = LyricUtil.getLocalLyricFile(title, artist)
                 .subscribeOn(Schedulers.io())
                 .observeOn(AndroidSchedulers.mainThread())
-                .subscribe(new Subscriber<File>() {
+                .subscribeWith(new DisposableObserver<>() {
                     @Override
-                    public void onCompleted() {
+                    public void onComplete() {
                     }
 
                     @Override
@@ -110,14 +99,10 @@ public class QuickControlsPresenter implements QuickControlsContract.Presenter {
 
                     @Override
                     public void onNext(File file) {
-                        if (file == null) {
-                            mView.showLyric(null);
-                        } else {
-                            mView.showLyric(file);
-                        }
+                        mView.showLyric(file);
                     }
                 });
-        mCompositeSubscription.add(subscription);
+        mCompositeDisposable.add(subscription);
     }
 
     @Override
@@ -127,6 +112,9 @@ public class QuickControlsPresenter implements QuickControlsContract.Presenter {
 
     @Override
     public void updateNowPlayingCard() {
+        if (mView.getContext() == null) {
+            return;
+        }
         if (MusicPlayer.isPlaying()) {
             if (!mView.getPlayPauseStatus()) {//true表示按钮为待暂停状态
                 mView.setPlayPauseButton(true);
@@ -147,35 +135,32 @@ public class QuickControlsPresenter implements QuickControlsContract.Presenter {
             mView.setArtist(artist);
         }
 
-        if (!mDuetoplaypause){
+        if (!mDuetoplaypause) {
             Glide.with(mView.getContext())
-                    .load(ListenerUtil.getAlbumArtUri(MusicPlayer.getCurrentAlbumId()).toString())
                     .asBitmap()
+                    .load(ListenerUtil.getAlbumArtUri(MusicPlayer.getCurrentAlbumId()))
                     .error(ATEUtil.getDefaultAlbumDrawable(mView.getContext()))
-                    .diskCacheStrategy(DiskCacheStrategy.SOURCE)
-                    .into(new SimpleTarget<Bitmap>(){
+                    .diskCacheStrategy(DiskCacheStrategy.DATA)
+                    .into(new CustomTarget<Bitmap>() {
                         @Override
-                        public void onLoadFailed(Exception e, Drawable errorDrawable) {
+                        public void onLoadFailed(Drawable errorDrawable) {
                             mView.setAlbumArt(errorDrawable);
                             if (!TextUtils.isEmpty(title) || !TextUtils.isEmpty(artist)) {
-                                new Palette.Builder(((BitmapDrawable) errorDrawable).getBitmap()).generate(new Palette.PaletteAsyncListener() {
-                                    @Override
-                                    public void onGenerated(Palette palette) {
-                                        mView.setPalette(palette);
-                                    }
-                                });
+                                if (errorDrawable instanceof BitmapDrawable) {
+                                    new Palette.Builder(((BitmapDrawable) errorDrawable).getBitmap()).generate(mView::setPalette);
+                                } else {
+                                    mView.setPalette(null);
+                                }
                             }
                         }
 
                         @Override
-                        public void onResourceReady(Bitmap resource, GlideAnimation<? super Bitmap> glideAnimation) {
+                        public void onResourceReady(Bitmap resource, Transition<? super Bitmap> transition) {
                             mView.setAlbumArt(resource);
-                            new Palette.Builder(resource).generate(new Palette.PaletteAsyncListener() {
-                                @Override
-                                public void onGenerated(Palette palette) {
-                                    mView.setPalette(palette);
-                                }
-                            });
+                            new Palette.Builder(resource).generate(mView::setPalette);
+                        }
+                        @Override
+                        public void onLoadCleared(Drawable placeholder) {
                         }
                     });
         }

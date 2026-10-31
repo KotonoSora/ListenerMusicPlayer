@@ -2,15 +2,7 @@ package io.hefuyi.listener.ui.fragment;
 
 
 import android.graphics.Rect;
-import android.os.Build;
 import android.os.Bundle;
-import android.support.annotation.Nullable;
-import android.support.v4.app.Fragment;
-import android.support.v7.app.ActionBar;
-import android.support.v7.app.AppCompatActivity;
-import android.support.v7.widget.GridLayoutManager;
-import android.support.v7.widget.RecyclerView;
-import android.support.v7.widget.Toolbar;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuInflater;
@@ -18,14 +10,22 @@ import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
+import androidx.appcompat.app.ActionBar;
+import androidx.appcompat.app.AppCompatActivity;
+import androidx.appcompat.widget.Toolbar;
+import androidx.core.view.MenuProvider;
+import androidx.fragment.app.Fragment;
+import androidx.recyclerview.widget.GridLayoutManager;
+import androidx.recyclerview.widget.RecyclerView;
+
 import com.afollestad.appthemeengine.ATE;
 
 import java.util.List;
 
 import javax.inject.Inject;
 
-import butterknife.BindView;
-import butterknife.ButterKnife;
 import io.hefuyi.listener.Constants;
 import io.hefuyi.listener.ListenerApp;
 import io.hefuyi.listener.R;
@@ -40,25 +40,21 @@ import io.hefuyi.listener.mvp.model.Playlist;
 import io.hefuyi.listener.ui.adapter.PlaylistAdapter;
 import io.hefuyi.listener.ui.dialogs.CreatePlaylistDialog;
 import io.hefuyi.listener.util.ATEUtil;
-import io.hefuyi.listener.util.DensityUtil;
+import io.hefuyi.listener.util.ListenerUtil;
 import io.hefuyi.listener.util.PreferencesUtility;
 import io.hefuyi.listener.widget.DividerItemDecoration;
 import io.hefuyi.listener.widget.fastscroller.FastScrollRecyclerView;
-import rx.Subscription;
-import rx.android.schedulers.AndroidSchedulers;
-import rx.functions.Action1;
-import rx.schedulers.Schedulers;
+import io.reactivex.rxjava3.disposables.Disposable;
+import io.reactivex.rxjava3.android.schedulers.AndroidSchedulers;
+import io.reactivex.rxjava3.schedulers.Schedulers;
 
 
 public class PlaylistFragment extends Fragment implements PlaylistContract.View {
 
     @Inject
     PlaylistContract.Presenter mPresenter;
-    @BindView(R.id.recyclerview)
     FastScrollRecyclerView recyclerView;
-    @BindView(R.id.view_empty)
     View emptyView;
-    @BindView(R.id.toolbar)
     Toolbar toolbar;
     private PlaylistAdapter mAdapter;
     private GridLayoutManager layoutManager;
@@ -67,23 +63,23 @@ public class PlaylistFragment extends Fragment implements PlaylistContract.View 
     private boolean isGrid;
 
     @Override
-    public void onCreate(final Bundle savedInstanceState) {
+    public void onCreate(@Nullable final Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        injectDependences();
+        injectDependencies();
         mPresenter.attachView(this);
 
-        mPreferences = PreferencesUtility.getInstance(getActivity());
+        mPreferences = PreferencesUtility.getInstance(requireActivity());
         isGrid = mPreferences.getPlaylistView() == Constants.PLAYLIST_VIEW_GRID;
         mAdapter = new PlaylistAdapter(this, null);
         if (isGrid) {
-            layoutManager = new GridLayoutManager(getActivity(), 2);
+            layoutManager = new GridLayoutManager(requireActivity(), 2);
         } else {
-            layoutManager = new GridLayoutManager(getActivity(), 1);
+            layoutManager = new GridLayoutManager(requireActivity(), 1);
         }
     }
 
-    private void injectDependences() {
-        ApplicationComponent applicationComponent = ((ListenerApp) getActivity().getApplication()).getApplicationComponent();
+    private void injectDependencies() {
+        ApplicationComponent applicationComponent = ((ListenerApp) requireActivity().getApplication()).getApplicationComponent();
         PlaylistComponent playlistComponent = DaggerPlaylistComponent.builder()
                 .applicationComponent(applicationComponent)
                 .playlistModule(new PlaylistModule())
@@ -91,45 +87,77 @@ public class PlaylistFragment extends Fragment implements PlaylistContract.View 
         playlistComponent.inject(this);
     }
 
+    @Nullable
     @Override
-    public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
-        View rootView = inflater.inflate(R.layout.fragment_list_layout, container, false);
-        ButterKnife.bind(this, rootView);
-        return rootView;
+    public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
+        return inflater.inflate(R.layout.fragment_list_layout, container, false);
     }
 
     @Override
-    public void onViewCreated(View view, @Nullable Bundle savedInstanceState) {
+    public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
 
-        ATE.apply(this, ATEUtil.getATEKey(getActivity()));
+        recyclerView = view.findViewById(R.id.recyclerview);
+        emptyView = view.findViewById(R.id.view_empty);
+        toolbar = view.findViewById(R.id.toolbar);
 
-        if (Build.VERSION.SDK_INT < 21 && view.findViewById(R.id.status_bar) != null) {
-            view.findViewById(R.id.status_bar).setVisibility(View.GONE);
-            if (Build.VERSION.SDK_INT >= 19) {
-                int statusBarHeight = DensityUtil.getStatusBarHeight(getContext());
-                view.findViewById(R.id.toolbar).setPadding(0, statusBarHeight, 0, 0);
-            }
+        ATE.apply(this, ATEUtil.getATEKey(requireActivity()));
+
+        ListenerUtil.applySystemBarPaddingAndHeight(toolbar, true, false);
+
+        AppCompatActivity activity = (AppCompatActivity) requireActivity();
+        activity.setSupportActionBar(toolbar);
+
+        final ActionBar ab = activity.getSupportActionBar();
+        if (ab != null) {
+            ab.setHomeAsUpIndicator(R.drawable.ic_menu);
+            ab.setDisplayHomeAsUpEnabled(true);
+            ab.setTitle(R.string.playlists);
         }
-
-        ((AppCompatActivity) getActivity()).setSupportActionBar(toolbar);
-
-        final ActionBar ab = ((AppCompatActivity) getActivity()).getSupportActionBar();
-        ab.setHomeAsUpIndicator(R.drawable.ic_menu);
-        ab.setDisplayHomeAsUpEnabled(true);
-        ab.setTitle(R.string.playlists);
 
         recyclerView.setLayoutManager(layoutManager);
         recyclerView.setAdapter(mAdapter);
         setItemDecoration();
+
+        ListenerUtil.applyBottomInsetWithPlayer(recyclerView);
+
+        setupMenu();
+
         mPresenter.subscribe();
         subscribePlaylistUpdateEvent();
     }
 
-    @Override
-    public void onActivityCreated(final Bundle savedInstanceState) {
-        super.onActivityCreated(savedInstanceState);
-        setHasOptionsMenu(true);
+    private void setupMenu() {
+        requireActivity().addMenuProvider(new MenuProvider() {
+            @Override
+            public void onCreateMenu(@NonNull Menu menu, @NonNull MenuInflater menuInflater) {
+                menuInflater.inflate(R.menu.menu_playlist, menu);
+            }
+
+            @Override
+            public boolean onMenuItemSelected(@NonNull MenuItem menuItem) {
+                int itemId = menuItem.getItemId();
+                if (itemId == R.id.action_new_playlist) {
+                    CreatePlaylistDialog.newInstance().show(getChildFragmentManager(), "CREATE_PLAYLIST");
+                    return true;
+                } else if (itemId == R.id.menu_show_as_list) {
+                    if (isGrid) {
+                        mPreferences.setPlaylistView(Constants.PLAYLIST_VIEW_LIST);
+                        isGrid = false;
+                        updateLayoutManager(1);
+                    }
+                    return true;
+                } else if (itemId == R.id.menu_show_as_grid) {
+                    if (!isGrid) {
+                        mPreferences.setPlaylistView(Constants.PLAYLIST_VIEW_GRID);
+                        isGrid = true;
+                        updateLayoutManager(2);
+                    }
+                    return true;
+                }
+                return false;
+            }
+        }, getViewLifecycleOwner());
     }
 
     @Override
@@ -138,37 +166,6 @@ public class PlaylistFragment extends Fragment implements PlaylistContract.View 
         mPresenter.unsubscribe();
         RxBus.getInstance().unSubscribe(this);
     }
-
-    @Override
-    public void onCreateOptionsMenu(Menu menu, MenuInflater inflater) {
-        super.onCreateOptionsMenu(menu, inflater);
-        inflater.inflate(R.menu.menu_playlist, menu);
-    }
-
-    @Override
-    public boolean onOptionsItemSelected(MenuItem item) {
-        switch (item.getItemId()) {
-            case R.id.action_new_playlist:
-                CreatePlaylistDialog.newInstance().show(getChildFragmentManager(), "CREATE_PLAYLIST");
-                return true;
-            case R.id.menu_show_as_list:
-                if (isGrid) {
-                    mPreferences.setPlaylistView(Constants.PLAYLIST_VIEW_LIST);
-                    isGrid = false;
-                    updateLayoutManager(1);
-                }
-                return true;
-            case R.id.menu_show_as_grid:
-                if (!isGrid) {
-                    mPreferences.setPlaylistView(Constants.PLAYLIST_VIEW_GRID);
-                    isGrid = true;
-                    updateLayoutManager(2);
-                }
-                return true;
-        }
-        return super.onOptionsItemSelected(item);
-    }
-
 
     @Override
     public void showPlaylist(List<Playlist> playlists) {
@@ -184,10 +181,10 @@ public class PlaylistFragment extends Fragment implements PlaylistContract.View 
 
     private void setItemDecoration() {
         if (isGrid) {
-            int spacingInPixels = getActivity().getResources().getDimensionPixelSize(R.dimen.spacing_card_album_grid);
-            itemDecoration = new PlaylistFragment.SpacesItemDecoration(spacingInPixels);
+            int spacingInPixels = requireContext().getResources().getDimensionPixelSize(R.dimen.spacing_card_album_grid);
+            itemDecoration = new SpacesItemDecoration(spacingInPixels);
         } else {
-            itemDecoration = new DividerItemDecoration(getActivity(), DividerItemDecoration.VERTICAL_LIST, false);
+            itemDecoration = new DividerItemDecoration(requireContext(), DividerItemDecoration.VERTICAL_LIST, false);
         }
         recyclerView.addItemDecoration(itemDecoration);
     }
@@ -203,33 +200,24 @@ public class PlaylistFragment extends Fragment implements PlaylistContract.View 
     }
 
     private void subscribePlaylistUpdateEvent() {
-        Subscription subscription = RxBus.getInstance()
+        Disposable subscription = RxBus.getInstance()
                 .toObservable(PlaylistUpdateEvent.class)
                 .subscribeOn(Schedulers.io())
                 .observeOn(AndroidSchedulers.mainThread())
-                .subscribe(new Action1<PlaylistUpdateEvent>() {
-                    @Override
-                    public void call(PlaylistUpdateEvent event) {
-                        mPresenter.loadPlaylist();
-                    }
-                }, new Action1<Throwable>() {
-                    @Override
-                    public void call(Throwable throwable) {
-
-                    }
+                .subscribe(event -> mPresenter.loadPlaylist(), throwable -> {
                 });
         RxBus.getInstance().addSubscription(this, subscription);
     }
 
-    public class SpacesItemDecoration extends RecyclerView.ItemDecoration {
-        private int space;
+    public static class SpacesItemDecoration extends RecyclerView.ItemDecoration {
+        private final int space;
 
         public SpacesItemDecoration(int space) {
             this.space = space;
         }
 
         @Override
-        public void getItemOffsets(Rect outRect, View view, RecyclerView parent, RecyclerView.State state) {
+        public void getItemOffsets(@NonNull Rect outRect, @NonNull View view, @NonNull RecyclerView parent, @NonNull RecyclerView.State state) {
             int position = parent.getChildAdapterPosition(view);
             if (position % 2 == 0) {
                 outRect.left = 0;

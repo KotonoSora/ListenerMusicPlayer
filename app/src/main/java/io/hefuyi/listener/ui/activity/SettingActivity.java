@@ -4,11 +4,14 @@ import android.app.FragmentManager;
 import android.os.Bundle;
 import android.preference.PreferenceFragment;
 import android.preference.PreferenceManager;
-import android.support.annotation.ColorInt;
-import android.support.annotation.NonNull;
-import android.support.v7.widget.Toolbar;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.view.View;
+
+import androidx.annotation.ColorInt;
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
+import androidx.appcompat.widget.Toolbar;
 
 import com.afollestad.appthemeengine.ATE;
 import com.afollestad.appthemeengine.Config;
@@ -18,16 +21,22 @@ import com.afollestad.materialdialogs.color.ColorChooserDialog;
 import io.hefuyi.listener.R;
 import io.hefuyi.listener.ui.fragment.SettingFragment;
 import io.hefuyi.listener.util.ColorUtil;
+import io.hefuyi.listener.util.ListenerUtil;
 
 public class SettingActivity extends BaseActivity implements ColorChooserDialog.ColorCallback, ATEActivityThemeCustomizer {
 
     @Override
-    public void onCreate(Bundle savedInstanceState) {
+    public void onCreate(@Nullable Bundle savedInstanceState) {
 
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_settings);
 
-        Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
+        Toolbar toolbar = findViewById(R.id.toolbar);
+        ListenerUtil.applySystemBarPaddingAndHeight(toolbar, true, false);
+
+        View fragmentContainer = findViewById(R.id.fragment_container);
+        ListenerUtil.applySystemBarPadding(fragmentContainer, false, true);
+
         setSupportActionBar(toolbar);
         getSupportActionBar().setDisplayHomeAsUpEnabled(true);
         getSupportActionBar().setTitle(R.string.settings);
@@ -46,7 +55,7 @@ public class SettingActivity extends BaseActivity implements ColorChooserDialog.
     }
 
     @Override
-    public boolean onOptionsItemSelected(final MenuItem item) {
+    public boolean onOptionsItemSelected(@NonNull final MenuItem item) {
         switch (item.getItemId()) {
             case android.R.id.home:
                 finish();
@@ -65,12 +74,20 @@ public class SettingActivity extends BaseActivity implements ColorChooserDialog.
 
     @Override
     public void onColorSelection(@NonNull ColorChooserDialog dialog, @ColorInt int selectedColor) {
-        final Config config = ATE.config(this, getATEKey());
-        config.primaryColor(selectedColor);
-        config.primaryColorDark(ColorUtil.getStatusBarColor(selectedColor));
-        config.accentColor(selectedColor);
-        config.commit();
+        final Config configLight = ATE.config(this, "light_theme");
+        configLight.primaryColor(selectedColor);
+        configLight.primaryColorDark(ColorUtil.getStatusBarColor(selectedColor));
+        configLight.accentColor(selectedColor);
+        configLight.commit();
+
+        final Config configDark = ATE.config(this, "dark_theme");
+        configDark.primaryColor(selectedColor);
+        configDark.primaryColorDark(ColorUtil.getStatusBarColor(selectedColor));
+        configDark.accentColor(selectedColor);
+        configDark.commit();
+
         Config.markChanged(this, "light_theme");
+        Config.markChanged(this, "dark_theme");
         recreate(); // recreation needed to reach the checkboxes in the preferences layout
     }
 }

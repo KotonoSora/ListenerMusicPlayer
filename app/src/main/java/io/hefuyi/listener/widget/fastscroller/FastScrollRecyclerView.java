@@ -19,42 +19,26 @@ package io.hefuyi.listener.widget.fastscroller;
 import android.content.Context;
 import android.graphics.Canvas;
 import android.graphics.Typeface;
-import android.support.annotation.ColorInt;
-import android.support.annotation.NonNull;
-import android.support.v7.widget.GridLayoutManager;
-import android.support.v7.widget.LinearLayoutManager;
-import android.support.v7.widget.RecyclerView;
 import android.util.AttributeSet;
 import android.view.MotionEvent;
 import android.view.View;
 
+import androidx.annotation.ColorInt;
+import androidx.annotation.NonNull;
+import androidx.recyclerview.widget.GridLayoutManager;
+import androidx.recyclerview.widget.LinearLayoutManager;
+import androidx.recyclerview.widget.RecyclerView;
+
 import io.hefuyi.listener.util.ListenerUtil;
 
+@SuppressWarnings("unused")
 public class FastScrollRecyclerView extends RecyclerView implements RecyclerView.OnItemTouchListener {
 
-    private FastScroller mScrollbar;
-
-    /**
-     * The current scroll state of the recycler view.  We use this in onUpdateScrollbar()
-     * and scrollToPositionAtProgress() to determine the scroll position of the recycler view so
-     * that we can calculate what the scroll bar looks like, and where to jump to from the fast
-     * scroller.
-     */
-    public static class ScrollPositionState {
-        // The index of the first visible row
-        public int rowIndex;
-        // The offset of the first visible row
-        public int rowTopOffset;
-        // The height of a given row (they are currently all the same height)
-        public int rowHeight;
-    }
-
-    private ScrollPositionState mScrollPosState = new ScrollPositionState();
-
+    private final FastScroller mScrollbar;
+    private final ScrollPositionState mScrollPosState = new ScrollPositionState();
     private int mDownX;
     private int mDownY;
     private int mLastY;
-
     private OnFastScrollStateChangeListener mStateChangeListener;
 
     public FastScrollRecyclerView(Context context) {
@@ -89,12 +73,12 @@ public class FastScrollRecyclerView extends RecyclerView implements RecyclerView
      * scroll bar.  Otherwise, we fall back to the default RecyclerView touch handling.
      */
     @Override
-    public boolean onInterceptTouchEvent(RecyclerView rv, MotionEvent ev) {
+    public boolean onInterceptTouchEvent(@NonNull RecyclerView rv, @NonNull MotionEvent ev) {
         return handleTouchEvent(ev);
     }
 
     @Override
-    public void onTouchEvent(RecyclerView rv, MotionEvent ev) {
+    public void onTouchEvent(@NonNull RecyclerView rv, @NonNull MotionEvent ev) {
         handleTouchEvent(ev);
     }
 
@@ -141,8 +125,7 @@ public class FastScrollRecyclerView extends RecyclerView implements RecyclerView
     protected int getAvailableScrollHeight(int rowCount, int rowHeight, int yOffset) {
         int visibleHeight = getHeight();
         int scrollHeight = getPaddingTop() + yOffset + rowCount * rowHeight + getPaddingBottom();
-        int availableScrollHeight = scrollHeight - visibleHeight;
-        return availableScrollHeight;
+        return scrollHeight - visibleHeight;
     }
 
     /**
@@ -151,12 +134,11 @@ public class FastScrollRecyclerView extends RecyclerView implements RecyclerView
      */
     protected int getAvailableScrollBarHeight() {
         int visibleHeight = getHeight();
-        int availableScrollBarHeight = visibleHeight - mScrollbar.getThumbHeight();
-        return availableScrollBarHeight;
+        return visibleHeight - mScrollbar.getThumbHeight();
     }
 
     @Override
-    public void draw(Canvas c) {
+    public void draw(@NonNull Canvas c) {
         super.draw(c);
         onUpdateScrollbar();
         mScrollbar.draw(c);
@@ -202,7 +184,11 @@ public class FastScrollRecyclerView extends RecyclerView implements RecyclerView
      * Maps the touch (from 0..1) to the adapter position that should be visible.
      */
     public String scrollToPositionAtProgress(float touchFraction) {
-        int itemCount = getAdapter().getItemCount();
+        Adapter<?> adapter = getAdapter();
+        if (adapter == null) {
+            return "";
+        }
+        int itemCount = adapter.getItemCount();
         if (itemCount == 0) {
             return "";
         }
@@ -228,17 +214,19 @@ public class FastScrollRecyclerView extends RecyclerView implements RecyclerView
         //Scroll to the desired item. The offset used here is kind of hard to explain.
         //If the position we wish to scroll to is, say, position 10.5, we scroll to position 10,
         //and then offset by 0.5 * rowHeight. This is how we achieve smooth scrolling.
-        LinearLayoutManager layoutManager = ((LinearLayoutManager) getLayoutManager());
-        layoutManager.scrollToPositionWithOffset(spanCount * exactItemPos / mScrollPosState.rowHeight,
-                -(exactItemPos % mScrollPosState.rowHeight));
+        if (getLayoutManager() instanceof LinearLayoutManager) {
+            LinearLayoutManager layoutManager = ((LinearLayoutManager) getLayoutManager());
+            layoutManager.scrollToPositionWithOffset(spanCount * exactItemPos / mScrollPosState.rowHeight,
+                    -(exactItemPos % mScrollPosState.rowHeight));
+        }
 
-        if (!(getAdapter() instanceof SectionedAdapter)) {
+        if (!(adapter instanceof SectionedAdapter)) {
             return "";
         }
 
         int posInt = (int) ((touchFraction == 1) ? itemPos - 1 : itemPos);
 
-        SectionedAdapter sectionedAdapter = (SectionedAdapter) getAdapter();
+        SectionedAdapter sectionedAdapter = (SectionedAdapter) adapter;
         return sectionedAdapter.getSectionName(posInt);
     }
 
@@ -247,11 +235,12 @@ public class FastScrollRecyclerView extends RecyclerView implements RecyclerView
      */
     public void onUpdateScrollbar() {
 
-        if (getAdapter() == null) {
+        Adapter<?> adapter = getAdapter();
+        if (adapter == null) {
             return;
         }
 
-        int rowCount = getAdapter().getItemCount();
+        int rowCount = adapter.getItemCount();
         if (getLayoutManager() instanceof GridLayoutManager) {
             int spanCount = ((GridLayoutManager) getLayoutManager()).getSpanCount();
             rowCount = (int) Math.ceil((double) rowCount / spanCount);
@@ -280,7 +269,11 @@ public class FastScrollRecyclerView extends RecyclerView implements RecyclerView
         stateOut.rowTopOffset = -1;
         stateOut.rowHeight = -1;
 
-        int itemCount = getAdapter().getItemCount();
+        Adapter<?> adapter = getAdapter();
+        if (adapter == null) {
+            return;
+        }
+        int itemCount = adapter.getItemCount();
 
         // Return early if there are no items, or no children.
         if (itemCount == 0 || getChildCount() == 0) {
@@ -290,10 +283,13 @@ public class FastScrollRecyclerView extends RecyclerView implements RecyclerView
         View child = getChildAt(0);
 
         stateOut.rowIndex = getChildAdapterPosition(child);
-        if (getLayoutManager() instanceof GridLayoutManager) {
-            stateOut.rowIndex = stateOut.rowIndex / ((GridLayoutManager) getLayoutManager()).getSpanCount();
+        LayoutManager lm = getLayoutManager();
+        if (lm instanceof GridLayoutManager) {
+            stateOut.rowIndex = stateOut.rowIndex / ((GridLayoutManager) lm).getSpanCount();
         }
-        stateOut.rowTopOffset = getLayoutManager().getDecoratedTop(child);
+        if (lm != null) {
+            stateOut.rowTopOffset = lm.getDecoratedTop(child);
+        }
         stateOut.rowHeight = child.getHeight();
     }
 
@@ -336,5 +332,20 @@ public class FastScrollRecyclerView extends RecyclerView implements RecyclerView
     public interface SectionedAdapter {
         @NonNull
         String getSectionName(int position);
+    }
+
+    /**
+     * The current scroll state of the recycler view.  We use this in onUpdateScrollbar()
+     * and scrollToPositionAtProgress() to determine the scroll position of the recycler view so
+     * that we can calculate what the scroll bar looks like, and where to jump to from the fast
+     * scroller.
+     */
+    public static class ScrollPositionState {
+        // The index of the first visible row
+        public int rowIndex;
+        // The offset of the first visible row
+        public int rowTopOffset;
+        // The height of a given row (they are currently all the same height)
+        public int rowHeight;
     }
 }

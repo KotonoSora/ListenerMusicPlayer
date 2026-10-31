@@ -14,7 +14,7 @@ import io.hefuyi.listener.mvp.view.BaseView;
 
 public interface FoldersContract {
 
-    interface View extends BaseView{
+    interface View extends BaseView {
 
         Context getContext();
 
@@ -23,7 +23,7 @@ public interface FoldersContract {
         void showFolders(List<FolderInfo> folderInfos);
     }
 
-    interface Presenter extends BasePresenter<View>{
+    interface Presenter extends BasePresenter<View> {
 
         void loadFolders();
     }

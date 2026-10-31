@@ -1,34 +1,35 @@
 package io.hefuyi.listener.mvp.presenter;
 
+import androidx.annotation.NonNull;
 import java.util.List;
 
 import io.hefuyi.listener.mvp.contract.ArtistSongContract;
 import io.hefuyi.listener.mvp.model.Song;
 import io.hefuyi.listener.mvp.usecase.GetArtistSongs;
-import rx.Subscriber;
-import rx.Subscription;
-import rx.android.schedulers.AndroidSchedulers;
-import rx.schedulers.Schedulers;
-import rx.subscriptions.CompositeSubscription;
+import io.reactivex.rxjava3.observers.DisposableObserver;
+import io.reactivex.rxjava3.disposables.Disposable;
+import io.reactivex.rxjava3.android.schedulers.AndroidSchedulers;
+import io.reactivex.rxjava3.schedulers.Schedulers;
+import io.reactivex.rxjava3.disposables.CompositeDisposable;
 
 /**
  * Created by hefuyi on 2016/11/25.
  */
 
-public class ArtistSongPresenter implements ArtistSongContract.Presenter{
+public class ArtistSongPresenter implements ArtistSongContract.Presenter {
 
-    private GetArtistSongs mUsecase;
+    private final GetArtistSongs mUseCase;
     private ArtistSongContract.View mView;
-    private CompositeSubscription mCompositeSubscription;
+    private CompositeDisposable mCompositeDisposable;
 
     public ArtistSongPresenter(GetArtistSongs getArtistSongs) {
-        mUsecase = getArtistSongs;
+        mUseCase = getArtistSongs;
     }
 
     @Override
-    public void attachView(ArtistSongContract.View view) {
+    public void attachView(@NonNull ArtistSongContract.View view) {
         mView = view;
-        mCompositeSubscription = new CompositeSubscription();
+        mCompositeDisposable = new CompositeDisposable();
     }
 
     @Override
@@ -43,19 +44,19 @@ public class ArtistSongPresenter implements ArtistSongContract.Presenter{
 
     @Override
     public void unsubscribe() {
-        mCompositeSubscription.clear();
+        mCompositeDisposable.clear();
     }
 
     @Override
     public void loadSongs(long artistID) {
-        mCompositeSubscription.clear();
-        Subscription subscription=mUsecase.execute(new GetArtistSongs.RequestValues(artistID))
+        mCompositeDisposable.clear();
+        Disposable subscription = mUseCase.execute(new GetArtistSongs.RequestValues(artistID))
                 .getSongList()
                 .subscribeOn(Schedulers.io())
                 .observeOn(AndroidSchedulers.mainThread())
-                .subscribe(new Subscriber<List<Song>>() {
+                .subscribeWith(new DisposableObserver<List<Song>>() {
                     @Override
-                    public void onCompleted() {
+                    public void onComplete() {
 
                     }
 
@@ -69,6 +70,6 @@ public class ArtistSongPresenter implements ArtistSongContract.Presenter{
                         mView.showSongs(songList);
                     }
                 });
-        mCompositeSubscription.add(subscription);
+        mCompositeDisposable.add(subscription);
     }
 }

@@ -23,7 +23,7 @@ public interface PlayRankingContract {
         void showEmptyView();
     }
 
-    interface Presenter extends BasePresenter<View>{
+    interface Presenter extends BasePresenter<View> {
 
         void loadRanking();
     }

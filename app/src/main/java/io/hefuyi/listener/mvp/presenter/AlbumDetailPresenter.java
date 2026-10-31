@@ -3,10 +3,11 @@ package io.hefuyi.listener.mvp.presenter;
 import android.graphics.Bitmap;
 import android.graphics.drawable.Drawable;
 
+import androidx.annotation.NonNull;
 import com.bumptech.glide.Glide;
 import com.bumptech.glide.Priority;
-import com.bumptech.glide.request.animation.GlideAnimation;
-import com.bumptech.glide.request.target.SimpleTarget;
+import com.bumptech.glide.request.transition.Transition;
+import com.bumptech.glide.request.target.CustomTarget;
 
 import java.util.List;
 
@@ -15,11 +16,11 @@ import io.hefuyi.listener.mvp.model.Song;
 import io.hefuyi.listener.mvp.usecase.GetAlbumSongs;
 import io.hefuyi.listener.util.ATEUtil;
 import io.hefuyi.listener.util.ListenerUtil;
-import rx.Subscriber;
-import rx.Subscription;
-import rx.android.schedulers.AndroidSchedulers;
-import rx.schedulers.Schedulers;
-import rx.subscriptions.CompositeSubscription;
+import io.reactivex.rxjava3.observers.DisposableObserver;
+import io.reactivex.rxjava3.disposables.Disposable;
+import io.reactivex.rxjava3.android.schedulers.AndroidSchedulers;
+import io.reactivex.rxjava3.schedulers.Schedulers;
+import io.reactivex.rxjava3.disposables.CompositeDisposable;
 
 /**
  * Created by hefuyi on 2016/12/3.
@@ -27,12 +28,12 @@ import rx.subscriptions.CompositeSubscription;
 
 public class AlbumDetailPresenter implements AlbumDetailContract.Presenter {
 
-    private GetAlbumSongs mUsecase;
+    private final GetAlbumSongs mUseCase;
     private AlbumDetailContract.View mView;
-    private CompositeSubscription mCompositeSubscription;
+    private CompositeDisposable mCompositeDisposable;
 
     public AlbumDetailPresenter(GetAlbumSongs getAlbumSongs) {
-        mUsecase = getAlbumSongs;
+        mUseCase = getAlbumSongs;
     }
 
     @Override
@@ -42,9 +43,9 @@ public class AlbumDetailPresenter implements AlbumDetailContract.Presenter {
     }
 
     @Override
-    public void attachView(AlbumDetailContract.View view) {
+    public void attachView(@NonNull AlbumDetailContract.View view) {
         mView = view;
-        mCompositeSubscription = new CompositeSubscription();
+        mCompositeDisposable = new CompositeDisposable();
     }
 
     @Override
@@ -54,19 +55,19 @@ public class AlbumDetailPresenter implements AlbumDetailContract.Presenter {
 
     @Override
     public void unsubscribe() {
-        mCompositeSubscription.clear();
+        mCompositeDisposable.clear();
     }
 
     @Override
     public void loadAlbumSongs(long albumID) {
-        mCompositeSubscription.clear();
-        Subscription subscription = mUsecase.execute(new GetAlbumSongs.RequestValues(albumID))
+        mCompositeDisposable.clear();
+        Disposable subscription = mUseCase.execute(new GetAlbumSongs.RequestValues(albumID))
                 .getSongList()
                 .subscribeOn(Schedulers.io())
                 .observeOn(AndroidSchedulers.mainThread())
-                .subscribe(new Subscriber<List<Song>>() {
+                .subscribeWith(new DisposableObserver<>() {
                     @Override
-                    public void onCompleted() {
+                    public void onComplete() {
 
                     }
 
@@ -80,26 +81,28 @@ public class AlbumDetailPresenter implements AlbumDetailContract.Presenter {
                         mView.showAlbumSongs(songList);
                     }
                 });
-        mCompositeSubscription.add(subscription);
+        mCompositeDisposable.add(subscription);
     }
 
     @Override
     public void loadAlbumArt(long albumID) {
         Glide.with(mView.getContext())
-                .load(ListenerUtil.getAlbumArtUri(albumID))
                 .asBitmap()
+                .load(ListenerUtil.getAlbumArtUri(albumID))
                 .priority(Priority.IMMEDIATE)
                 .error(ATEUtil.getDefaultAlbumDrawable(mView.getContext()))
-                .into(new SimpleTarget<Bitmap>() {
+                .into(new CustomTarget<Bitmap>() {
                     @Override
-                    public void onLoadFailed(Exception e, Drawable errorDrawable) {
-                        super.onLoadFailed(e, errorDrawable);
+                    public void onLoadFailed(Drawable errorDrawable) {
                         mView.showAlbumArt(errorDrawable);
                     }
 
                     @Override
-                    public void onResourceReady(Bitmap resource, GlideAnimation<? super Bitmap> glideAnimation) {
+                    public void onResourceReady(Bitmap resource, Transition<? super Bitmap> transition) {
                         mView.showAlbumArt(resource);
+                    }
+                    @Override
+                    public void onLoadCleared(Drawable placeholder) {
                     }
                 });
     }

@@ -1,16 +1,14 @@
 package io.hefuyi.listener.mvp.presenter;
 
-import java.util.List;
+import androidx.annotation.NonNull;
 
 import io.hefuyi.listener.Constants;
 import io.hefuyi.listener.mvp.contract.PlayRankingContract;
-import io.hefuyi.listener.mvp.model.Song;
 import io.hefuyi.listener.mvp.usecase.GetSongs;
-import rx.Subscription;
-import rx.android.schedulers.AndroidSchedulers;
-import rx.functions.Action1;
-import rx.schedulers.Schedulers;
-import rx.subscriptions.CompositeSubscription;
+import io.reactivex.rxjava3.disposables.Disposable;
+import io.reactivex.rxjava3.android.schedulers.AndroidSchedulers;
+import io.reactivex.rxjava3.schedulers.Schedulers;
+import io.reactivex.rxjava3.disposables.CompositeDisposable;
 
 /**
  * Created by hefuyi on 2016/12/9.
@@ -18,18 +16,18 @@ import rx.subscriptions.CompositeSubscription;
 
 public class PlayRankingPresenter implements PlayRankingContract.Presenter {
 
-    private GetSongs mUsecase;
+    private final GetSongs mUseCase;
     private PlayRankingContract.View mView;
-    private CompositeSubscription mCompositeSubscription;
+    private CompositeDisposable mCompositeDisposable;
 
     public PlayRankingPresenter(GetSongs getSongs) {
-        mUsecase = getSongs;
+        mUseCase = getSongs;
     }
 
     @Override
-    public void attachView(PlayRankingContract.View view) {
+    public void attachView(@NonNull PlayRankingContract.View view) {
         mView = view;
-        mCompositeSubscription = new CompositeSubscription();
+        mCompositeDisposable = new CompositeDisposable();
     }
 
     @Override
@@ -39,26 +37,23 @@ public class PlayRankingPresenter implements PlayRankingContract.Presenter {
 
     @Override
     public void unsubscribe() {
-        mCompositeSubscription.clear();
+        mCompositeDisposable.clear();
     }
 
     @Override
     public void loadRanking() {
-        mCompositeSubscription.clear();
-        Subscription subscription = mUsecase.execute(new GetSongs.RequestValues(Constants.NAVIGATE_PLAYLIST_TOPPLAYED))
+        mCompositeDisposable.clear();
+        Disposable subscription = mUseCase.execute(new GetSongs.RequestValues(Constants.NAVIGATE_PLAYLIST_TOPPLAYED))
                 .getSongList()
                 .subscribeOn(Schedulers.io())
                 .observeOn(AndroidSchedulers.mainThread())
-                .subscribe(new Action1<List<Song>>() {
-                    @Override
-                    public void call(List<Song> songList) {
-                        if (songList == null || songList.size() == 0) {
-                            mView.showEmptyView();
-                        } else {
-                            mView.showRanking(songList);
-                        }
+                .subscribe(songList -> {
+                    if (songList == null || songList.isEmpty()) {
+                        mView.showEmptyView();
+                    } else {
+                        mView.showRanking(songList);
                     }
                 });
-        mCompositeSubscription.add(subscription);
+        mCompositeDisposable.add(subscription);
     }
 }

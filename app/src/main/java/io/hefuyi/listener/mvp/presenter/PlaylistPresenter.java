@@ -1,34 +1,32 @@
 package io.hefuyi.listener.mvp.presenter;
 
-import java.util.List;
+import androidx.annotation.NonNull;
 
 import io.hefuyi.listener.mvp.contract.PlaylistContract;
-import io.hefuyi.listener.mvp.model.Playlist;
 import io.hefuyi.listener.mvp.usecase.GetPlaylists;
-import rx.Subscription;
-import rx.android.schedulers.AndroidSchedulers;
-import rx.functions.Action1;
-import rx.schedulers.Schedulers;
-import rx.subscriptions.CompositeSubscription;
+import io.reactivex.rxjava3.disposables.Disposable;
+import io.reactivex.rxjava3.android.schedulers.AndroidSchedulers;
+import io.reactivex.rxjava3.schedulers.Schedulers;
+import io.reactivex.rxjava3.disposables.CompositeDisposable;
 
 /**
  * Created by hefuyi on 2016/12/4.
  */
 
-public class PlaylistPresenter implements PlaylistContract.Presenter{
+public class PlaylistPresenter implements PlaylistContract.Presenter {
 
-    private GetPlaylists mUsecase;
+    private final GetPlaylists mUseCase;
     private PlaylistContract.View mView;
-    private CompositeSubscription mCompositeSubscription;
+    private CompositeDisposable mCompositeDisposable;
 
     public PlaylistPresenter(GetPlaylists getPlaylists) {
-        mUsecase = getPlaylists;
+        mUseCase = getPlaylists;
     }
 
     @Override
-    public void attachView(PlaylistContract.View view) {
+    public void attachView(@NonNull PlaylistContract.View view) {
         mView = view;
-        mCompositeSubscription = new CompositeSubscription();
+        mCompositeDisposable = new CompositeDisposable();
     }
 
     @Override
@@ -38,26 +36,23 @@ public class PlaylistPresenter implements PlaylistContract.Presenter{
 
     @Override
     public void unsubscribe() {
-        mCompositeSubscription.clear();
+        mCompositeDisposable.clear();
     }
 
     @Override
     public void loadPlaylist() {
-        mCompositeSubscription.clear();
-        Subscription subscription = mUsecase.execute(new GetPlaylists.RequestValues(false))
+        mCompositeDisposable.clear();
+        Disposable subscription = mUseCase.execute(new GetPlaylists.RequestValues(false))
                 .getPlaylists()
                 .subscribeOn(Schedulers.io())
                 .observeOn(AndroidSchedulers.mainThread())
-                .subscribe(new Action1<List<Playlist>>() {
-                    @Override
-                    public void call(List<Playlist> playlists) {
-                        if (playlists == null || playlists.size() == 0) {
-                            mView.showEmptyView();
-                        } else {
-                            mView.showPlaylist(playlists);
-                        }
+                .subscribe(playlists -> {
+                    if (playlists == null || playlists.isEmpty()) {
+                        mView.showEmptyView();
+                    } else {
+                        mView.showPlaylist(playlists);
                     }
                 });
-        mCompositeSubscription.add(subscription);
+        mCompositeDisposable.add(subscription);
     }
 }

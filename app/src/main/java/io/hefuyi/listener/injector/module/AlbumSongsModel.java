@@ -14,7 +14,7 @@ import io.hefuyi.listener.respository.interfaces.Repository;
 public class AlbumSongsModel {
 
     @Provides
-    GetAlbumSongs getAlbumSongUsecase(Repository repository) {
+    GetAlbumSongs getAlbumSongUseCase(Repository repository) {
         return new GetAlbumSongs(repository);
     }
 

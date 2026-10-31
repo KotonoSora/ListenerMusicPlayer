@@ -4,13 +4,13 @@ import java.util.List;
 
 import io.hefuyi.listener.mvp.model.Playlist;
 import io.hefuyi.listener.respository.interfaces.Repository;
-import rx.Observable;
+import io.reactivex.rxjava3.core.Observable;
 
 /**
  * Created by hefuyi on 2016/12/5.
  */
 
-public class GetPlaylists extends UseCase<GetPlaylists.RequestValues,GetPlaylists.ResponseValue>{
+public class GetPlaylists extends UseCase<GetPlaylists.RequestValues, GetPlaylists.ResponseValue> {
 
     private final Repository mRepository;
 
@@ -23,9 +23,9 @@ public class GetPlaylists extends UseCase<GetPlaylists.RequestValues,GetPlaylist
         return new ResponseValue(mRepository.getPlaylists(requestValues.defaultIncluded));
     }
 
-    public static final class RequestValues implements UseCase.RequestValues{
+    public static final class RequestValues implements UseCase.RequestValues {
 
-        private boolean defaultIncluded;
+        private final boolean defaultIncluded;
 
         public RequestValues(boolean defaultIncluded) {
             this.defaultIncluded = defaultIncluded;
@@ -41,7 +41,7 @@ public class GetPlaylists extends UseCase<GetPlaylists.RequestValues,GetPlaylist
             mListObservable = listObservable;
         }
 
-        public Observable<List<Playlist>> getPlaylists(){
+        public Observable<List<Playlist>> getPlaylists() {
             return mListObservable;
         }
     }

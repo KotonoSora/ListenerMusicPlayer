@@ -4,13 +4,13 @@ import java.util.List;
 
 import io.hefuyi.listener.mvp.model.FolderInfo;
 import io.hefuyi.listener.respository.interfaces.Repository;
-import rx.Observable;
+import io.reactivex.rxjava3.core.Observable;
 
 /**
  * Created by hefuyi on 2016/12/11.
  */
 
-public class GetFolders extends UseCase<GetFolders.RequestValues,GetFolders.ResponseValue>{
+public class GetFolders extends UseCase<GetFolders.RequestValues, GetFolders.ResponseValue> {
 
     private final Repository mRepository;
 
@@ -23,7 +23,7 @@ public class GetFolders extends UseCase<GetFolders.RequestValues,GetFolders.Resp
         return new ResponseValue(mRepository.getFoldersWithSong());
     }
 
-    public static final class RequestValues implements UseCase.RequestValues{
+    public static final class RequestValues implements UseCase.RequestValues {
     }
 
     public static final class ResponseValue implements UseCase.ResponseValue {
@@ -34,7 +34,7 @@ public class GetFolders extends UseCase<GetFolders.RequestValues,GetFolders.Resp
             mListObservable = listObservable;
         }
 
-        public Observable<List<FolderInfo>> getFolderList(){
+        public Observable<List<FolderInfo>> getFolderList() {
             return mListObservable;
         }
     }

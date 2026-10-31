@@ -4,13 +4,13 @@ import java.util.List;
 
 import io.hefuyi.listener.mvp.model.Song;
 import io.hefuyi.listener.respository.interfaces.Repository;
-import rx.Observable;
+import io.reactivex.rxjava3.core.Observable;
 
 /**
  * Created by hefuyi on 2016/12/12.
  */
 
-public class GetFolderSongs extends UseCase<GetFolderSongs.RequestValues,GetFolderSongs.ResponseValue>{
+public class GetFolderSongs extends UseCase<GetFolderSongs.RequestValues, GetFolderSongs.ResponseValue> {
 
     private final Repository mRepository;
 
@@ -45,7 +45,7 @@ public class GetFolderSongs extends UseCase<GetFolderSongs.RequestValues,GetFold
             mListObservable = listObservable;
         }
 
-        public Observable<List<Song>> getSongList(){
+        public Observable<List<Song>> getSongList() {
             return mListObservable;
         }
     }

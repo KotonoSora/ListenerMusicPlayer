@@ -1,19 +1,20 @@
 package io.hefuyi.listener.ui.adapter;
 
+import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.os.Handler;
-import android.support.annotation.NonNull;
-import android.support.v7.widget.RecyclerView;
+import android.os.Looper;
 import android.view.LayoutInflater;
-import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageView;
 import android.widget.PopupMenu;
 import android.widget.TextView;
 
-import com.afollestad.materialdialogs.DialogAction;
-import com.afollestad.materialdialogs.MaterialDialog;
+import androidx.annotation.NonNull;
+import androidx.core.content.ContextCompat;
+import androidx.recyclerview.widget.RecyclerView;
+
 import com.bumptech.glide.Glide;
 import com.bumptech.glide.load.engine.DiskCacheStrategy;
 
@@ -23,6 +24,7 @@ import io.hefuyi.listener.MusicPlayer;
 import io.hefuyi.listener.R;
 import io.hefuyi.listener.mvp.model.Song;
 import io.hefuyi.listener.util.ATEUtil;
+import io.hefuyi.listener.util.ColorUtil;
 import io.hefuyi.listener.util.ListenerUtil;
 import io.hefuyi.listener.util.NavigationUtil;
 
@@ -32,9 +34,9 @@ import io.hefuyi.listener.util.NavigationUtil;
 
 public class AlbumSongsAdapter extends RecyclerView.Adapter<AlbumSongsAdapter.ItemHolder> {
 
+    private final Activity mContext;
+    private final long albumID;
     private List<Song> arraylist;
-    private Activity mContext;
-    private long albumID;
     private long[] songIDs;
 
     public AlbumSongsAdapter(Activity context, long albumID) {
@@ -42,86 +44,74 @@ public class AlbumSongsAdapter extends RecyclerView.Adapter<AlbumSongsAdapter.It
         this.albumID = albumID;
     }
 
+    @NonNull
     @Override
-    public ItemHolder onCreateViewHolder(ViewGroup viewGroup, int viewType) {
+    public ItemHolder onCreateViewHolder(@NonNull ViewGroup viewGroup, int viewType) {
         View v = LayoutInflater.from(viewGroup.getContext()).inflate(R.layout.item_list_linear_layout_item, viewGroup, false);
         return new ItemHolder(v);
     }
 
     @Override
-    public void onBindViewHolder(AlbumSongsAdapter.ItemHolder itemHolder, int i) {
+    public void onBindViewHolder(@NonNull ItemHolder itemHolder, int i) {
         Song localItem = arraylist.get(i);
         itemHolder.title.setText(localItem.title);
         itemHolder.artist.setText(localItem.artistName);
         itemHolder.album.setText(localItem.albumName);
 
-        Glide.with(mContext)
-                .load(ListenerUtil.getAlbumArtUri(localItem.albumId).toString())
-                .diskCacheStrategy(DiskCacheStrategy.SOURCE)
+        Glide.with(itemHolder.itemView.getContext())
+                .load(ListenerUtil.getAlbumArtUri(localItem.albumId))
+                .diskCacheStrategy(DiskCacheStrategy.DATA)
                 .error(ATEUtil.getDefaultAlbumDrawable(mContext))
                 .centerCrop()
                 .into(itemHolder.albumArt);
 
         if (MusicPlayer.getCurrentAudioId() == localItem.id) {
-            itemHolder.title.setTextColor(ATEUtil.getThemeAccentColor(mContext));
+            int accent = ATEUtil.getThemePrimaryColor(mContext);
+            int songBg = ContextCompat.getColor(mContext, ATEUtil.isDarkTheme(mContext) ? R.color.window_background_dark : R.color.window_background);
+            itemHolder.title.setTextColor(ColorUtil.ensureContrastRatio(accent, songBg, 4.5));
         } else {
             itemHolder.title.setTextColor(ATEUtil.getThemeTextColorPrimary(mContext));
         }
 
-        setOnPopupMenuListener(itemHolder, i);
+        setOnPopupMenuListener(itemHolder);
     }
 
-    private void setOnPopupMenuListener(final ItemHolder itemHolder, final int position) {
-
-        itemHolder.popupMenu.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-
-                final PopupMenu menu = new PopupMenu(mContext, v);
-                menu.setOnMenuItemClickListener(new PopupMenu.OnMenuItemClickListener() {
-                    @Override
-                    public boolean onMenuItemClick(MenuItem item) {
-                        switch (item.getItemId()) {
-                            case R.id.popup_song_play_next:
-                                long[] ids = new long[1];
-                                ids[0] = arraylist.get(position).id;
-                                MusicPlayer.playNext(mContext, ids, -1, ListenerUtil.IdType.NA);
-                                break;
-                            case R.id.popup_song_goto_album:
-                                NavigationUtil.goToAlbum(mContext, arraylist.get(position).albumId,
-                                        arraylist.get(position).title);
-                                break;
-                            case R.id.popup_song_goto_artist:
-                                NavigationUtil.goToArtist(mContext, arraylist.get(position).artistId,
-                                        arraylist.get(position).artistName);
-                                break;
-                            case R.id.popup_song_addto_queue:
-                                long[] id = new long[1];
-                                id[0] = arraylist.get(position).id;
-                                MusicPlayer.addToQueue(mContext, id, -1, ListenerUtil.IdType.NA);
-                                break;
-                            case R.id.popup_song_addto_playlist:
-                                ListenerUtil.showAddPlaylistDialog(mContext, new long[]{arraylist.get(itemHolder.getAdapterPosition()).id});
-                                break;
-                            case R.id.popup_song_delete:
-                                long[] deleteIds = {arraylist.get(position).id};
-                                ListenerUtil.showDeleteDialog(mContext, arraylist.get(position).title, deleteIds,
-                                        new MaterialDialog.SingleButtonCallback() {
-                                            @Override
-                                            public void onClick(@NonNull MaterialDialog dialog, @NonNull DialogAction which) {
-                                                arraylist.remove(position);
-                                                songIDs = getSongIds();
-                                                notifyDataSetChanged();
-                                            }
-                                        });
-                                break;
-                        }
-                        return false;
-                    }
-                });
-                menu.inflate(R.menu.popup_song);
-                menu.show();
-            }
+    private void setOnPopupMenuListener(final ItemHolder itemHolder) {
+        itemHolder.popupMenu.setOnClickListener(v -> {
+            final PopupMenu menu = new PopupMenu(mContext, v);
+            menu.setOnMenuItemClickListener(item -> {
+                int pos = itemHolder.getBindingAdapterPosition();
+                if (pos == RecyclerView.NO_POSITION) {
+                    return false;
+                }
+                int itemId = item.getItemId();
+                if (itemId == R.id.popup_song_play_next) {
+                    long[] ids = new long[]{arraylist.get(pos).id};
+                    MusicPlayer.playNext(mContext, ids, -1, ListenerUtil.IdType.NA);
+                } else if (itemId == R.id.popup_song_goto_album) {
+                    NavigationUtil.goToAlbum(mContext, arraylist.get(pos).albumId,
+                            arraylist.get(pos).title);
+                } else if (itemId == R.id.popup_song_goto_artist) {
+                    NavigationUtil.goToArtist(mContext, arraylist.get(pos).artistId,
+                            arraylist.get(pos).artistName);
+                } else if (itemId == R.id.popup_song_addto_queue) {
+                    long[] id = new long[]{arraylist.get(pos).id};
+                    MusicPlayer.addToQueue(mContext, id, -1, ListenerUtil.IdType.NA);
+                } else if (itemId == R.id.popup_song_addto_playlist) {
+                    ListenerUtil.showAddPlaylistDialog(mContext, new long[]{arraylist.get(pos).id});
+                } else if (itemId == R.id.popup_song_delete) {
+                    long[] deleteIds = {arraylist.get(pos).id};
+                    ListenerUtil.showDeleteDialog(mContext, arraylist.get(pos).title, deleteIds,
+                            (dialog, which) -> {
+                                arraylist.remove(pos);
+                                songIDs = getSongIds();
+                                notifyItemRemoved(pos);
+                            });
+                }
+                return false;
+            });
+            menu.inflate(R.menu.popup_song);
+            menu.show();
         });
     }
 
@@ -139,6 +129,7 @@ public class AlbumSongsAdapter extends RecyclerView.Adapter<AlbumSongsAdapter.It
         return ret;
     }
 
+    @SuppressLint("NotifyDataSetChanged")
     public void setSongList(List<Song> songList) {
         arraylist = songList;
         songIDs = getSongIds();
@@ -147,33 +138,31 @@ public class AlbumSongsAdapter extends RecyclerView.Adapter<AlbumSongsAdapter.It
 
 
     public class ItemHolder extends RecyclerView.ViewHolder implements View.OnClickListener {
-        private TextView title;
-        private TextView artist;
-        private TextView album;
-        private ImageView albumArt;
-        private ImageView popupMenu;
+        private final TextView title;
+        private final TextView artist;
+        private final TextView album;
+        private final ImageView albumArt;
+        private final ImageView popupMenu;
 
         public ItemHolder(View view) {
             super(view);
-            this.title = (TextView) view.findViewById(R.id.text_item_title);
-            this.artist = (TextView) view.findViewById(R.id.text_item_subtitle);
-            this.album = (TextView) view.findViewById(R.id.text_item_subtitle_2);
-            this.albumArt = (ImageView) view.findViewById(R.id.image);
-            this.popupMenu = (ImageView) view.findViewById(R.id.popup_menu);
+            this.title = view.findViewById(R.id.text_item_title);
+            this.artist = view.findViewById(R.id.text_item_subtitle);
+            this.album = view.findViewById(R.id.text_item_subtitle_2);
+            this.albumArt = view.findViewById(R.id.image);
+            this.popupMenu = view.findViewById(R.id.popup_menu);
             view.setOnClickListener(this);
         }
 
         @Override
         public void onClick(View v) {
-            Handler handler = new Handler();
-            handler.postDelayed(new Runnable() {
-                @Override
-                public void run() {
-                    MusicPlayer.playAll(mContext, songIDs, getAdapterPosition(), albumID, ListenerUtil.IdType.Album, false);
+            Handler handler = new Handler(Looper.getMainLooper());
+            handler.postDelayed(() -> {
+                int pos = getBindingAdapterPosition();
+                if (pos != RecyclerView.NO_POSITION) {
+                    MusicPlayer.playAll(mContext, songIDs, pos, albumID, ListenerUtil.IdType.Album, false);
                 }
             }, 100);
-
         }
-
     }
 }

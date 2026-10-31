@@ -13,7 +13,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import io.hefuyi.listener.mvp.model.Song;
-import rx.Observable;
+import io.reactivex.rxjava3.core.Observable;
 
 public class PlaylistSongLoader {
 
@@ -26,10 +26,7 @@ public class PlaylistSongLoader {
         Cursor cursor = makePlaylistSongCursor(context, playlistID);
 
         if (cursor != null) {
-            boolean runCleanup = false;
-            if (cursor.getCount() != playlistCount) {
-                runCleanup = true;
-            }
+            boolean runCleanup = cursor.getCount() != playlistCount;
 
             if (!runCleanup && cursor.moveToFirst()) {
                 final int playOrderCol = cursor.getColumnIndexOrThrow(MediaStore.Audio.Playlists.Members.PLAY_ORDER);
@@ -95,11 +92,12 @@ public class PlaylistSongLoader {
             cursor.close();
             cursor = null;
         }
-        return Observable.from(mSongList).toList();
+        return Observable.fromIterable(mSongList).toList().toObservable();
     }
 
     /**
      * 清空某playlist,用cursor填充
+     *
      * @param context
      * @param playlistId
      * @param cursor
@@ -109,7 +107,7 @@ public class PlaylistSongLoader {
         final int idCol = cursor.getColumnIndexOrThrow(MediaStore.Audio.Playlists.Members.AUDIO_ID);
         final Uri uri = MediaStore.Audio.Playlists.Members.getContentUri("external", playlistId);
 
-        ArrayList<ContentProviderOperation> ops = new ArrayList<ContentProviderOperation>();
+        ArrayList<ContentProviderOperation> ops = new ArrayList<>();
 
         ops.add(ContentProviderOperation.newDelete(uri).build());
 
@@ -139,6 +137,7 @@ public class PlaylistSongLoader {
 
     /**
      * 计算某playlist中媒体文件的数量
+     *
      * @param context
      * @param playlistId
      * @return
@@ -186,14 +185,14 @@ public class PlaylistSongLoader {
 
     /**
      * 获取某playlist中规范音乐文件的数量
+     *
      * @param context
      * @param playlistID
      * @return
      */
     private static Cursor makePlaylistSongCursor(final Context context, final Long playlistID) {
-        final StringBuilder mSelection = new StringBuilder();
-        mSelection.append(MediaStore.Audio.AudioColumns.IS_MUSIC + "=1");
-        mSelection.append(" AND " + MediaStore.Audio.AudioColumns.TITLE + " != ''");
+        String mSelection = MediaStore.Audio.AudioColumns.IS_MUSIC + "=1" +
+                " AND " + MediaStore.Audio.AudioColumns.TITLE + " != ''";
         return context.getContentResolver().query(
                 MediaStore.Audio.Playlists.Members.getContentUri("external", playlistID),
                 new String[]{
@@ -207,7 +206,7 @@ public class PlaylistSongLoader {
                         MediaStore.Audio.AudioColumns.DURATION,
                         MediaStore.Audio.AudioColumns.TRACK,
                         MediaStore.Audio.Playlists.Members.PLAY_ORDER,
-                }, mSelection.toString(), null,
+                }, mSelection, null,
                 MediaStore.Audio.Playlists.Members.DEFAULT_SORT_ORDER);
     }
 }

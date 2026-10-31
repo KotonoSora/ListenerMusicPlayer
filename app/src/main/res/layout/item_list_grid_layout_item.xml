@@ -1,80 +1,88 @@
 <?xml version="1.0" encoding="utf-8"?>
-<RelativeLayout
-    xmlns:android="http://schemas.android.com/apk/res/android"
-    android:layout_width="wrap_content"
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:foreground="?selectableItemBackground">
+    android:foreground="?selectableItemBackground"
+    android:orientation="vertical"
+    android:fitsSystemWindows="true"
+    tools:ignore="PartiallyHidden">
 
     <io.hefuyi.listener.widget.SquareImageView
         android:id="@+id/image"
-        android:layout_width="fill_parent"
-        android:layout_height="fill_parent"
-        android:foreground="?selectableItemBackground"
-        android:src="?default_singer_drawable"
-        android:scaleType="centerCrop"/>
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:background="?album_default_palette_color"
+        android:contentDescription="@null"
+        android:importantForAccessibility="no"
+        android:scaleType="centerCrop"
+        android:src="?default_singer_drawable" />
 
     <RelativeLayout
         android:id="@+id/footer"
-        android:layout_width="fill_parent"
+        android:layout_width="match_parent"
         android:layout_height="@dimen/grid_layout_list_item_info_height"
-        android:layout_below="@id/image"
-        android:background="@color/album_default_palette_color_light">
+        android:background="?album_default_palette_color">
 
         <ImageView
             android:id="@+id/popup_menu"
+            style="@style/Widget.AppCompat.ActionButton.Overflow"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_alignParentRight="true"
+            android:layout_alignParentEnd="true"
             android:layout_centerVertical="true"
-            android:tint="@color/background_floating_material_dark"
-            android:src="@drawable/abc_ic_menu_moreoverflow_mtrl_alpha"
-            style="@style/Widget.AppCompat.ActionButton.Overflow"/>
+            android:contentDescription="@null"
+            android:src="@drawable/abc_ic_menu_more_overflow_mtrl_alpha"
+            app:tint="?android:textColorSecondary" />
 
         <LinearLayout
-            android:orientation="vertical"
-            android:paddingLeft="@dimen/linear_layout_list_item_padding"
-            android:layout_width="fill_parent"
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_toLeftOf="@id/popup_menu"
-            android:layout_centerVertical="true">
+            android:layout_centerVertical="true"
+            android:layout_toStartOf="@id/popup_menu"
+            android:orientation="vertical"
+            android:paddingStart="@dimen/linear_layout_list_item_padding"
+            android:paddingEnd="@dimen/linear_layout_list_item_padding">
 
             <TextView
                 android:id="@+id/text_item_title"
-                android:layout_width="fill_parent"
+                style="@style/ListItemTitleStyle"
+                android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                style="@style/ListItemTitleStyle"/>
+                tools:ignore="PartiallyHidden" />
 
             <RelativeLayout
-                android:layout_width="fill_parent"
-                android:layout_height="fill_parent"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
                 android:layout_marginTop="@dimen/grid_layout_list_text_line_space">
 
                 <TextView
                     android:id="@+id/text_item_subtitle"
+                    style="@style/ListItemSubTitleStyle"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:maxWidth="@dimen/gird_layout_list_subtitle_max_width"
                     android:layout_centerVertical="true"
-                    style="@style/ListItemSubTitleStyle"/>
+                    android:maxWidth="@dimen/gird_layout_list_subtitle_max_width" />
 
                 <View
                     android:id="@+id/divider_subtitle"
-                    android:background="@color/colorDividerBlack"
                     android:layout_width="1.0dip"
                     android:layout_height="@dimen/text_vertical_divider_height"
-                    android:layout_marginLeft="@dimen/linear_layout_list_text_line_space"
-                    android:layout_marginRight="@dimen/linear_layout_list_text_line_space"
-                    android:layout_toRightOf="@id/text_item_subtitle"
-                    android:layout_centerVertical="true" />
+                    android:layout_centerVertical="true"
+                    android:layout_marginStart="@dimen/linear_layout_list_text_line_space"
+                    android:layout_marginEnd="@dimen/linear_layout_list_text_line_space"
+                    android:layout_toEndOf="@id/text_item_subtitle"
+                    android:background="?divider_color" />
 
                 <TextView
                     android:id="@+id/text_item_subtitle_2"
+                    style="@style/ListItemSubTitleStyle"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:maxWidth="@dimen/gird_layout_list_subtitle_2_max_width"
-                    android:layout_toRightOf="@id/divider_subtitle"
                     android:layout_centerVertical="true"
-                    style="@style/ListItemSubTitleStyle" />
+                    android:layout_toEndOf="@id/divider_subtitle"
+                    android:maxWidth="@dimen/gird_layout_list_subtitle_2_max_width" />
 
             </RelativeLayout>
 
@@ -82,5 +90,5 @@
 
     </RelativeLayout>
 
-</RelativeLayout>
+</LinearLayout>
 

@@ -1,6 +1,5 @@
 package io.hefuyi.listener.permission;
 
-import java.util.ArrayList;
 import java.util.Random;
 
 /**
@@ -10,25 +9,19 @@ import java.util.Random;
 public class PermissionRequest {
 
     private static Random random;
-    private ArrayList<String> permissions;
-    private int requestCode;
+    private final int requestCode;
     private PermissionCallback permissionCallback;
 
     public PermissionRequest(int requestCode) {
         this.requestCode = requestCode;
     }
 
-    public PermissionRequest(ArrayList<String> permissions, PermissionCallback permissionCallback) {
-        this.permissions = permissions;
+    public PermissionRequest(PermissionCallback permissionCallback) {
         this.permissionCallback = permissionCallback;
         if (random == null) {
             random = new Random();
         }
         this.requestCode = random.nextInt(32768);
-    }
-
-    public ArrayList<String> getPermissions() {
-        return permissions;
     }
 
     public int getRequestCode() {

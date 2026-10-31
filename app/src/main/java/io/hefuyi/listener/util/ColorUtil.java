@@ -1,9 +1,11 @@
 package io.hefuyi.listener.util;
 
 import android.graphics.Color;
-import android.support.annotation.ColorInt;
-import android.support.annotation.Nullable;
-import android.support.v7.graphics.Palette;
+
+import androidx.annotation.ColorInt;
+import androidx.annotation.Nullable;
+import androidx.core.graphics.ColorUtils;
+import androidx.palette.graphics.Palette;
 
 /**
  * Created by hefuyi on 2016/11/23.
@@ -39,5 +41,34 @@ public class ColorUtil {
             }
         }
         return mostPopulous;
+    }
+
+    public static int ensureContrastRatio(int foregroundColor, int backgroundColor, double minContrast) {
+        if (ColorUtils.calculateContrast(foregroundColor, backgroundColor) >= minContrast) {
+            return foregroundColor;
+        }
+
+        float[] hsv = new float[3];
+        Color.colorToHSV(foregroundColor, hsv);
+
+        boolean isBackgroundDark = ColorUtils.calculateLuminance(backgroundColor) < 0.5;
+
+        for (int i = 0; i < 100; i++) {
+            if (isBackgroundDark) {
+                hsv[2] = Math.min(1.0f, hsv[2] + 0.01f);
+                if (hsv[2] >= 0.95f) {
+                    hsv[1] = Math.max(0.0f, hsv[1] - 0.02f);
+                }
+            } else {
+                hsv[2] = Math.max(0.0f, hsv[2] - 0.01f);
+            }
+
+            int adjustedColor = Color.HSVToColor(hsv);
+            if (ColorUtils.calculateContrast(adjustedColor, backgroundColor) >= minContrast) {
+                return adjustedColor;
+            }
+        }
+
+        return isBackgroundDark ? Color.WHITE : Color.BLACK;
     }
 }

@@ -8,11 +8,8 @@ import java.util.ArrayList;
 import java.util.List;
 
 import io.hefuyi.listener.mvp.model.Album;
-import io.hefuyi.listener.mvp.model.Song;
 import io.hefuyi.listener.util.PreferencesUtility;
-import rx.Observable;
-import rx.Subscriber;
-import rx.functions.Func1;
+import io.reactivex.rxjava3.core.Observable;
 
 
 /**
@@ -22,77 +19,49 @@ import rx.functions.Func1;
 public class AlbumLoader {
 
     private static Observable<Album> getAlbum(final Cursor cursor) {
-        return Observable.create(new Observable.OnSubscribe<Album>() {
-            @Override
-            public void call(Subscriber<? super Album> subscriber) {
-                Album album = new Album();
-                if (cursor != null) {
-                    if (cursor.moveToFirst())
-                        album = new Album(cursor.getLong(0), cursor.getString(1), cursor.getString(2), cursor.getLong(3), cursor.getInt(4), cursor.getInt(5));
-                }
-                if (cursor != null){
-                    cursor.close();
-                }
-                subscriber.onNext(album);
-                subscriber.onCompleted();
+        return Observable.create(subscriber -> {
+            Album album = new Album();
+            if (cursor != null) {
+                if (cursor.moveToFirst())
+                    album = new Album(cursor.getLong(0), cursor.getString(1), cursor.getString(2), cursor.getLong(3), cursor.getInt(4), cursor.getInt(5));
             }
+            if (cursor != null) {
+                cursor.close();
+            }
+            subscriber.onNext(album);
+            subscriber.onComplete();
         });
     }
 
-    public static Observable<List<Album>> getFavourateAlbums(final Context context) {
-        return SongLoader.getFavoriteSong(context).flatMap(new Func1<List<Song>, Observable<Song>>() {
-            @Override
-            public Observable<Song> call(List<Song> songList) {
-                return Observable.from(songList);
-            }
-        }).distinct(new Func1<Song, Long>() {
-            @Override
-            public Long call(Song song) {
-                return song.albumId;
-            }
-        }).flatMap(new Func1<Song, Observable<Album>>() {
-            @Override
-            public Observable<Album> call(Song song) {
-                return AlbumLoader.getAlbum(context, song.albumId);
-            }
-        }).toList();
+    public static Observable<List<Album>> getFavoriteAlbums(final Context context) {
+        return SongLoader.getFavoriteSongs(context)
+                .flatMap(Observable::fromIterable)
+                .distinct(song -> song.albumId)
+                .flatMap(song -> AlbumLoader.getAlbum(context, song.albumId))
+                .toList().toObservable();
     }
 
     public static Observable<List<Album>> getRecentlyPlayedAlbums(final Context context) {
-        return TopTracksLoader.getTopRecentSongs(context).flatMap(new Func1<List<Song>, Observable<Song>>() {
-            @Override
-            public Observable<Song> call(List<Song> songList) {
-                return Observable.from(songList);
-            }
-        }).distinct(new Func1<Song, Long>() {
-            @Override
-            public Long call(Song song) {
-                return song.albumId;
-            }
-        }).flatMap(new Func1<Song, Observable<Album>>() {
-            @Override
-            public Observable<Album> call(Song song) {
-                return AlbumLoader.getAlbum(context, song.albumId);
-            }
-        }).toList();
+        return TopTracksLoader.getTopRecentSongs(context)
+                .flatMap(Observable::fromIterable)
+                .distinct(song -> song.albumId)
+                .flatMap(song -> AlbumLoader.getAlbum(context, song.albumId))
+                .toList().toObservable();
     }
 
     private static Observable<List<Album>> getAlbumsForCursor(final Cursor cursor) {
-        return Observable.create(new Observable.OnSubscribe<List<Album>>() {
-            @Override
-            public void call(Subscriber<? super List<Album>> subscriber) {
-                List<Album> arrayList = new ArrayList<Album>();
-                if ((cursor != null) && (cursor.moveToFirst()))
-                    do {
-                        arrayList.add(new Album(cursor.getLong(0), cursor.getString(1), cursor.getString(2), cursor.getLong(3), cursor.getInt(4), cursor.getInt(5)));
-                    }
-                    while (cursor.moveToNext());
-                if (cursor != null) {
-                    cursor.close();
+        return Observable.create(subscriber -> {
+            List<Album> arrayList = new ArrayList<>();
+            if ((cursor != null) && (cursor.moveToFirst()))
+                do {
+                    arrayList.add(new Album(cursor.getLong(0), cursor.getString(1), cursor.getString(2), cursor.getLong(3), cursor.getInt(4), cursor.getInt(5)));
                 }
-                subscriber.onNext(arrayList);
-                subscriber.onCompleted();
+                while (cursor.moveToNext());
+            if (cursor != null) {
+                cursor.close();
             }
+            subscriber.onNext(arrayList);
+            subscriber.onComplete();
         });
     }
 
@@ -101,7 +70,7 @@ public class AlbumLoader {
     }
 
     public static Observable<Album> getAlbum(Context context, long id) {
-        return getAlbum(makeAlbumCursor(context, "_id=?", new String[]{String.valueOf(id)}));
+        return getAlbum(makeAlbumCursor(context, "_id=?", new String[]{id + ""}));
     }
 
     public static Observable<List<Album>> getAlbums(Context context, String paramString) {

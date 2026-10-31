@@ -6,11 +6,12 @@ import android.provider.MediaStore;
 
 import java.io.File;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import io.hefuyi.listener.mvp.model.FolderInfo;
-import rx.Observable;
-import rx.Subscriber;
+import io.reactivex.rxjava3.core.Observable;
 
 /**
  * Created by hefuyi on 2016/12/11.
@@ -20,50 +21,44 @@ public class FolderLoader {
 
     /**
      * 检索包含音频文件的文件夹, 并统计该文件夹下的歌曲数目
-     * @return
+     *
+     * @return Observable containing list of folder information
      */
+    @SuppressWarnings("deprecation")
     public static Observable<List<FolderInfo>> getFoldersWithSong(final Context context) {
-        final List<FolderInfo> folderInfos = new ArrayList<FolderInfo>();
-        final String num_of_songs = "num_of_songs";
-        final String[] projection = new String[]{MediaStore.Files.FileColumns.DATA,
-                "count(" + MediaStore.Files.FileColumns.PARENT + ") as " + num_of_songs};
+        return Observable.create(subscriber -> {
+            final List<FolderInfo> folderInfos = new ArrayList<>();
+            final String[] projection = new String[]{MediaStore.Audio.Media.DATA};
+            final String selection = "is_music=1 AND title != ''";
 
-        final String selection = " is_music=1 AND title != '' " + " ) " + " group by ( "
-                + MediaStore.Files.FileColumns.PARENT;
+            Cursor cursor = context.getContentResolver().query(
+                    MediaStore.Audio.Media.EXTERNAL_CONTENT_URI, projection, selection, null, null);
 
-        return Observable.create(new Observable.OnSubscribe<List<FolderInfo>>() {
-            @Override
-            public void call(Subscriber<? super List<FolderInfo>> subscriber) {
-                Cursor cursor = context.getContentResolver().query(
-                        MediaStore.Files.getContentUri("external"), projection, selection, null, null);
+            if (cursor != null) {
+                Map<String, Integer> folderCountMap = new HashMap<>();
+                int index_data = cursor.getColumnIndexOrThrow(MediaStore.Audio.Media.DATA);
 
-                if (cursor != null) {
-                    int index_data = cursor.getColumnIndex(MediaStore.Files.FileColumns.DATA);
-                    int index_num_of_songs = cursor.getColumnIndex(num_of_songs);
-
-                    while (cursor.moveToNext()) {
-
-                        // 获取每个目录下的歌曲数量
-                        int songCount = cursor.getInt(index_num_of_songs);
-
-                        // 获取文件的路径，如/storage/sdcard0/MIUI/music/Baby.mp3
-                        String filepath = cursor.getString(index_data);
-
-                        // 获取文件所属文件夹的路径，如/storage/sdcard0/MIUI/music
-                        String folderpath = filepath.substring(0, filepath.lastIndexOf(File.separator));
-
-                        // 获取文件所属文件夹的名称，如music
-                        String foldername = folderpath.substring(folderpath.lastIndexOf(File.separator) + 1);
-
-                        folderInfos.add(new FolderInfo(foldername, folderpath, songCount));
+                while (cursor.moveToNext()) {
+                    String filePath = cursor.getString(index_data);
+                    if (filePath != null) {
+                        int lastSeparatorIndex = filePath.lastIndexOf(File.separator);
+                        if (lastSeparatorIndex > 0) {
+                            String folderPath = filePath.substring(0, lastSeparatorIndex);
+                            folderCountMap.merge(folderPath, 1, Integer::sum);
+                        }
                     }
                 }
+                cursor.close();
 
-                if (cursor != null) {
-                    cursor.close();
+                for (Map.Entry<String, Integer> entry : folderCountMap.entrySet()) {
+                    String folderPath = entry.getKey();
+                    int songCount = entry.getValue();
+                    String folderName = folderPath.substring(folderPath.lastIndexOf(File.separator) + 1);
+                    folderInfos.add(new FolderInfo(folderName, folderPath, songCount));
                 }
-                subscriber.onNext(folderInfos);
             }
+            subscriber.onNext(folderInfos);
+            subscriber.onComplete();
         });
     }
 }

@@ -14,8 +14,8 @@ public class Song {
     public final long id;
     public final String title;
     public final int trackNumber;
-    public float playCountScore;
     public final String path;
+    public float playCountScore;
 
     public Song() {
         this.id = -1;
@@ -53,12 +53,12 @@ public class Song {
         this.path = _path;
     }
 
-    public void setPlayCountScore(float playCountScore) {
-        this.playCountScore = playCountScore;
-    }
-
     public float getPlayCountScore() {
         return playCountScore;
+    }
+
+    public void setPlayCountScore(float playCountScore) {
+        this.playCountScore = playCountScore;
     }
 
 }

@@ -18,9 +18,9 @@
 
             android:title="@string/folders" />
         <item
-            android:id="@+id/nav_favourate"
+            android:id="@+id/nav_favorite"
 
-            android:title="@string/favourate" />
+            android:title="@string/favorite" />
         <item
             android:id="@+id/nav_recent_play"
 

@@ -1,33 +1,30 @@
 package io.hefuyi.listener.ui.fragment;
 
 
-import android.annotation.TargetApi;
 import android.graphics.Bitmap;
 import android.graphics.Color;
 import android.graphics.drawable.Drawable;
-import android.os.Build;
 import android.os.Bundle;
-import android.support.annotation.Nullable;
-import android.support.design.widget.AppBarLayout;
-import android.support.design.widget.CollapsingToolbarLayout;
-import android.support.design.widget.FloatingActionButton;
-import android.support.v4.app.Fragment;
-import android.support.v7.app.ActionBar;
-import android.support.v7.app.AppCompatActivity;
-import android.support.v7.graphics.Palette;
-import android.support.v7.widget.Toolbar;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageView;
 
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
+import androidx.appcompat.app.ActionBar;
+import androidx.appcompat.app.AppCompatActivity;
+import androidx.appcompat.widget.Toolbar;
+import androidx.fragment.app.Fragment;
+import androidx.palette.graphics.Palette;
+
 import com.afollestad.appthemeengine.ATE;
+import com.google.android.material.appbar.AppBarLayout;
+import com.google.android.material.appbar.CollapsingToolbarLayout;
+import com.google.android.material.floatingactionbutton.FloatingActionButton;
 
 import javax.inject.Inject;
 
-import butterknife.BindView;
-import butterknife.ButterKnife;
-import butterknife.OnClick;
 import io.hefuyi.listener.Constants;
 import io.hefuyi.listener.ListenerApp;
 import io.hefuyi.listener.MusicPlayer;
@@ -39,25 +36,19 @@ import io.hefuyi.listener.injector.module.ArtistInfoModule;
 import io.hefuyi.listener.mvp.contract.ArtistDetailContract;
 import io.hefuyi.listener.util.ATEUtil;
 import io.hefuyi.listener.util.ColorUtil;
-import io.hefuyi.listener.util.DensityUtil;
 import io.hefuyi.listener.util.ListenerUtil;
 
 /**
  * A simple {@link Fragment} subclass.
  */
-public class ArtistDetailFragment extends Fragment implements ArtistDetailContract.View{
+public class ArtistDetailFragment extends Fragment implements ArtistDetailContract.View {
 
     @Inject
     ArtistDetailContract.Presenter mPresenter;
-    @BindView(R.id.artist_art)
     ImageView artistArt;
-    @BindView(R.id.toolbar)
     Toolbar toolbar;
-    @BindView(R.id.collapsing_toolbar)
     CollapsingToolbarLayout collapsingToolbarLayout;
-    @BindView(R.id.app_bar)
     AppBarLayout appBarLayout;
-    @BindView(R.id.fab_play)
     FloatingActionButton fabPlay;
 
     private ArtistMusicFragment mArtistMusicFragment;
@@ -78,19 +69,20 @@ public class ArtistDetailFragment extends Fragment implements ArtistDetailContra
     }
 
     @Override
-    public void onCreate(Bundle savedInstanceState) {
+    public void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        injetDependences();
+        injectDependencies();
         mPresenter.attachView(this);
-        if (getArguments() != null) {
-            artistID = getArguments().getLong(Constants.ARTIST_ID);
-            artistName = getArguments().getString(Constants.ARTIST_NAME);
+        Bundle args = getArguments();
+        if (args != null) {
+            artistID = args.getLong(Constants.ARTIST_ID);
+            artistName = args.getString(Constants.ARTIST_NAME);
         }
 
     }
 
-    private void injetDependences() {
-        ApplicationComponent applicationComponent = ((ListenerApp) getActivity().getApplication()).getApplicationComponent();
+    private void injectDependencies() {
+        ApplicationComponent applicationComponent = ((ListenerApp) requireActivity().getApplication()).getApplicationComponent();
         ArtistInfoComponent artistInfoComponent = DaggerArtistInfoComponent.builder()
                 .applicationComponent(applicationComponent)
                 .artistInfoModule(new ArtistInfoModule())
@@ -98,33 +90,33 @@ public class ArtistDetailFragment extends Fragment implements ArtistDetailContra
         artistInfoComponent.injectForFragment(this);
     }
 
+    @Nullable
     @Override
-    public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
+    public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
         View root = inflater.inflate(R.layout.fragment_artist_detail, container, false);
-        if (Build.VERSION.SDK_INT >= 19 && Build.VERSION.SDK_INT < 21) {
-            root.findViewById(R.id.app_bar).setFitsSystemWindows(false);
-            root.findViewById(R.id.artist_art).setFitsSystemWindows(false);
-            root.findViewById(R.id.gradient).setFitsSystemWindows(false);
-            Toolbar toolbar = (Toolbar) root.findViewById(R.id.toolbar);
-            CollapsingToolbarLayout.LayoutParams layoutParams = (CollapsingToolbarLayout.LayoutParams) toolbar.getLayoutParams();
-            layoutParams.height += DensityUtil.getStatusBarHeight(getContext());
-            toolbar.setLayoutParams(layoutParams);
-            toolbar.setPadding(0, DensityUtil.getStatusBarHeight(getContext()), 0, 0);
-        }
+        toolbar = root.findViewById(R.id.toolbar);
+        ListenerUtil.applySystemBarPaddingAndHeight(toolbar, true, false);
         return root;
     }
 
-    @TargetApi(Build.VERSION_CODES.LOLLIPOP)
     @Override
-    public void onViewCreated(View view, @Nullable Bundle savedInstanceState) {
+    public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
-        ButterKnife.bind(this, view);
 
-        ATE.apply(this, ATEUtil.getATEKey(getActivity()));
+        artistArt = view.findViewById(R.id.artist_art);
+        toolbar = view.findViewById(R.id.toolbar);
+        collapsingToolbarLayout = view.findViewById(R.id.collapsing_toolbar);
+        appBarLayout = view.findViewById(R.id.app_bar);
+        fabPlay = view.findViewById(R.id.fab_play);
 
-        if (getArguments().getBoolean("transition")) {
-            artistArt.setTransitionName(getArguments().getString("transition_name"));
+        ATE.apply(this, ATEUtil.getATEKey(requireActivity()));
+
+        Bundle args = getArguments();
+        if (args != null && args.getBoolean("transition")) {
+            artistArt.setTransitionName(args.getString("transition_name"));
         }
+
+        fabPlay.setOnClickListener(v -> onFabPlayClick());
 
         setupToolbar();
 
@@ -150,24 +142,26 @@ public class ArtistDetailFragment extends Fragment implements ArtistDetailContra
     }
 
     private void setupToolbar() {
-        ((AppCompatActivity) getActivity()).setSupportActionBar(toolbar);
-        final ActionBar ab = ((AppCompatActivity) getActivity()).getSupportActionBar();
-        ab.setDisplayHomeAsUpEnabled(true);
+        AppCompatActivity activity = (AppCompatActivity) requireActivity();
+        activity.setSupportActionBar(toolbar);
+        ActionBar ab = activity.getSupportActionBar();
+        if (ab != null) {
+            ab.setDisplayHomeAsUpEnabled(true);
+        }
         collapsingToolbarLayout.setTitle(artistName);
     }
 
     @Override
     public void showArtistArt(Bitmap bitmap) {
         artistArt.setImageBitmap(bitmap);
-        if (ATEUtil.getATEKey(getActivity()).equals("dark_theme")) {
-            primaryColor = ATEUtil.getThemePrimaryColor(getContext());
+        if (ATEUtil.isDarkTheme(requireActivity())) {
+            primaryColor = ATEUtil.getThemePrimaryColor(requireContext());
             collapsingToolbarLayout.setContentScrimColor(primaryColor);
             collapsingToolbarLayout.setStatusBarScrimColor(ColorUtil.getStatusBarColor(primaryColor));
             return;
         }
-        new Palette.Builder(bitmap).generate(new Palette.PaletteAsyncListener() {
-            @Override
-            public void onGenerated(Palette palette) {
+        new Palette.Builder(bitmap).generate(palette -> {
+            if (palette != null) {
                 Palette.Swatch swatch = ColorUtil.getMostPopulousSwatch(palette);
                 if (swatch != null) {
                     int color = swatch.getRgb();
@@ -182,13 +176,14 @@ public class ArtistDetailFragment extends Fragment implements ArtistDetailContra
     @Override
     public void showArtistArt(Drawable drawable) {
         artistArt.setImageDrawable(drawable);
-        primaryColor = ATEUtil.getThemePrimaryColor(getContext());
+        primaryColor = ATEUtil.getThemePrimaryColor(requireContext());
         collapsingToolbarLayout.setContentScrimColor(primaryColor);
         collapsingToolbarLayout.setStatusBarScrimColor(ColorUtil.getStatusBarColor(primaryColor));
     }
 
-    @OnClick(R.id.fab_play)
     public void onFabPlayClick() {
-        MusicPlayer.playAll(getActivity(), mArtistMusicFragment.mSongAdapter.getSongIds(), 0, artistID, ListenerUtil.IdType.Artist, false);
+        if (mArtistMusicFragment != null && mArtistMusicFragment.mSongAdapter != null) {
+            MusicPlayer.playAll(requireActivity(), mArtistMusicFragment.mSongAdapter.getSongIds(), 0, artistID, ListenerUtil.IdType.Artist, false);
+        }
     }
 }

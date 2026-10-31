@@ -1,20 +1,22 @@
 package io.hefuyi.listener.ui.adapter;
 
+import android.annotation.SuppressLint;
 import android.graphics.PorterDuff;
+import android.graphics.PorterDuffColorFilter;
 import android.graphics.drawable.Drawable;
-import android.support.annotation.NonNull;
-import android.support.v7.app.AppCompatActivity;
-import android.support.v7.widget.RecyclerView;
 import android.view.LayoutInflater;
-import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageView;
 import android.widget.PopupMenu;
 import android.widget.TextView;
 
-import com.afollestad.materialdialogs.DialogAction;
-import com.afollestad.materialdialogs.MaterialDialog;
+import androidx.annotation.NonNull;
+import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.content.ContextCompat;
+import androidx.recyclerview.widget.RecyclerView;
+
+import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -25,132 +27,92 @@ import io.hefuyi.listener.RxBus;
 import io.hefuyi.listener.dataloader.SongLoader;
 import io.hefuyi.listener.event.MediaUpdateEvent;
 import io.hefuyi.listener.mvp.model.FolderInfo;
-import io.hefuyi.listener.mvp.model.Song;
 import io.hefuyi.listener.util.DensityUtil;
 import io.hefuyi.listener.util.ListenerUtil;
 import io.hefuyi.listener.util.NavigationUtil;
 import io.hefuyi.listener.widget.fastscroller.FastScrollRecyclerView;
-import rx.Observable;
-import rx.android.schedulers.AndroidSchedulers;
-import rx.functions.Action1;
-import rx.functions.Func1;
-import rx.schedulers.Schedulers;
+import io.reactivex.rxjava3.core.Observable;
+import io.reactivex.rxjava3.android.schedulers.AndroidSchedulers;
+import io.reactivex.rxjava3.schedulers.Schedulers;
 
 public class FolderAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> implements FastScrollRecyclerView.SectionedAdapter {
 
+    private final AppCompatActivity mContext;
     private List<FolderInfo> arraylist;
-    private AppCompatActivity mContext;
 
     public FolderAdapter(AppCompatActivity context, List<FolderInfo> arraylist) {
-        if (arraylist == null) {
-            this.arraylist = new ArrayList<>();
-        } else {
-            this.arraylist = arraylist;
-        }
+        this.arraylist = (arraylist != null) ? arraylist : new ArrayList<>();
         this.mContext = context;
     }
 
+    @NonNull
     @Override
-    public RecyclerView.ViewHolder onCreateViewHolder(ViewGroup viewGroup, int viewType) {
+    public RecyclerView.ViewHolder onCreateViewHolder(@NonNull ViewGroup viewGroup, int viewType) {
         View v = LayoutInflater.from(viewGroup.getContext()).inflate(R.layout.item_list_linear_layout_item, viewGroup, false);
         return new ItemHolder(v);
     }
 
     @Override
-    public void onBindViewHolder(RecyclerView.ViewHolder holder, int position) {
+    public void onBindViewHolder(@NonNull RecyclerView.ViewHolder holder, int position) {
         ItemHolder itemHolder = (ItemHolder) holder;
         FolderInfo localItem = arraylist.get(position);
-        Drawable image = mContext.getResources().getDrawable(R.drawable.ic_folder_black_48dp);
-        image.setColorFilter(mContext.getResources().getColor(R.color.folderTint), PorterDuff.Mode.SRC_IN);
-        itemHolder.image.setImageDrawable(image);
+        Drawable image = ContextCompat.getDrawable(mContext, R.drawable.ic_folder_black_48dp);
+        if (image != null) {
+            image.setColorFilter(new PorterDuffColorFilter(ContextCompat.getColor(mContext, R.color.folderTint), PorterDuff.Mode.SRC_IN));
+            itemHolder.image.setImageDrawable(image);
+        }
         itemHolder.folderName.setText(localItem.folderName);
-        itemHolder.songcount.setText(ListenerUtil.makeLabel(mContext, R.plurals.Nsongs, localItem.songCount));
+        itemHolder.songCount.setText(ListenerUtil.makeLabel(mContext, R.plurals.n_songs, localItem.songCount));
         itemHolder.folderPath.setText(localItem.folderPath);
         itemHolder.folderPath.setMaxWidth(DensityUtil.dip2px(mContext, 240));
-        setOnPopupMenuListener(itemHolder, position);
+        setOnPopupMenuListener(itemHolder);
     }
-
-
 
     @Override
     public int getItemCount() {
         return (null != arraylist ? arraylist.size() : 0);
     }
 
-    private void setOnPopupMenuListener(final ItemHolder itemHolder, final int position) {
-        itemHolder.popupMenu.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-
-                final PopupMenu menu = new PopupMenu(mContext, v);
-                int adapterPosition = itemHolder.getAdapterPosition();
-                final FolderInfo folderInfo = arraylist.get(adapterPosition);
-                menu.setOnMenuItemClickListener(new PopupMenu.OnMenuItemClickListener() {
-                    @Override
-                    public boolean onMenuItemClick(MenuItem item) {
-                        switch (item.getItemId()) {
-                            case R.id.popup_folder_addto_queue:
-                                getSongListIdByFolder(folderInfo.folderPath)
-                                        .subscribeOn(Schedulers.io())
-                                        .observeOn(AndroidSchedulers.mainThread())
-                                        .subscribe(new Action1<long[]>() {
-                                            @Override
-                                            public void call(long[] ids) {
-                                                MusicPlayer.addToQueue(mContext, ids, -1, ListenerUtil.IdType.Folder);
-
-                                            }
-                                        });
-                                break;
-                            case R.id.popup_folder_addto_playlist:
-                                getSongListIdByFolder(folderInfo.folderPath)
-                                        .subscribeOn(Schedulers.io())
-                                        .observeOn(AndroidSchedulers.mainThread())
-                                        .subscribe(new Action1<long[]>() {
-                                            @Override
-                                            public void call(long[] ids) {
-                                                ListenerUtil.showAddPlaylistDialog(mContext, ids);
-                                            }
-                                        });
-                                break;
-                            case R.id.popup_folder_delete:
-                                new MaterialDialog.Builder(mContext)
-                                        .title(mContext.getResources().getString(R.string.delete_folder))
-                                        .content("删除文件夹下"+folderInfo.songCount+"首歌曲?")
-                                        .positiveText(R.string.delete)
-                                        .negativeText(R.string.cancel)
-                                        .onPositive(new MaterialDialog.SingleButtonCallback() {
-                                            @Override
-                                            public void onClick(@NonNull MaterialDialog dialog, @NonNull DialogAction which) {
-                                                getSongListIdByFolder(folderInfo.folderPath)
-                                                        .subscribeOn(Schedulers.io())
-                                                        .observeOn(AndroidSchedulers.mainThread())
-                                                        .subscribe(new Action1<long[]>() {
-                                                            @Override
-                                                            public void call(long[] ids) {
-                                                                ListenerUtil.deleteTracks(mContext, ids);
-                                                                RxBus.getInstance().post(new MediaUpdateEvent());
-                                                            }
-                                                        });
-                                            }
-                                        })
-                                        .onNegative(new MaterialDialog.SingleButtonCallback() {
-                                            @Override
-                                            public void onClick(@NonNull MaterialDialog dialog, @NonNull DialogAction which) {
-                                                dialog.dismiss();
-                                            }
-                                        })
-                                        .show();
-                                break;
-                        }
-                        return false;
-                    }
-                });
-                menu.inflate(R.menu.popup_folder);
-                menu.show();
-            }
+    private void setOnPopupMenuListener(final ItemHolder itemHolder) {
+        itemHolder.popupMenu.setOnClickListener(v -> {
+            final PopupMenu menu = new PopupMenu(mContext, v);
+            int adapterPosition = itemHolder.getBindingAdapterPosition();
+            if (adapterPosition == RecyclerView.NO_POSITION) return;
+            final FolderInfo folderInfo = arraylist.get(adapterPosition);
+            menu.setOnMenuItemClickListener(item -> {
+                int itemId = item.getItemId();
+                if (itemId == R.id.popup_folder_addto_queue) {
+                    getSongListIdByFolder(folderInfo.folderPath)
+                            .subscribeOn(Schedulers.io())
+                            .observeOn(AndroidSchedulers.mainThread())
+                            .subscribe(ids -> MusicPlayer.addToQueue(mContext, ids, -1, ListenerUtil.IdType.Folder));
+                } else if (itemId == R.id.popup_folder_addto_playlist) {
+                    getSongListIdByFolder(folderInfo.folderPath)
+                            .subscribeOn(Schedulers.io())
+                            .observeOn(AndroidSchedulers.mainThread())
+                            .subscribe(ids -> ListenerUtil.showAddPlaylistDialog(mContext, ids));
+                } else if (itemId == R.id.popup_folder_delete) {
+                    new MaterialAlertDialogBuilder(mContext)
+                            .setTitle(mContext.getResources().getString(R.string.delete_folder))
+                            .setMessage(mContext.getResources().getString(R.string.delete_folder_confirmation, folderInfo.songCount))
+                            .setPositiveButton(R.string.delete, (dialog, which) -> getSongListIdByFolder(folderInfo.folderPath)
+                                    .subscribeOn(Schedulers.io())
+                                    .observeOn(AndroidSchedulers.mainThread())
+                                    .subscribe(ids -> {
+                                        ListenerUtil.deleteTracks(mContext, ids);
+                                        RxBus.getInstance().post(new MediaUpdateEvent());
+                                    }))
+                            .setNegativeButton(R.string.cancel, null)
+                            .show();
+                }
+                return false;
+            });
+            menu.inflate(R.menu.popup_folder);
+            menu.show();
         });
     }
 
+    @SuppressLint("NotifyDataSetChanged")
     public void setFolderList(List<FolderInfo> arraylist) {
         this.arraylist = arraylist;
         notifyDataSetChanged();
@@ -159,7 +121,7 @@ public class FolderAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder>
     @NonNull
     @Override
     public String getSectionName(int position) {
-        Character ch = arraylist.get(position).folderName.charAt(0);
+        char ch = arraylist.get(position).folderName.charAt(0);
         if (Character.isDigit(ch)) {
             return "#";
         } else
@@ -168,42 +130,37 @@ public class FolderAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder>
 
     private Observable<long[]> getSongListIdByFolder(String path) {
         return SongLoader.getSongListInFolder(mContext, path)
-                .map(new Func1<List<Song>, long[]>() {
-                    @Override
-                    public long[] call(List<Song> songs) {
-                        long[] ids = new long[songs.size()];
-                        int i = 0;
-                        for (Song song : songs) {
-                            ids[i] = song.id;
-                            i++;
-                        }
-                        return ids;
+                .map(songs -> {
+                    long[] ids = new long[songs.size()];
+                    for (int i = 0; i < songs.size(); i++) {
+                        ids[i] = songs.get(i).id;
                     }
+                    return ids;
                 });
     }
 
     public class ItemHolder extends RecyclerView.ViewHolder implements View.OnClickListener {
-        private ImageView image;
-        private TextView folderName;
-        private TextView songcount;
-        private TextView folderPath;
-        private ImageView popupMenu;
+        private final ImageView image;
+        private final TextView folderName;
+        private final TextView songCount;
+        private final TextView folderPath;
+        private final ImageView popupMenu;
 
         public ItemHolder(View view) {
             super(view);
-            this.image = (ImageView) view.findViewById(R.id.image);
-            this.folderName = (TextView) view.findViewById(R.id.text_item_title);
-            this.songcount = (TextView) view.findViewById(R.id.text_item_subtitle);
-            this.folderPath = (TextView) view.findViewById(R.id.text_item_subtitle_2);
-            this.popupMenu = (ImageView) view.findViewById(R.id.popup_menu);
+            this.image = view.findViewById(R.id.image);
+            this.folderName = view.findViewById(R.id.text_item_title);
+            this.songCount = view.findViewById(R.id.text_item_subtitle);
+            this.folderPath = view.findViewById(R.id.text_item_subtitle_2);
+            this.popupMenu = view.findViewById(R.id.popup_menu);
             view.setOnClickListener(this);
         }
 
         @Override
         public void onClick(View v) {
-            NavigationUtil.navigateToFolderSongs(mContext,arraylist.get(getAdapterPosition()).folderPath);
+            int pos = getBindingAdapterPosition();
+            if (pos == RecyclerView.NO_POSITION) return;
+            NavigationUtil.navigateToFolderSongs(mContext, arraylist.get(pos).folderPath);
         }
     }
 }
-
-

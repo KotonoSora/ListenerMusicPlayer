@@ -8,20 +8,22 @@ import android.content.res.TypedArray;
 import android.graphics.Matrix;
 import android.graphics.Rect;
 import android.graphics.RectF;
-import android.support.annotation.NonNull;
-import android.support.design.widget.AppBarLayout;
-import android.support.design.widget.CoordinatorLayout;
-import android.support.design.widget.FloatingActionButton;
-import android.support.v4.view.ViewCompat;
-import android.support.v4.view.animation.FastOutSlowInInterpolator;
 import android.util.AttributeSet;
+import android.util.Log;
 import android.view.Gravity;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.ViewParent;
 
+import androidx.annotation.NonNull;
+import androidx.coordinatorlayout.widget.CoordinatorLayout;
+import androidx.core.view.ViewCompat;
+import androidx.interpolator.view.animation.FastOutSlowInInterpolator;
+
+import com.google.android.material.appbar.AppBarLayout;
+import com.google.android.material.floatingactionbutton.FloatingActionButton;
+
 import java.lang.reflect.Field;
-import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.List;
 
@@ -31,12 +33,12 @@ import io.hefuyi.listener.R;
  * Created by hefuyi on 2016/12/1.
  */
 
-public  class RotationFabBehavior extends CoordinatorLayout.Behavior<FloatingActionButton> {
+@SuppressWarnings({"unused", "PrivateResource"})
+public class RotationFabBehavior extends CoordinatorLayout.Behavior<FloatingActionButton> {
+    private static final String TAG = "RotationFabBehavior";
     private static final boolean AUTO_HIDE_DEFAULT = true;
-
+    private final boolean mAutoHideEnabled;
     private Rect mTmpRect;
-    private FloatingActionButton.OnVisibilityChangedListener mInternalAutoHideListener;
-    private boolean mAutoHideEnabled;
     private boolean isAnimate;//动画是否在进行
 
     public RotationFabBehavior() {
@@ -46,12 +48,17 @@ public  class RotationFabBehavior extends CoordinatorLayout.Behavior<FloatingAct
 
     public RotationFabBehavior(Context context, AttributeSet attrs) {
         super(context, attrs);
-        TypedArray a = context.obtainStyledAttributes(attrs,
-                android.support.design.R.styleable.FloatingActionButton_Behavior_Layout);
-        mAutoHideEnabled = a.getBoolean(
-                android.support.design.R.styleable.FloatingActionButton_Behavior_Layout_behavior_autoHide,
-                AUTO_HIDE_DEFAULT);
-        a.recycle();
+        try (TypedArray a = context.obtainStyledAttributes(attrs,
+                com.google.android.material.R.styleable.FloatingActionButton_Behavior_Layout)) {
+            mAutoHideEnabled = a.getBoolean(
+                    com.google.android.material.R.styleable.FloatingActionButton_Behavior_Layout_behavior_autoHide,
+                    AUTO_HIDE_DEFAULT);
+        }
+    }
+
+    static void getDescendantRect(ViewGroup parent, View descendant, Rect out) {
+        out.set(0, 0, descendant.getWidth(), descendant.getHeight());
+        ViewGroupUtilsHoneycomb.offsetDescendantRect(parent, descendant, out);
     }
 
     @Override
@@ -64,8 +71,8 @@ public  class RotationFabBehavior extends CoordinatorLayout.Behavior<FloatingAct
     }
 
     @Override
-    public boolean onDependentViewChanged(CoordinatorLayout parent, FloatingActionButton child,
-                                          View dependency) {
+    public boolean onDependentViewChanged(@NonNull CoordinatorLayout parent, @NonNull FloatingActionButton child,
+                                          @NonNull View dependency) {
         if (dependency instanceof AppBarLayout) {
             // If we're depending on an AppBarLayout we will show/hide it automatically
             // if the FAB is anchored to the AppBarLayout
@@ -81,19 +88,9 @@ public  class RotationFabBehavior extends CoordinatorLayout.Behavior<FloatingAct
             return false;
         }
 
-        if (lp.getAnchorId() != dependency.getId()) {
-            // The anchor ID doesn't match the dependency, so we won't automatically
-            // show/hide the FAB
-            return false;
-        }
-
-        //noinspection RedundantIfStatement
-//        if (child.getVisibility() != VISIBLE) {
-//            // The view isn't set to be visible so skip changing its visibility
-//            return false;
-//        }
-
-        return true;
+        // The anchor ID doesn't match the dependency, so we won't automatically
+        // show/hide the FAB
+        return lp.getAnchorId() == dependency.getId();
     }
 
     private boolean updateFabVisibilityForAppBarLayout(CoordinatorLayout parent,
@@ -112,25 +109,24 @@ public  class RotationFabBehavior extends CoordinatorLayout.Behavior<FloatingAct
 
         int height = 0;
         try {
-            Method method = AppBarLayout.class.getDeclaredMethod("getMinimumHeightForVisibleOverlappingContent", (Class<?>[]) new Class[0]);
+            Method method = AppBarLayout.class.getDeclaredMethod("getMinimumHeightForVisibleOverlappingContent");
             method.setAccessible(true);
-            height = (int) method.invoke(appBarLayout, new Object[0]);
-        } catch (NoSuchMethodException e) {
-            e.printStackTrace();
-        } catch (InvocationTargetException e) {
-            e.printStackTrace();
-        } catch (IllegalAccessException e) {
-            e.printStackTrace();
+            Object result = method.invoke(appBarLayout);
+            if (result instanceof Integer) {
+                height = (Integer) result;
+            }
+        } catch (Exception e) {
+            Log.e(TAG, "Error invoking getMinimumHeightForVisibleOverlappingContent", e);
         }
 
         if (rect.bottom <= height) {
             // If the anchor's bottom is below the seam, we'll animate our FAB out
-            if (!isAnimate&&child.getVisibility()==View.VISIBLE){
+            if (!isAnimate && child.getVisibility() == View.VISIBLE) {
                 hide(child);
             }
         } else {
             // Else, we'll animate our FAB back in
-            if(!isAnimate&&child.getVisibility()==View.GONE){
+            if (!isAnimate && child.getVisibility() == View.GONE) {
                 show(child);
             }
         }
@@ -138,7 +134,7 @@ public  class RotationFabBehavior extends CoordinatorLayout.Behavior<FloatingAct
     }
 
     @Override
-    public boolean onLayoutChild(CoordinatorLayout parent, FloatingActionButton child,
+    public boolean onLayoutChild(@NonNull CoordinatorLayout parent, @NonNull FloatingActionButton child,
                                  int layoutDirection) {
         // First, let's make sure that the visibility of the FAB is consistent
         final List<View> dependencies = parent.getDependencies(child);
@@ -167,11 +163,12 @@ public  class RotationFabBehavior extends CoordinatorLayout.Behavior<FloatingAct
         try {
             Field mShadowPadding = FloatingActionButton.class.getDeclaredField("mShadowPadding");
             mShadowPadding.setAccessible(true);
-            shadowPadding=(Rect)mShadowPadding.get(child);
-        } catch (NoSuchFieldException e) {
-            e.printStackTrace();
-        } catch (IllegalAccessException e) {
-            e.printStackTrace();
+            Object obj = mShadowPadding.get(child);
+            if (obj instanceof Rect) {
+                shadowPadding = (Rect) obj;
+            }
+        } catch (Exception e) {
+            Log.e(TAG, "Error accessing mShadowPadding", e);
         }
         rect.set(child.getLeft() + shadowPadding.left,
                 child.getTop() + shadowPadding.top,
@@ -190,14 +187,15 @@ public  class RotationFabBehavior extends CoordinatorLayout.Behavior<FloatingAct
         try {
             Field mShadowPadding = FloatingActionButton.class.getDeclaredField("mShadowPadding");
             mShadowPadding.setAccessible(true);
-            padding=(Rect)mShadowPadding.get(fab);
-        } catch (NoSuchFieldException e) {
-            e.printStackTrace();
-        } catch (IllegalAccessException e) {
-            e.printStackTrace();
+            Object obj = mShadowPadding.get(fab);
+            if (obj instanceof Rect) {
+                padding = (Rect) obj;
+            }
+        } catch (Exception e) {
+            Log.e(TAG, "Error accessing mShadowPadding", e);
         }
 
-        if (padding != null && padding.centerX() > 0 && padding.centerY() > 0) {
+        if (padding.centerX() > 0 && padding.centerY() > 0) {
             final CoordinatorLayout.LayoutParams lp =
                     (CoordinatorLayout.LayoutParams) fab.getLayoutParams();
 
@@ -227,42 +225,34 @@ public  class RotationFabBehavior extends CoordinatorLayout.Behavior<FloatingAct
         }
     }
 
-    static void getDescendantRect(ViewGroup parent, View descendant, Rect out) {
-        out.set(0, 0, descendant.getWidth(), descendant.getHeight());
-        ViewGroupUtilsHoneycomb.offsetDescendantRect(parent, descendant, out);
-    }
-
     private void show(final FloatingActionButton floatingActionButton) {
-        floatingActionButton.postDelayed(new Runnable() {
-            @Override
-            public void run() {
-                AnimatorSet fabAnimation = (AnimatorSet) AnimatorInflater.loadAnimator(floatingActionButton.getContext(), R.animator.float_button_in);
-                fabAnimation.setTarget(floatingActionButton);
-                fabAnimation.setInterpolator(new FastOutSlowInInterpolator());
-                fabAnimation.addListener(new Animator.AnimatorListener() {
-                    @Override
-                    public void onAnimationStart(Animator animation) {
-                        isAnimate = true;
-                        floatingActionButton.setVisibility(View.VISIBLE);
-                    }
+        floatingActionButton.postDelayed(() -> {
+            AnimatorSet fabAnimation = (AnimatorSet) AnimatorInflater.loadAnimator(floatingActionButton.getContext(), R.animator.float_button_in);
+            fabAnimation.setTarget(floatingActionButton);
+            fabAnimation.setInterpolator(new FastOutSlowInInterpolator());
+            fabAnimation.addListener(new Animator.AnimatorListener() {
+                @Override
+                public void onAnimationStart(@NonNull Animator animation) {
+                    isAnimate = true;
+                    floatingActionButton.setVisibility(View.VISIBLE);
+                }
 
-                    @Override
-                    public void onAnimationEnd(Animator animation) {
-                        isAnimate = false;
-                    }
+                @Override
+                public void onAnimationEnd(@NonNull Animator animation) {
+                    isAnimate = false;
+                }
 
-                    @Override
-                    public void onAnimationCancel(Animator animation) {
-                        hide(floatingActionButton);
-                    }
+                @Override
+                public void onAnimationCancel(@NonNull Animator animation) {
+                    hide(floatingActionButton);
+                }
 
-                    @Override
-                    public void onAnimationRepeat(Animator animation) {
+                @Override
+                public void onAnimationRepeat(@NonNull Animator animation) {
 
-                    }
-                });
-                fabAnimation.start();
-            }
+                }
+            });
+            fabAnimation.start();
         }, 150L);
     }
 
@@ -272,23 +262,23 @@ public  class RotationFabBehavior extends CoordinatorLayout.Behavior<FloatingAct
         fabAnimation.setInterpolator(new FastOutSlowInInterpolator());
         fabAnimation.addListener(new Animator.AnimatorListener() {
             @Override
-            public void onAnimationStart(Animator animation) {
+            public void onAnimationStart(@NonNull Animator animation) {
                 isAnimate = true;
             }
 
             @Override
-            public void onAnimationEnd(Animator animation) {
+            public void onAnimationEnd(@NonNull Animator animation) {
                 floatingActionButton.setVisibility(View.GONE);
                 isAnimate = false;
             }
 
             @Override
-            public void onAnimationCancel(Animator animation) {
+            public void onAnimationCancel(@NonNull Animator animation) {
                 show(floatingActionButton);
             }
 
             @Override
-            public void onAnimationRepeat(Animator animation) {
+            public void onAnimationRepeat(@NonNull Animator animation) {
 
             }
         });

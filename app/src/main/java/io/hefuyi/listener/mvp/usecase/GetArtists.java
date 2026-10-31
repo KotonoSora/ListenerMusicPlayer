@@ -5,13 +5,13 @@ import java.util.List;
 import io.hefuyi.listener.Constants;
 import io.hefuyi.listener.mvp.model.Artist;
 import io.hefuyi.listener.respository.interfaces.Repository;
-import rx.Observable;
+import io.reactivex.rxjava3.core.Observable;
 
 /**
  * Created by hefuyi on 2016/11/13.
  */
 
-public class GetArtists extends UseCase<GetArtists.RequestValues,GetArtists.ResponseValue>{
+public class GetArtists extends UseCase<GetArtists.RequestValues, GetArtists.ResponseValue> {
 
     private final Repository mRepository;
 
@@ -29,23 +29,23 @@ public class GetArtists extends UseCase<GetArtists.RequestValues,GetArtists.Resp
                 return new ResponseValue(mRepository.getRecentlyAddedArtists());
             case Constants.NAVIGATE_PLAYLIST_RECENTPLAY:
                 return new ResponseValue(mRepository.getRecentlyPlayedArtist());
-            case Constants.NAVIGATE_PLAYLIST_FAVOURATE:
-                return new ResponseValue(mRepository.getFavourateArtist());
+            case Constants.NAVIGATE_PLAYLIST_FAVORITE:
+                return new ResponseValue(mRepository.getFavoriteArtist());
             default:
                 throw new RuntimeException("wrong action type");
         }
     }
 
 
-    public static final class RequestValues implements UseCase.RequestValues{
+    public static final class RequestValues implements UseCase.RequestValues {
 
-        private String action;
+        private final String action;
 
         public RequestValues(String action) {
             this.action = action;
         }
 
-        public String getAction(){
+        public String getAction() {
             return action;
         }
     }
@@ -58,7 +58,7 @@ public class GetArtists extends UseCase<GetArtists.RequestValues,GetArtists.Resp
             mListObservable = listObservable;
         }
 
-        public Observable<List<Artist>> getArtistList(){
+        public Observable<List<Artist>> getArtistList() {
             return mListObservable;
         }
     }

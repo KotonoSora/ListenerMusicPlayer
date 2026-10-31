@@ -1,14 +1,15 @@
 package io.hefuyi.listener.widget;
 
 import android.content.Context;
-import android.content.res.TypedArray;
 import android.graphics.Canvas;
 import android.graphics.Rect;
 import android.graphics.drawable.Drawable;
-import android.support.v4.content.ContextCompat;
-import android.support.v7.widget.LinearLayoutManager;
-import android.support.v7.widget.RecyclerView;
 import android.view.View;
+
+import androidx.annotation.NonNull;
+import androidx.core.content.ContextCompat;
+import androidx.recyclerview.widget.LinearLayoutManager;
+import androidx.recyclerview.widget.RecyclerView;
 
 import io.hefuyi.listener.R;
 import io.hefuyi.listener.util.ATEUtil;
@@ -17,30 +18,20 @@ import io.hefuyi.listener.util.DensityUtil;
 
 public class DividerItemDecoration extends RecyclerView.ItemDecoration {
 
-    private static final int HORIZONTAL_LIST = LinearLayoutManager.HORIZONTAL;
     public static final int VERTICAL_LIST = LinearLayoutManager.VERTICAL;
-    private static final int[] ATTRS = new int[]{
-            android.R.attr.listDivider
-    };
-    private Drawable mDivider;
+    private static final int HORIZONTAL_LIST = LinearLayoutManager.HORIZONTAL;
+    private final Drawable mDivider;
 
     private int mOrientation;
     private boolean withHeader;
 
     public DividerItemDecoration(Context context, int orientation, boolean withHeader) {
-        final TypedArray a = context.obtainStyledAttributes(ATTRS);
-        if (ATEUtil.getATEKey(context).equals("light_theme")) {
+        if (!ATEUtil.isDarkTheme(context)) {
             mDivider = ContextCompat.getDrawable(context, R.drawable.item_divider_black);
         } else {
             mDivider = ContextCompat.getDrawable(context, R.drawable.item_divider_white);
         }
         this.withHeader = withHeader;
-        a.recycle();
-        setOrientation(orientation);
-    }
-
-    public DividerItemDecoration(Context context, int orientation, int resId) {
-        mDivider = ContextCompat.getDrawable(context, resId);
         setOrientation(orientation);
     }
 
@@ -52,7 +43,7 @@ public class DividerItemDecoration extends RecyclerView.ItemDecoration {
     }
 
     @Override
-    public void onDraw(Canvas c, RecyclerView parent) {
+    public void onDraw(@NonNull Canvas c, @NonNull RecyclerView parent, @NonNull RecyclerView.State state) {
         if (mOrientation == VERTICAL_LIST) {
             drawVertical(c, parent);
         } else {
@@ -65,13 +56,13 @@ public class DividerItemDecoration extends RecyclerView.ItemDecoration {
         final int right = parent.getWidth() - parent.getPaddingRight();
 
         final int childCount = parent.getChildCount();
-        for (int i = 0; i < childCount-1; i++) {
+        for (int i = 0; i < childCount - 1; i++) {
             final View child = parent.getChildAt(i);
             final RecyclerView.LayoutParams params = (RecyclerView.LayoutParams) child
                     .getLayoutParams();
             final int top = child.getBottom() + params.bottomMargin;
             final int bottom = top + mDivider.getIntrinsicHeight();
-            if (i != 0||(!withHeader)) {
+            if (i != 0 || (!withHeader)) {
                 left = parent.getPaddingLeft() + DensityUtil.dip2px(parent.getContext(), 72);
             }
             mDivider.setBounds(left, top, right, bottom);
@@ -96,7 +87,7 @@ public class DividerItemDecoration extends RecyclerView.ItemDecoration {
     }
 
     @Override
-    public void getItemOffsets(Rect outRect, int itemPosition, RecyclerView parent) {
+    public void getItemOffsets(@NonNull Rect outRect, @NonNull View view, @NonNull RecyclerView parent, @NonNull RecyclerView.State state) {
         if (mOrientation == VERTICAL_LIST) {
             outRect.set(0, 0, 0, mDivider.getIntrinsicHeight());
         } else {

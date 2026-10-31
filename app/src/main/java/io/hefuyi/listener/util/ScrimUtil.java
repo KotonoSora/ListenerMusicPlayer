@@ -37,6 +37,7 @@ public class ScrimUtil {
      * <a href="https://plus.google.com/+RomanNurik/posts/2QvHVFWrHZf">this post</a> for more
      * details.
      */
+    @SuppressWarnings("RtlHardcoded")
     public static Drawable makeCubicGradientScrimDrawable(int baseColor, int numStops, final int gravity) {
 
         // Generate a cache key by hashing together the inputs, based on the method described in the Effective Java book
@@ -69,18 +70,35 @@ public class ScrimUtil {
 
         final float x0, x1, y0, y1;
         switch (gravity & Gravity.HORIZONTAL_GRAVITY_MASK) {
-            case Gravity.LEFT:  x0 = 1; x1 = 0; break;
-            case Gravity.RIGHT: x0 = 0; x1 = 1; break;
+            case Gravity.LEFT:
+                x0 = 1;
+                x1 = 0;
+                break;
+            case Gravity.RIGHT:
+                x0 = 0;
+                x1 = 1;
+                break;
             case Gravity.CENTER_HORIZONTAL:
-            default:            x0 = 0; x1 = 0; break;
+            default:
+                x0 = 0;
+                x1 = 0;
+                break;
         }
         switch (gravity & Gravity.VERTICAL_GRAVITY_MASK) {
-            case Gravity.TOP:    y0 = 1; y1 = 0; break;
-            case Gravity.BOTTOM: y0 = 0; y1 = 1; break;
+            case Gravity.TOP:
+                y0 = 1;
+                y1 = 0;
+                break;
+            case Gravity.BOTTOM:
+                y0 = 0;
+                y1 = 1;
+                break;
             case Gravity.CENTER_VERTICAL:
-            default:             y0 = 0; y1 = 0; break;
+            default:
+                y0 = 0;
+                y1 = 0;
+                break;
         }
-
 
 
         paintDrawable.setShaderFactory(new ShapeDrawable.ShaderFactory() {
@@ -105,12 +123,11 @@ public class ScrimUtil {
         int length = stopColors.length;
         int[] doubleStopColors = new int[length * 2];
 
-        for (int i=0;i<length;i++) {
+        for (int i = 0; i < length; i++) {
             doubleStopColors[i] = stopColors[length - 1 - i];
         }
-        for (int j=length;j<length*2;j++) {
-            doubleStopColors[j] = stopColors[j - length];
-        }
+        if (length * 2 - length >= 0)
+            System.arraycopy(stopColors, 0, doubleStopColors, length, length * 2 - length);
 
         return doubleStopColors;
     }

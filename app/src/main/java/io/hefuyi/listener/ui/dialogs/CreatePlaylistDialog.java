@@ -2,11 +2,15 @@ package io.hefuyi.listener.ui.dialogs;
 
 import android.app.Dialog;
 import android.os.Bundle;
-import android.support.annotation.NonNull;
-import android.support.v4.app.DialogFragment;
+import android.widget.EditText;
+import android.widget.FrameLayout;
 import android.widget.Toast;
 
-import com.afollestad.materialdialogs.MaterialDialog;
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
+import androidx.fragment.app.DialogFragment;
+
+import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 
 import io.hefuyi.listener.MusicPlayer;
 import io.hefuyi.listener.R;
@@ -17,6 +21,7 @@ import io.hefuyi.listener.mvp.model.Song;
 /**
  * Created by naman on 20/12/15.
  */
+@SuppressWarnings("SpellCheckingInspection")
 public class CreatePlaylistDialog extends DialogFragment {
 
     public static CreatePlaylistDialog newInstance() {
@@ -44,29 +49,38 @@ public class CreatePlaylistDialog extends DialogFragment {
 
     @NonNull
     @Override
-    public Dialog onCreateDialog(Bundle savedInstanceState) {
-        return new MaterialDialog.Builder(getActivity())
-                .title(R.string.create_new_playlist)
-                .positiveText(R.string.create)
-                .negativeText(R.string.cancel)
-                .input(getString(R.string.playlist_name), "", false, new MaterialDialog.InputCallback() {
-                    @Override
-                    public void onInput(@NonNull MaterialDialog dialog, CharSequence input) {
+    public Dialog onCreateDialog(@Nullable Bundle savedInstanceState) {
+        final EditText input = new EditText(requireActivity());
+        input.setHint(R.string.playlist_name);
+        input.setSingleLine(true);
+        int margin = (int) (24 * requireActivity().getResources().getDisplayMetrics().density);
+        FrameLayout container = new FrameLayout(requireActivity());
+        FrameLayout.LayoutParams params = new FrameLayout.LayoutParams(
+                FrameLayout.LayoutParams.MATCH_PARENT, FrameLayout.LayoutParams.WRAP_CONTENT);
+        params.leftMargin = margin;
+        params.rightMargin = margin;
+        input.setLayoutParams(params);
+        container.addView(input);
+        return new MaterialAlertDialogBuilder(requireActivity())
+                .setTitle(R.string.create_new_playlist)
+                .setView(container)
+                .setPositiveButton(R.string.create, (dialog, which) -> {
+                    Bundle args = getArguments();
+                    long[] songs = args != null ? args.getLongArray("songs") : null;
+                    long playlistId = MusicPlayer.createPlaylist(requireActivity(), input.getText().toString());
 
-                        long[] songs = getArguments().getLongArray("songs");
-                        long playistId = MusicPlayer.createPlaylist(getActivity(), input.toString());
-
-                        if (playistId != -1) {
-                            if (songs != null && songs.length != 0) {
-                                MusicPlayer.addToPlaylist(getActivity(), songs, playistId);
-                            } else {
-                                Toast.makeText(getActivity(), R.string.create_playlist_success, Toast.LENGTH_SHORT).show();
-                            }
-                            RxBus.getInstance().post(new PlaylistUpdateEvent());
+                    if (playlistId != -1) {
+                        if (songs != null && songs.length != 0) {
+                            MusicPlayer.addToPlaylist(requireActivity(), songs, playlistId);
                         } else {
-                            Toast.makeText(getActivity(), R.string.create_playlist_fail, Toast.LENGTH_SHORT).show();
+                            Toast.makeText(requireActivity(), R.string.create_playlist_success, Toast.LENGTH_SHORT).show();
                         }
+                        RxBus.getInstance().post(new PlaylistUpdateEvent());
+                    } else {
+                        Toast.makeText(requireActivity(), R.string.create_playlist_fail, Toast.LENGTH_SHORT).show();
                     }
-                }).build();
+                })
+                .setNegativeButton(R.string.cancel, null)
+                .create();
     }
 }

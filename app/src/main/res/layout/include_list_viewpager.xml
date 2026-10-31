@@ -1,24 +1,28 @@
 <?xml version="1.0" encoding="utf-8"?>
-<com.sothree.slidinguppanel.SlidingUpPanelLayout
-    xmlns:android="http://schemas.android.com/apk/res/android"
+<com.sothree.slidinguppanel.SlidingUpPanelLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:sothree="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
     android:id="@+id/sliding_layout"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    android:background="?android:windowBackground"
     android:gravity="bottom"
-    sothree:umanoDragView="@+id/quickcontrols_container"
+    sothree:umanoDragView="@+id/quick_controls_container"
+    sothree:umanoOverlay="false"
     sothree:umanoPanelHeight="@dimen/sliding_up_header"
     sothree:umanoShadowHeight="5dp"
-    sothree:umanoOverlay="false">
+    tools:ignore="PartiallyHidden">
 
     <FrameLayout
         android:id="@+id/fragment_container"
         android:layout_width="match_parent"
-        android:layout_height="match_parent"/>
+        android:layout_height="match_parent"
+        tools:ignore="PartiallyHidden" />
 
     <FrameLayout
+        android:id="@+id/quick_controls_container"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:id="@+id/quickcontrols_container"/>
+        tools:ignore="PartiallyHidden" />
 
 </com.sothree.slidinguppanel.SlidingUpPanelLayout>

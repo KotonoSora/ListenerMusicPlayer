@@ -19,7 +19,7 @@ public class SearchModule {
     }
 
     @Provides
-    GetSearchResult getSearchResultUsecase(Repository repository) {
+    GetSearchResult getSearchResultUseCase(Repository repository) {
         return new GetSearchResult(repository);
     }
 }

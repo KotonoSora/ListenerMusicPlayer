@@ -16,10 +16,10 @@ import java.util.List;
 public class SortedCursor extends AbstractCursor {
     // cursor to wrap
     private final Cursor mCursor;
+    // this contains the ids that weren't found in the underlying cursor
+    private final ArrayList<Long> mMissingIds;
     // the map of external indices to internal indices
     private ArrayList<Integer> mOrderedPositions;
-    // this contains the ids that weren't found in the underlying cursor
-    private ArrayList<Long> mMissingIds;
     // this contains the mapped cursor positions and afterwards the extra ids that weren't found
     private HashMap<Long, Integer> mMapCursorPositions;
     // extra we want to store with the cursor
@@ -50,12 +50,12 @@ public class SortedCursor extends AbstractCursor {
      */
     private ArrayList<Long> buildCursorPositionMapping(final long[] order,
                                                        final String columnName, final List<? extends Object> extraData) {
-        ArrayList<Long> missingIds = new ArrayList<Long>();
+        ArrayList<Long> missingIds = new ArrayList<>();
 
-        mOrderedPositions = new ArrayList<Integer>(mCursor.getCount());
-        mExtraData = new ArrayList<Object>();
+        mOrderedPositions = new ArrayList<>(mCursor.getCount());
+        mExtraData = new ArrayList<>();
 
-        mMapCursorPositions = new HashMap<Long, Integer>(mCursor.getCount());
+        mMapCursorPositions = new HashMap<>(mCursor.getCount());
         final int idPosition = mCursor.getColumnIndex(columnName);
 
         if (mCursor.moveToFirst()) {

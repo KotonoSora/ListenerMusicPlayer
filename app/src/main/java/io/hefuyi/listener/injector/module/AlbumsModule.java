@@ -19,7 +19,7 @@ public class AlbumsModule {
     }
 
     @Provides
-    GetAlbums getAlbumsUsecase(Repository repository) {
+    GetAlbums getAlbumsUseCase(Repository repository) {
         return new GetAlbums(repository);
     }
 }

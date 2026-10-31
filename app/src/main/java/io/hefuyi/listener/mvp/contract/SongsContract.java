@@ -19,7 +19,7 @@ public interface SongsContract {
         void showEmptyView();
     }
 
-    interface Presenter extends BasePresenter<View>{
+    interface Presenter extends BasePresenter<View> {
 
         void loadSongs(String action);
     }
